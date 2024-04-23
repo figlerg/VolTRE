@@ -1,10 +1,8 @@
 from antlr4 import FileStream, CommonTokenStream
 
-from TREVisitor import TREVisitor
 from parse.SyntaxError import HardSyntaxErrorStrategy
 from parse.TREParser import TREParser
-from math import inf
-
+from math import inf, floor, ceil
 
 """
 The volume of a TRE in terms of overall duration T is always a piecewise polynomial:
@@ -16,70 +14,69 @@ easier than separately.
 """
 
 
+# selfmade recursion
+def generate_intervals(node:TREParser.ExprContext, n):
+    assert n >= 0, "Recursion bug."
 
+    if n == 0:
+        return []
 
-class IntervalVisitor(TREVisitor):
-    """
-    - Intervals are 2-valued lists
-    - Visitor returns list of lists... basically a multiset of intervals
-    """
+    elif isinstance(node, TREParser.AtomicExprContext):
+        out = [[0, inf], ] if n == 1 else []
 
+    elif isinstance(node, TREParser.ParenExprContext):
+        expr = node.expr()
+        out = generate_intervals(expr, n)
 
-    def generate_intervals(self, n):
+    elif isinstance(node, TREParser.UnionExprContext):
+        out = generate_intervals(node.expr(0), n) + generate_intervals(node.expr(1), n)
 
+    elif isinstance(node, TREParser.ConcatExprContext):
+        out = []
 
-    def visitAtomicExpr(self, ctx:TREParser.AtomicExprContext):
-        return [[0, inf], ]
+        # discrete convolution
+        for i in range(n+1):
 
-    def visitParenExpr(self, ctx:TREParser.ParenExprContext):
-        return self.visit(ctx.expr())
+            # continuous convolution
+            out += multiset_interval_convolution(generate_intervals(node.expr(0), i), generate_intervals(node.expr(1), n-i))
 
-    def visitInterval(self, ctx:TREParser.IntervalContext):
+    elif isinstance(node, TREParser.TimedExprContext):
+        child_intervals = generate_intervals(node.expr(), n)
+        restriction_interval = [int(node.interval().INT(0).getText()), int(node.interval().INT(1).getText())]
 
-        a = int(ctx.INT(0).getText()) # surely not the canonical way to get this
-        b = int(ctx.INT(1).getText()) # surely not the canonical way to get this
-
-        return [a,b]
-
-    def visitUnionExpr(self, ctx:TREParser.UnionExprContext):
-        return self.visit(ctx.expr(0)) + self.visit(ctx.expr(1))
-
-    def visitConcatExpr(self, ctx:TREParser.ConcatExprContext):
-        child_intervals1 = self.visit(ctx.expr(0))  # this is the list of intervals we get from left expression
-        child_intervals2 = self.visit(ctx.expr(1))  # this is the list of intervals we get from right expression
-
-
-
-        return multiset_interval_convolution(child_intervals1, child_intervals2)
-
-    def visitTimedExpr(self, ctx:TREParser.TimedExprContext):
-        child_intervals = self.visit(ctx.expr())  # this is the list of intervals we get from the expression
-        restriction_interval = self.visit(ctx.interval())
-
-        intervals = []
+        out = []
 
         for interval in child_intervals:
             intersection = intersect(interval, restriction_interval)
 
             if intersection:
-                intervals.append(intersection)
+                out.append(intersection)
 
-        return intervals
+    elif isinstance(node, TREParser.KleeneExprContext):
+        expr = node.expr()
 
-    def visitKleeneExpr(self, ctx:TREParser.KleeneExprContext):
-        # return self.BoundedKleene(self.visit(ctx.expr()), self.n)
+        out = []
 
-        # TODO TODO TODO something here is not right... the intervals only make sense when the word length is taken
-        #  into account... n = 2 means "a" has volume 0, no intervals needed. So basically we should bake the n into
-        #  the visitor, decrease it accordingly in concat and kleene, and then recombine it.
+        for i in range(0, n+1):
 
-    def BoundedKleene(self, exp_intervals, n):
-        return multiset_interval_convolution(exp_intervals, self.BoundedKleene(exp_intervals, self.n - 1))
-
-
-
+            # this is the case where no intervals survive, since V(e, i) is 0 everywhere.
+            if i == 0:
+                continue
+            # this is the case where we simply take the expr intervals, since V(e*, 0) is the dirac and works as unit
+            if i == n:
+                out += generate_intervals(expr, n)
 
 
+            # continuous convolution - unfolding one e from e*
+            out += multiset_interval_convolution(generate_intervals(expr, i), generate_intervals(node, n-i))
+
+            # note that we always return 0 for n==0 above, and mathematically assume that the empty word is not in expr
+            #  so we do not have the problematic case with blowup (i == 0 on paper)
+
+    else:
+        raise Exception("Bad state.")
+
+    return out
 
 
 
@@ -104,9 +101,12 @@ def intersect(int1, int2):
 def length(interval):
     check_int(interval)
 
-    return interval[1] - interval[2]
+    return interval[1] - interval[0]
 
 def interval_convolution(int1, int2):
+    check_int(int1)
+    check_int(int2)
+
 
     a1, b1 = int1[0], int1[1]
     a2, b2 = int2[0], int2[1]
@@ -127,6 +127,7 @@ def interval_convolution(int1, int2):
 
 def multiset_interval_convolution(intervals1:list ,intervals2:list):
     # takes to interval lists and returns all the intervals from the convolution of the two
+
     out = []
 
     for int1 in intervals1:
@@ -144,15 +145,15 @@ if __name__ == '__main__':
     from os.path import join, curdir
     from os import listdir
 
-    print("tests:")
-    print(test1 := intersect([0, inf], [1,3]))
-    print(test2 := intersect([2, 3], [0,1]))
-    try:
-        intersect([2, 3, 1], [0,1])
-    except AssertionError:
-        print('Failed successfully on [2, 3, 1], [0,1] because of bad interval input.')
-
-    print(test4 := intersect([1, 3], [2 , 4]))
+    # print("tests:")
+    # print(test1 := intersect([0, inf], [1,3]))
+    # print(test2 := intersect([2, 3], [0,1]))
+    # try:
+    #     intersect([2, 3, 1], [0,1])
+    # except AssertionError:
+    #     print('Failed successfully on [2, 3, 1], [0,1] because of bad interval input.')
+    #
+    # print(test4 := intersect([1, 3], [2 , 4]))
 
 
     input_stream = FileStream(join('parse', 'test.txt'))
@@ -162,7 +163,11 @@ if __name__ == '__main__':
     parser._errHandler = HardSyntaxErrorStrategy()
     ctx = parser.expr()
 
-    visitor = IntervalVisitor()
-    intervals = visitor.visit(ctx)
+    print(generate_intervals(ctx, 5))
 
-    print(f"final output: {intervals}")
+
+
+    # visitor = IntervalVisitor()
+    # intervals = visitor.visit(ctx)
+    #
+    # print(f"final output: {intervals}")
