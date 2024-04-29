@@ -1,5 +1,6 @@
 from math import inf
 
+import matplotlib.pyplot as plt
 from antlr4 import FileStream, CommonTokenStream
 from sympy import Piecewise
 
@@ -8,8 +9,14 @@ from parse.SyntaxError import HardSyntaxErrorStrategy
 from parse.TREParser import TREParser
 
 
-def slice_volume(node: TREParser.ExprContext, n):
+def slice_volume(node: TREParser.ExprContext, n, cache:dict=None):
     assert n >= 0, "Recursion bug."
+
+    if not cache:
+        cache = dict()
+
+    if cache and (n,node) in cache:
+        return cache[(n,node)]
 
     if n == 0:
         # TODO check for deltas? probably by asking whether the node accepts epsilon
@@ -22,11 +29,11 @@ def slice_volume(node: TREParser.ExprContext, n):
 
     elif isinstance(node, TREParser.ParenExprContext):
         expr = node.expr()
-        out = slice_volume(expr, n)
+        out = slice_volume(expr, n, cache=cache)
 
     elif isinstance(node, TREParser.UnionExprContext):
         # the plus is overloaded: normal addition of piecewise polynomials
-        out = slice_volume(node.expr(0), n) + slice_volume(node.expr(1), n)
+        out = slice_volume(node.expr(0), n, cache=cache) + slice_volume(node.expr(1), n, cache=cache)
 
     elif isinstance(node, TREParser.ConcatExprContext):
         out = VolumePoly()  # the zero poly
@@ -34,10 +41,10 @@ def slice_volume(node: TREParser.ExprContext, n):
         # discrete convolution
         for i in range(n + 1):
             # continuous convolution - * is overloaded with convolution of two piecewise poly objects
-            out += slice_volume(node.expr(0), i) * slice_volume(node.expr(1), n - i)
+            out += slice_volume(node.expr(0), i, cache=cache) * slice_volume(node.expr(1), n - i, cache=cache)
 
     elif isinstance(node, TREParser.TimedExprContext):
-        child_volume = slice_volume(node.expr(), n)
+        child_volume = slice_volume(node.expr(), n, cache=cache)
         restriction_interval = (int(node.interval().INT(0).getText()), int(node.interval().INT(1).getText()))
 
         child_volume.time_restriction(restriction_interval)  # does the interval intersection in place for all intervals
@@ -56,10 +63,10 @@ def slice_volume(node: TREParser.ExprContext, n):
                 continue
             # this is the case where we simply take the expr intervals, since V(e*, 0) is the dirac and works as unit
             if i == n:
-                out += slice_volume(expr, n)
+                out += slice_volume(expr, n, cache=cache)
 
             # continuous convolution - unfolding one e from e*
-            out += slice_volume(expr, i) * slice_volume(node, n - i)
+            out += slice_volume(expr, i, cache=cache) * slice_volume(node, n - i, cache=cache)
 
             # note that we always return 0 for n==0 above, and mathematically assume that the empty word is not in expr
             #  so we do not have the problematic case with blowup (i == 0 on paper)
@@ -69,6 +76,8 @@ def slice_volume(node: TREParser.ExprContext, n):
 
     out.exp = ctx.getText()
     out.n = n
+
+    cache[(n,node)] = out
 
     return out
 
@@ -90,9 +99,22 @@ if __name__ == '__main__':
     parser._errHandler = HardSyntaxErrorStrategy()
     ctx = parser.expr()
 
-    n = 1
-    test = slice_volume(ctx, n)
+    import time
+    n_max = 12
 
-    print(test)
+    ts = []
+    for n in range(n_max):
+        a = time.time()
+        test = slice_volume(ctx, n)
+        b = time.time()
 
-    test.plot(n)
+        print(f"Computation complete for n = {n} and exp = {ctx.getText()}.\n"
+          f"Elapsed time = {b-a}s")
+        ts.append(b-a)
+
+        print(test)
+
+        # test.plot(n)
+
+    plt.plot(ts)
+    plt.show()

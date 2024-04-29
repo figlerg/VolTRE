@@ -27,6 +27,7 @@ class VolumePoly:
         self.intervals = intervals if intervals else list()  # empty intervals is just the zero poly
         self.polys = polys if polys else list()
 
+
         self.delta = delta
 
         # during creating with slice_volumes, these are set
@@ -221,6 +222,7 @@ class VolumePoly:
         # Create a colormap
         cmap = plt.get_cmap('tab10')  # You can choose any colormap you prefer
 
+        last_val = 0
         for i, (function, interval) in enumerate(zip(self.polys, self.intervals)):
             start, end = interval
 
@@ -236,15 +238,21 @@ class VolumePoly:
             # Evaluate the function at each point
             y = [f(point) for point in x]
 
-            # Get color from the colormap
+            ## stryictly speaking, at the border points we want something like the sum of the two polys.
+            ## under the assumption that we get continuous volumes, we can do the below.
+            # if self.n not in [0,1]:
+            #     plt.scatter(x[-1], 2*y[-1], color = 'black', s = 6)
+
+            # Get color from the colormap TODO - they mix and it looks bad/confusing
             color = cmap(
                 i % cmap.N)  # Looping over colors in case the number of functions exceeds the number of colors in the colormap
 
-            plt.plot(x, y, label=f"Function {i + 1} on [{start}, {end}]", color=color)
+
+            plt.plot(x, y, label=f"$V_n^e$ on [{start}, {end}]", color=color)
 
             # Plot interval boundaries
-            plt.axvline(x=start, linestyle='--', color=color, alpha=0.5)  # Start of interval
-            plt.axvline(x=end, linestyle='--', color=color, alpha=0.5)  # End of interval
+            plt.axvline(x=start, linestyle='--', color='grey', alpha=0.5)  # Start of interval
+            plt.axvline(x=end, linestyle='--', color='grey', alpha=0.5)  # End of interval
 
         # Ensure that (0, 0) is included in the plot
         plt.xlim(left=min(0, plt.xlim()[0]), right=max(0, plt.xlim()[1]))
@@ -252,9 +260,9 @@ class VolumePoly:
 
 
         plt.xlabel('T')
-        plt.ylabel(r'$V^e_{n}(T)$', rotation = 0)
+        plt.ylabel(r'$V^e_{n}(T)$       ', rotation = 0)
         plt.title(f'Slice Volume:\ne = {self.exp}, n = {self.n}.')
-        plt.legend()
+        # plt.legend()
         plt.grid(False)  # Remove background lattice
         plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
         plt.gca().yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
