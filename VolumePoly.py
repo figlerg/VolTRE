@@ -68,6 +68,11 @@ class VolumePoly:
         last_a = 0  # left border of current interval
         last_poly = 0  # poly at current interval
 
+        # TODO right now intervals [0,inf] don't work well
+        #   I will put a heuristic for now, but this should be done better.
+        c_max = min(c_max, 200)
+
+
         for i in range(c_max + 1):
 
             # deconstruct the intervals into minimal integer intervals

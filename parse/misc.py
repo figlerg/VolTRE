@@ -1,8 +1,10 @@
 # helpers and similar
+import math
+
 
 def check_int(interval):
     assert len(interval) == 2, "Intervals are not two-valued?"
-    assert interval[0] < interval[1], "Intervals are not correctly ordered?"
+    assert interval[0] < interval[1] or interval[0] == math.inf == interval[1], "Intervals are not correctly ordered?"
 
 
 def intersect(int1, int2):

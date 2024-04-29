@@ -54,6 +54,12 @@ def slice_volume(node: TREParser.ExprContext, n, cache:dict=None):
     elif isinstance(node, TREParser.KleeneExprContext):
         expr = node.expr()
 
+        # TODO here i have a problem to do the fast squaring recursion method...
+        #   I never really know how how many letters exp can have, so the base case depends on that.
+        #   For example, if i take <aa>_[0,1]* and if I look at V_1 here, it will be zero.
+        #   One solution would be to look how deep the tree goes (how many letters to expect here),
+        #   but that only works if there is no kleene below...
+
         out = VolumePoly()  # the zero poly
 
         for i in range(0, n + 1):
@@ -65,7 +71,7 @@ def slice_volume(node: TREParser.ExprContext, n, cache:dict=None):
             if i == n:
                 out += slice_volume(expr, n, cache=cache)
 
-            # continuous convolution - unfolding one e from e*
+            # continuous convolution - unfolding one e from e*. TODO fast squaring would have to happen with two "node" inputs, right? but what is the base case?
             out += slice_volume(expr, i, cache=cache) * slice_volume(node, n - i, cache=cache)
 
             # note that we always return 0 for n==0 above, and mathematically assume that the empty word is not in expr
@@ -102,7 +108,7 @@ if __name__ == '__main__':
     import time
 
 
-    case = 1
+    case = 0
 
     # here i try to profile the computation for varying n
     if case == 0:
@@ -120,7 +126,7 @@ if __name__ == '__main__':
 
             print(test)
 
-            # test.plot()
+            test.plot()
 
         plt.plot(ts)
         plt.show()
