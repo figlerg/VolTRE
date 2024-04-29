@@ -100,21 +100,51 @@ if __name__ == '__main__':
     ctx = parser.expr()
 
     import time
-    n_max = 12
 
-    ts = []
-    for n in range(n_max):
+
+    case = 1
+
+    # here i try to profile the computation for varying n
+    if case == 0:
+        n_max = 12
+
+        ts = []
+        for n in range(n_max):
+            a = time.time()
+            test = slice_volume(ctx, n)
+            b = time.time()
+
+            print(f"Computation complete for n = {n} and exp = {ctx.getText()}.\n"
+              f"Elapsed time = {b-a}s")
+            ts.append(b-a)
+
+            print(test)
+
+            # test.plot()
+
+        plt.plot(ts)
+        plt.show()
+
+    # TODO here I look at suspicious case with discontinuity. Is it a bug? Very likely, since it only happens for
+    #  rec(1)*rec(5). maybe something like overflow?
+    if case == 1:
+        n = 6
         a = time.time()
         test = slice_volume(ctx, n)
         b = time.time()
 
         print(f"Computation complete for n = {n} and exp = {ctx.getText()}.\n"
-          f"Elapsed time = {b-a}s")
-        ts.append(b-a)
+              f"Elapsed time = {b - a}s")
 
-        print(test)
+        test.plot()
 
-        # test.plot(n)
+        a = time.time()
+        test1 = slice_volume(ctx, 1)
+        test2 = slice_volume(ctx, 5)
+        b = time.time()
 
-    plt.plot(ts)
-    plt.show()
+        print(f"Computation 2 complete for n = {n} and exp = {ctx.getText()}.\n"
+                      f"Elapsed time = {b - a}s")
+
+        test = test1 * test2
+        test.plot()

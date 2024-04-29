@@ -126,8 +126,6 @@ class VolumePoly:
                 new_ints = interval_convolution(I1, I2)
                 intervals += new_ints
 
-                # TODO TODO TODO 1 and 0 cannot be functions in sympy. Here i need them callable, somewhere else I need
-                #  to add them. This probably needs an ugly case distinction depending on the type in both places
 
                 """             
                 Here we are computing the convolution:
@@ -215,7 +213,7 @@ class VolumePoly:
             del self.polys[i]
 
     # noinspection PyTypeChecker
-    def plot(self, n):
+    def plot(self):
 
         num_points = 100
 
