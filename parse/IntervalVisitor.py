@@ -2,20 +2,24 @@ from antlr4 import FileStream, CommonTokenStream
 
 from parse.SyntaxError import HardSyntaxErrorStrategy
 from parse.TREParser import TREParser
-from math import inf, floor, ceil
+from math import inf
+
+from parse.misc import intersect, multiset_interval_convolution
 
 """
 The volume of a TRE in terms of overall duration T is always a piecewise polynomial:
 p(T) = sum   p_I(T)   1_I(T)
 
-This visitor parses a TRE for the intervals on which the volume functions are defined.
-I will probably make it into a visitor that directly calculates intervals AND the respective polynomial since it is 
-easier than separately.
+I disliked the antlr visitor, so I simply made a recursion on the syntax tree.
 """
 
 
-# selfmade recursion
-def generate_intervals(node:TREParser.ExprContext, n):
+
+
+
+
+# selfmade recursion skeleton: just the intervals
+def generate_intervals(node: TREParser.ExprContext, n):
     assert n >= 0, "Recursion bug."
 
     if n == 0:
@@ -35,10 +39,10 @@ def generate_intervals(node:TREParser.ExprContext, n):
         out = []
 
         # discrete convolution
-        for i in range(n+1):
-
+        for i in range(n + 1):
             # continuous convolution
-            out += multiset_interval_convolution(generate_intervals(node.expr(0), i), generate_intervals(node.expr(1), n-i))
+            out += multiset_interval_convolution(generate_intervals(node.expr(0), i),
+                                                 generate_intervals(node.expr(1), n - i))
 
     elif isinstance(node, TREParser.TimedExprContext):
         child_intervals = generate_intervals(node.expr(), n)
@@ -57,7 +61,7 @@ def generate_intervals(node:TREParser.ExprContext, n):
 
         out = []
 
-        for i in range(0, n+1):
+        for i in range(0, n + 1):
 
             # this is the case where no intervals survive, since V(e, i) is 0 everywhere.
             if i == 0:
@@ -66,9 +70,8 @@ def generate_intervals(node:TREParser.ExprContext, n):
             if i == n:
                 out += generate_intervals(expr, n)
 
-
             # continuous convolution - unfolding one e from e*
-            out += multiset_interval_convolution(generate_intervals(expr, i), generate_intervals(node, n-i))
+            out += multiset_interval_convolution(generate_intervals(expr, i), generate_intervals(node, n - i))
 
             # note that we always return 0 for n==0 above, and mathematically assume that the empty word is not in expr
             #  so we do not have the problematic case with blowup (i == 0 on paper)
@@ -79,71 +82,22 @@ def generate_intervals(node:TREParser.ExprContext, n):
     return out
 
 
-
-def check_int(interval):
-    assert len(interval) == 2, "Intervals are not two-valued?"
-    assert interval[0] < interval[1], "Intervals are not correctly ordered?"
+# TODO today:
+#  - try out the fast squaring optimization
+#  - try to find a way to handle the 2 variable polys
+#  - develop the interval shortening method
+#  - try to add polys to the code
+#  - caching or dynamic programming algo so we don't do work twice
 
 
 # I represent intervals as 2-value lists for now. As utility, define the intersection:
-def intersect(int1, int2):
-    check_int(int1)
-    check_int(int2)
-
-    a1, b1 = int1[0], int1[1]
-    a2, b2 = int2[0], int2[1]
-
-    if b1 < a2 or b2 < a1:
-        return None
-    else:
-        return [max(a1, a2),  min(b1, b2)]
-
-def length(interval):
-    check_int(interval)
-
-    return interval[1] - interval[0]
-
-def interval_convolution(int1, int2):
-    check_int(int1)
-    check_int(int2)
-
-
-    a1, b1 = int1[0], int1[1]
-    a2, b2 = int2[0], int2[1]
-    l1, l2 = length(int1), length(int2)
-
-    if l1 == l2:
-        # in this case one of the intervals would be a singleton, so we just need to consider the two intervals with
-        # interior points.
-        l = l1
-        return [[a1 + a2, a1 + a2 + l],
-                [a1 + a2 + l, b1 + b2]]
-
-    else:
-        return [[a1 + a2, a1 + a2 + min(l1, l2)],
-                [a1 + a2, a1 + a2 + max(l1, l2)],
-                [a1 + a2 + max(l1, l2), b1 + b2]]
-
-
-def multiset_interval_convolution(intervals1:list ,intervals2:list):
-    # takes to interval lists and returns all the intervals from the convolution of the two
-
-    out = []
-
-    for int1 in intervals1:
-        for int2 in intervals2:
-            out += interval_convolution(int1, int2)
-
-    return out
 
 
 if __name__ == '__main__':
-
     from parse.TRELexer import TRELexer
     from parse.TREParser import TREParser
 
-    from os.path import join, curdir
-    from os import listdir
+    from os.path import join
 
     # print("tests:")
     # print(test1 := intersect([0, inf], [1,3]))
@@ -155,7 +109,6 @@ if __name__ == '__main__':
     #
     # print(test4 := intersect([1, 3], [2 , 4]))
 
-
     input_stream = FileStream(join('parse', 'test.txt'))
     lexer = TRELexer(input_stream)
     stream = CommonTokenStream(lexer)
@@ -163,11 +116,6 @@ if __name__ == '__main__':
     parser._errHandler = HardSyntaxErrorStrategy()
     ctx = parser.expr()
 
-    print(generate_intervals(ctx, 5))
+    print(generate_intervals(ctx, 2))
 
 
-
-    # visitor = IntervalVisitor()
-    # intervals = visitor.visit(ctx)
-    #
-    # print(f"final output: {intervals}")

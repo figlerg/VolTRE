@@ -9,15 +9,6 @@ from parse.TREParser import TREParser
 from os.path import join, curdir
 from os import listdir
 
-# print("tests:")
-# print(test1 := intersect([0, inf], [1,3]))
-# print(test2 := intersect([2, 3], [0,1]))
-# try:
-#     intersect([2, 3, 1], [0,1])
-# except AssertionError:
-#     print('Failed successfully on [2, 3, 1], [0,1] because of bad interval input.')
-#
-# print(test4 := intersect([1, 3], [2 , 4]))
 
 
 input_stream = FileStream(join('parse', 'test.txt'))
@@ -27,4 +18,4 @@ parser = TREParser(stream)
 parser._errHandler = HardSyntaxErrorStrategy()
 ctx = parser.expr()
 
-print(generate_intervals(ctx, 1))
+print(generate_intervals(ctx, 2))
