@@ -109,14 +109,14 @@ class VolumePoly:
 
         return out
 
-    def __iadd__(self, other):
-        # quality of life for the discrete convolution stuff
-        if not self:
-            return other
-        elif not other:
-            return self
-        else:
-            return other + self
+    # def __iadd__(self, other):
+    #     # quality of life for the discrete convolution stuff
+    #     if not self:
+    #         return other
+    #     elif not other:
+    #         return self
+    #     else:
+    #         return other + self
 
     def __mul__(self, other):
         """This is NOT the multiplication, but the continuous convolution from 0 to T. We never really need the
@@ -139,30 +139,14 @@ class VolumePoly:
                 into another interval so they basically only influence the borders of the integral.
                 """
 
-                # since sympy does not allow constant polynomials to be evaluated, I need to do this distinction.
-                try:
-                    q_x = poly(pI2(x), x)  # basically renaming the variable T to x so I can insert T-t below
-                    q_eval = q_x(T - t)
-                except TypeError:
-                    q_eval = pI2  # if it isn't a poly, it is a number
 
-
-                # this is the poly p(T') * q(T-T') in my paper notation (so the poly inside the conv integral)
-                try:
-                    p_prod = poly(pI1(t) * q_eval, t)
-                except:
-                    p_prod = poly(pI1 * q_eval, t)
-
+                q_x = poly(pI2(x), x)  # basically renaming the variable T to x so I can insert T-t below
+                q_eval = q_x(T - t)
+                p_prod = poly(pI1(t) * q_eval, t)
 
                 # indef integral for the computation of the definite integrals with symbols below
-                if isinstance(p_prod, float):
-                    integral_p_prod = poly(f'{p_prod}*t')  # p_prod can be 0 or 1
-                else:
-                    integral_p_prod = p_prod.integrate(t)
+                integral_p_prod = p_prod.integrate(t)
 
-                    # below I use this indefinite integral as a function. if the value is 0, it will not be callable because sympy
-                    if integral_p_prod == 0:
-                        integral_p_prod = lambda y : 0
 
                 a, b = I1  # see calculations in "convolution poly closed form"
                 a_, b_ = I2  # see calculations in "convolution poly closed form"
@@ -200,6 +184,9 @@ class VolumePoly:
 
     def __bool__(self):
         return bool(self.polys)
+
+    def __eq__(self, other):
+        return self.intervals == other.intervals and self.polys == other.polys
 
     def time_restriction(self, restriction_inter:tuple):
         # intersect all the intervals with the input interval

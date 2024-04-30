@@ -2,7 +2,8 @@ from math import inf
 
 import matplotlib.pyplot as plt
 from antlr4 import FileStream, CommonTokenStream
-from sympy import Piecewise
+from sympy import Piecewise, poly
+from sympy.abc import T, t
 
 from VolumePoly import VolumePoly
 from parse.SyntaxError import HardSyntaxErrorStrategy
@@ -23,9 +24,12 @@ def slice_volume(node: TREParser.ExprContext, n, cache:dict=None):
         out = VolumePoly([], [])
 
     elif isinstance(node, TREParser.AtomicExprContext):
-        ints = [(0, inf), ] if n == 1 else []
-        polys = [Piecewise((1, True)), ]  # the only way I found for representing constant functions
-        out = VolumePoly(ints, polys)
+        if n == 1:
+            ints = [(0, inf), ]
+            polys = [poly(1, T)]  # the only way I found for representing constant functions
+            out = VolumePoly(ints, polys)
+        else:
+            out = VolumePoly()  # 0 poly if we have more or less letters
 
     elif isinstance(node, TREParser.ParenExprContext):
         expr = node.expr()
@@ -71,8 +75,10 @@ def slice_volume(node: TREParser.ExprContext, n, cache:dict=None):
             if i == n:
                 out += slice_volume(expr, n, cache=cache)
 
+            intermediate_poly = slice_volume(expr, i, cache=cache) * slice_volume(node, n - i, cache=cache) # TODO visualize these together with the syntax tree
+
             # continuous convolution - unfolding one e from e*. TODO fast squaring would have to happen with two "node" inputs, right? but what is the base case?
-            out += slice_volume(expr, i, cache=cache) * slice_volume(node, n - i, cache=cache)
+            out += intermediate_poly
 
             # note that we always return 0 for n==0 above, and mathematically assume that the empty word is not in expr
             #  so we do not have the problematic case with blowup (i == 0 on paper)
@@ -108,7 +114,7 @@ if __name__ == '__main__':
     import time
 
 
-    case = 0
+    case = 1
 
     # here i try to profile the computation for varying n
     if case == 0:
@@ -145,12 +151,34 @@ if __name__ == '__main__':
         test.plot()
 
         a = time.time()
-        test1 = slice_volume(ctx, 1)
-        test2 = slice_volume(ctx, 5)
+        n1 = 3
+        n2 = 3
+        test1 = slice_volume(ctx, n1)
+        test2 = slice_volume(ctx, n2)
+        test2 = test1 * test2
+        test2.n = f'{n1} + {n2}'
+        test2.exp = ctx.expr().getText() + '.' + ctx.getText()
         b = time.time()
 
-        print(f"Computation 2 complete for n = {n} and exp = {ctx.getText()}.\n"
+        print(f"Computation 2 complete for n = {n1} + {n2} and exp = {test2.exp}.\n"
                       f"Elapsed time = {b - a}s")
 
-        test = test1 * test2
-        test.plot()
+        test2.plot()
+
+
+        a = time.time()
+        n1 = 2
+        n2 = 4
+        testa = slice_volume(ctx, n1)
+        testb = slice_volume(ctx, n2)
+        test3 = testa * testb
+        test3.n = f'{n1} + {n2}'
+        test3.exp = ctx.expr().getText() + '.' + ctx.getText()
+        b = time.time()
+
+        print(f"Computation 3 complete for n = {n1} + {n2} and exp = {test3.exp}.\n"
+                      f"Elapsed time = {b - a}s")
+
+        print(f"test2 == test3: {test2 == test3}")
+
+        test3.plot()
