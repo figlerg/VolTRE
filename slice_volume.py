@@ -8,20 +8,33 @@ from sympy.abc import T, t
 from VolumePoly import VolumePoly
 from parse.SyntaxError import HardSyntaxErrorStrategy
 from parse.TREParser import TREParser
+from visualize_recursion import generate_syntax_tree, highlight_node
 
 
-def slice_volume(node: TREParser.ExprContext, n, cache:dict=None):
+def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None):
+
+    if not vis:
+        vis = generate_syntax_tree(ctx)
+
+    highlight_node(vis, str(node), n)
+
+    if cache is None:
+        cache = {}
     assert n >= 0, "Recursion bug."
 
-    if not cache:
-        cache = dict()
 
-    if cache and (n,node) in cache:
+    # memoizer
+    if (n,node) in cache:
+        print(f"n = {n}\t node = {node.getText()}\t poly = {cache[(n,node)]} \t (cached)")
         return cache[(n,node)]
 
     if n == 0:
-        # TODO check for deltas? probably by asking whether the node accepts epsilon
+        # TODO check for deltas? probably by asking whether the node accepts epsilon. THIS IS NOT TRIVIAL! I basically need to check children for whether they allow epsilon?
         out = VolumePoly([], [])
+        # if isinstance(node, TREParser.KleeneExprContext):
+        #     out.delta = True
+
+
 
     elif isinstance(node, TREParser.AtomicExprContext):
         if n == 1:
@@ -33,22 +46,22 @@ def slice_volume(node: TREParser.ExprContext, n, cache:dict=None):
 
     elif isinstance(node, TREParser.ParenExprContext):
         expr = node.expr()
-        out = slice_volume(expr, n, cache=cache)
+        out = slice_volume(expr, n, cache=cache, vis=vis)
 
     elif isinstance(node, TREParser.UnionExprContext):
         # the plus is overloaded: normal addition of piecewise polynomials
-        out = slice_volume(node.expr(0), n, cache=cache) + slice_volume(node.expr(1), n, cache=cache)
+        out = slice_volume(node.expr(0), n, cache=cache, vis=vis) + slice_volume(node.expr(1), n, cache=cache, vis=vis)
 
     elif isinstance(node, TREParser.ConcatExprContext):
         out = VolumePoly()  # the zero poly
 
         # discrete convolution
         for i in range(n + 1):
-            # continuous convolution - * is overloaded with convolution of two piecewise poly objects
-            out += slice_volume(node.expr(0), i, cache=cache) * slice_volume(node.expr(1), n - i, cache=cache)
+            # continuous convolution - ** is overloaded with convolution of two piecewise poly objects
+            out += slice_volume(node.expr(0), i, cache=cache, vis=vis) ** slice_volume(node.expr(1), n - i, cache=cache, vis=vis)
 
     elif isinstance(node, TREParser.TimedExprContext):
-        child_volume = slice_volume(node.expr(), n, cache=cache)
+        child_volume = slice_volume(node.expr(), n, cache=cache, vis=vis)
         restriction_interval = (int(node.interval().INT(0).getText()), int(node.interval().INT(1).getText()))
 
         child_volume.time_restriction(restriction_interval)  # does the interval intersection in place for all intervals
@@ -60,7 +73,7 @@ def slice_volume(node: TREParser.ExprContext, n, cache:dict=None):
 
         # TODO here i have a problem to do the fast squaring recursion method...
         #   I never really know how how many letters exp can have, so the base case depends on that.
-        #   For example, if i take <aa>_[0,1]* and if I look at V_1 here, it will be zero.
+        #   For example, if i take <aa>_[0,1]** and if I look at V_1 here, it will be zero.
         #   One solution would be to look how deep the tree goes (how many letters to expect here),
         #   but that only works if there is no kleene below...
 
@@ -71,13 +84,14 @@ def slice_volume(node: TREParser.ExprContext, n, cache:dict=None):
             # this is the case where no intervals survive, since V(e, i) is 0 everywhere.
             if i == 0:
                 continue
-            # this is the case where we simply take the expr intervals, since V(e*, 0) is the dirac and works as unit
+            # # this is the case where we simply take the expr intervals, since V(e**, 0) is the dirac and works as unit
             if i == n:
-                out += slice_volume(expr, n, cache=cache)
+                out += slice_volume(expr, n, cache=cache, vis=vis)
+                pass
 
-            intermediate_poly = slice_volume(expr, i, cache=cache) * slice_volume(node, n - i, cache=cache) # TODO visualize these together with the syntax tree
+            intermediate_poly = slice_volume(expr, i, cache=cache, vis=vis) ** slice_volume(node, n - i, cache=cache, vis=vis) # TODO visualize these together with the syntax tree
 
-            # continuous convolution - unfolding one e from e*. TODO fast squaring would have to happen with two "node" inputs, right? but what is the base case?
+            # continuous convolution - unfolding one e from e**. TODO fast squaring would have to happen with two "node" inputs, right? but what is the base case?
             out += intermediate_poly
 
             # note that we always return 0 for n==0 above, and mathematically assume that the empty word is not in expr
@@ -91,6 +105,8 @@ def slice_volume(node: TREParser.ExprContext, n, cache:dict=None):
 
     cache[(n,node)] = out
 
+
+    print(f"n = {n}\t node = {node.getText()}\t poly = {out}")
     return out
 
 
@@ -111,6 +127,7 @@ if __name__ == '__main__':
     parser._errHandler = HardSyntaxErrorStrategy()
     ctx = parser.expr()
 
+
     import time
 
 
@@ -118,7 +135,7 @@ if __name__ == '__main__':
 
     # here i try to profile the computation for varying n
     if case == 0:
-        n_max = 12
+        n_max = 20
 
         ts = []
         for n in range(n_max):
@@ -132,13 +149,14 @@ if __name__ == '__main__':
 
             print(test)
 
-            test.plot()
+            # test.plot()
 
+        # this goes up to ~20s with the cache, so we got a huge speedup by remembering the results
         plt.plot(ts)
         plt.show()
 
     # TODO here I look at suspicious case with discontinuity. Is it a bug? Very likely, since it only happens for
-    #  rec(1)*rec(5). maybe something like overflow?
+    #  rec(1)**rec(5). maybe something like overflow?
     if case == 1:
         n = 6
         a = time.time()
@@ -151,11 +169,11 @@ if __name__ == '__main__':
         test.plot()
 
         a = time.time()
-        n1 = 3
-        n2 = 3
+        n1 = 5
+        n2 = 1
         test1 = slice_volume(ctx, n1)
         test2 = slice_volume(ctx, n2)
-        test2 = test1 * test2
+        test2 = test1 ** test2
         test2.n = f'{n1} + {n2}'
         test2.exp = ctx.expr().getText() + '.' + ctx.getText()
         b = time.time()
@@ -171,7 +189,24 @@ if __name__ == '__main__':
         n2 = 4
         testa = slice_volume(ctx, n1)
         testb = slice_volume(ctx, n2)
-        test3 = testa * testb
+        test3 = testa ** testb
+        test3.n = f'{n1} + {n2}'
+        test3.exp = ctx.expr().getText() + '.' + ctx.getText()
+        b = time.time()
+
+        print(f"Computation 3 complete for n = {n1} + {n2} and exp = {test3.exp}.\n"
+                      f"Elapsed time = {b - a}s")
+
+        print(f"test2 == test3: {test2 == test3}")
+
+        test3.plot()
+
+        a = time.time()
+        n1 = 1
+        n2 = 5
+        testa = slice_volume(ctx, n1)
+        testb = slice_volume(ctx, n2)
+        test3 = testa ** testb
         test3.n = f'{n1} + {n2}'
         test3.exp = ctx.expr().getText() + '.' + ctx.getText()
         b = time.time()

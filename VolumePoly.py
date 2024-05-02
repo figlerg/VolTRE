@@ -50,6 +50,8 @@ class VolumePoly:
         if self.delta:
             out += ' + delta(T)'
 
+        if not out:
+            return '0'
         return out
 
     def __repr__(self):
@@ -103,6 +105,8 @@ class VolumePoly:
         # TODO this is not nice, because in our fragment it could still be that both have epsilon,
         #  and then we could end up with two diracs... In that case I am not sure what wouldbe the canonical way.
 
+        # assert not (self.delta and other.delta), "Problem with dirac" # TODO this actually happens... why?
+
         out = VolumePoly(intervals, polys, delta)
 
         out.simplify()  # not strictly necessary, but probably we do this every time? TODO think
@@ -118,10 +122,10 @@ class VolumePoly:
     #     else:
     #         return other + self
 
-    def __mul__(self, other):
-        """This is NOT the multiplication, but the continuous convolution from 0 to T. We never really need the
-        multiplication, so I used the operator *.
-        TODO maybe use another and put NotImplemented here to make it less confusing."""
+    def __pow__(self, other):
+        """
+        This is the convolution of two functions: int_0^T f(T') g(T-T') dT'
+        """
 
         intervals = []
         polys = []
@@ -146,7 +150,6 @@ class VolumePoly:
 
                 # indef integral for the computation of the definite integrals with symbols below
                 integral_p_prod = p_prod.integrate(t)
-
 
                 a, b = I1  # see calculations in "convolution poly closed form"
                 a_, b_ = I2  # see calculations in "convolution poly closed form"
@@ -280,4 +283,4 @@ if __name__ == '__main__':
     print(vol1 + vol2)
 
     print(f"addition: {vol1 + vol2}")  # checked by hand
-    print(f"Convolution: {vol1 * vol2}")  # checked by wolfram (assuming my integration intervals are correct)
+    print(f"Convolution: {vol1 ** vol2}")  # checked by wolfram (assuming my integration intervals are correct)
