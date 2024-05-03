@@ -1,3 +1,5 @@
+import os
+
 import networkx as nx
 import matplotlib.pyplot as plt
 from antlr4 import *
@@ -68,7 +70,12 @@ def highlight_node(G:nx.DiGraph, node, n):
     labels[node] += f"     n = {n}"
 
     nx.draw(G, pos, with_labels=True, labels=labels, node_color = cs)
-    plt.show()
+    # plt.show()
+    vis_dir_path = os.path.join(os.curdir, 'vis_cache')
+    file_n = len([name for name in os.listdir(vis_dir_path) if os.path.isfile(os.path.join(vis_dir_path,name))]) + 1
+    file_path = os.path.join(vis_dir_path, f"file{file_n}.png")
+    plt.savefig(file_path)
+    plt.clf()
 
 
 if __name__ == '__main__':

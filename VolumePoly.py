@@ -39,6 +39,9 @@ class VolumePoly:
     def pairs(self):
         return zip(self.intervals, self.polys)
 
+    def check(self):
+        assert(len(self.intervals) == len(self.polys)), "Invalid poly!"
+
     def __str__(self):
         out = ''
 
@@ -98,18 +101,23 @@ class VolumePoly:
         self.intervals = new_intervals
         self.polys = new_polys
 
+        self.check()
+
     def __add__(self, other):
         intervals = self.intervals + other.intervals
         polys = self.polys + other.polys
-        delta = self.delta or other.delta
+        delta = int(self.delta) + int(other.delta)
         # TODO this is not nice, because in our fragment it could still be that both have epsilon,
         #  and then we could end up with two diracs... In that case I am not sure what wouldbe the canonical way.
 
-        # assert not (self.delta and other.delta), "Problem with dirac" # TODO this actually happens... why?
+        # assert not (self.delta and other.delta), "Problem with dirac"
+        # THIS REALLY HAPPENS! REASON: the way I am aggregating things in the kleene recursion leads to multiple kleene polys being added (discrete convolution).
 
         out = VolumePoly(intervals, polys, delta)
 
         out.simplify()  # not strictly necessary, but probably we do this every time? TODO think
+
+        out.check()
 
         return out
 
@@ -121,6 +129,29 @@ class VolumePoly:
     #         return self
     #     else:
     #         return other + self
+
+    def __mul__(self, other):
+        """
+        scalar multiplication - TODO not sure what the canonical way is. I just want to multiply with ints
+        :param other:
+        :return:
+        """
+        assert isinstance(other, int), "For now only poly * int is supported."
+
+        polys = []
+        for p in self.polys:
+            polys.append(p*other)
+
+        intervals = self.intervals.copy()
+        delta = int(self.delta) * other
+
+        out = VolumePoly(intervals, polys, delta)
+        out.n = self.n
+
+        out.check()
+
+        return out
+
 
     def __pow__(self, other):
         """
@@ -174,13 +205,16 @@ class VolumePoly:
 
         if self.delta:
             intervals += other.intervals
-            polys += other.polys
+            polys += [int(self.delta)*p for p in other.polys]
 
         if other.delta:
             intervals += self.intervals
-            polys += self.polys
+            polys += [int(other.delta)*p for p in self.polys]
 
-        out = VolumePoly(intervals, polys, delta=self.delta or other.delta)
+
+        # TODO this is where the bugs happen: the two lines below switch the bug on and off for n = 6, but introduce it for n = 3
+        # out = VolumePoly(intervals, polys, delta=int(self.delta) + int(other.delta))
+        out = VolumePoly(intervals, polys, delta=False)
 
         out.simplify()
         return out
