@@ -28,7 +28,7 @@ ctx = parser.expr()
 
 ### SUBEXPERIMENT
 
-case = 0
+case = 3
 
 
 
@@ -133,3 +133,41 @@ if case == 2:
           f"Elapsed time = {b - a}s")
 
     test.plot()
+
+
+if case == 3:
+    n = 6
+    test1 = slice_volume(ctx,n)
+
+    sub1 = slice_volume(ctx,1)
+    sub2 = slice_volume(ctx,2)
+    sub3 = slice_volume(ctx,3)
+    sub4 = slice_volume(ctx,4)
+    sub5 = slice_volume(ctx,5)
+
+    sub1.delta = False  # this is one expr unfolded and shouldn't have delta
+    newtest = sub1 ** sub5
+
+    newtest.plot()
+
+
+    # print(sub1)
+    # print(sub5)
+    #
+    # newtest.plot()
+    # print(newtest == test1)
+    #
+    # newtest = sub2 ** sub4
+    # newtest.plot()
+    # print(newtest == test1)
+    #
+    # newtest = sub4 ** sub2
+    # newtest.plot()
+    # print(newtest == test1)
+    #
+    # newtest = sub5 ** sub1
+    # newtest.plot()
+    # print(newtest == test1)
+
+
+

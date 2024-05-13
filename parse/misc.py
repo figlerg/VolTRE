@@ -38,8 +38,8 @@ def interval_convolution(int1, int2):
         # in this case one of the intervals would be a singleton, so we just need to consider the two intervals with
         # interior points.
         l = l1
-        return [[a1 + a2, a1 + a2 + l],
-                [a1 + a2 + l, b1 + b2]]
+        return [(a1 + a2, a1 + a2 + l),
+                (a1 + a2 + l, b1 + b2)]
 
     else:
         return [(a1 + a2, a1 + a2 + min(l1, l2)),

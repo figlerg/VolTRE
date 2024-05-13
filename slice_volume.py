@@ -13,6 +13,8 @@ from visualize_recursion import generate_syntax_tree, highlight_node
 
 def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None):
 
+    node_text = node.getText()  # just for debugging
+
     if not vis and DEBUG_MODE:
         vis = generate_syntax_tree(node)
 

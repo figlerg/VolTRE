@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 from matplotlib import ticker
 from math import inf
 
-
 from parse.misc import intersect, length, interval_convolution
 
 
@@ -23,10 +22,8 @@ class VolumePoly:
         #  However, I will always need to use indices instead of the intervals themselves when matching a poly:interval
         #  pair.
 
-
         self.intervals = intervals if intervals else list()  # empty intervals is just the zero poly
         self.polys = polys if polys else list()
-
 
         self.delta = delta
 
@@ -34,13 +31,12 @@ class VolumePoly:
         self.exp = None
         self.n = None
 
-
     @property
     def pairs(self):
         return zip(self.intervals, self.polys)
 
     def check(self):
-        assert(len(self.intervals) == len(self.polys)), "Invalid poly!"
+        assert (len(self.intervals) == len(self.polys)), "Invalid poly!"
 
     def __str__(self):
         out = ''
@@ -51,7 +47,7 @@ class VolumePoly:
         out = out[0:-3]  # get rid of trailing +
 
         if self.delta:
-            out += ' + delta(T)'
+            out += f' + {int(self.delta)} delta(T)'
 
         if not out:
             return '0'
@@ -77,7 +73,6 @@ class VolumePoly:
         #   I will put a heuristic for now, but this should be done better.
         c_max = min(c_max, 200)
 
-
         for i in range(c_max + 1):
 
             # deconstruct the intervals into minimal integer intervals
@@ -101,6 +96,20 @@ class VolumePoly:
         self.intervals = new_intervals
         self.polys = new_polys
 
+
+
+        self.check()
+
+    def simplify_new(self):
+        # Adds up polys with overlapping intervals. Sweep line algo!
+        starts = [a for a, b in self.intervals]
+        ends = [b for a, b in self.intervals]
+
+        raise NotImplementedError
+
+        self.intervals = new_intervals
+        self.polys = new_polys
+
         self.check()
 
     def __add__(self, other):
@@ -113,7 +122,7 @@ class VolumePoly:
         # assert not (self.delta and other.delta), "Problem with dirac"
         # THIS REALLY HAPPENS! REASON: the way I am aggregating things in the kleene recursion leads to multiple kleene polys being added (discrete convolution).
 
-        out = VolumePoly(intervals, polys, delta)
+        out = VolumePoly(intervals, polys, delta=delta)
 
         out.simplify()  # not strictly necessary, but probably we do this every time? TODO think
 
@@ -140,7 +149,7 @@ class VolumePoly:
 
         polys = []
         for p in self.polys:
-            polys.append(p*other)
+            polys.append(p * other)
 
         intervals = self.intervals.copy()
         delta = int(self.delta) * other
@@ -151,7 +160,6 @@ class VolumePoly:
         out.check()
 
         return out
-
 
     def __pow__(self, other):
         """
@@ -166,14 +174,12 @@ class VolumePoly:
                 new_ints = interval_convolution(I1, I2)
                 intervals += new_ints
 
-
                 """             
                 Here we are computing the convolution:
                         int p(T') q(T-T') dT'
                 In the original formulation we have something with indicator functions inside, but these can be formed
                 into another interval so they basically only influence the borders of the integral.
                 """
-
 
                 q_x = poly(pI2(x), x)  # basically renaming the variable T to x so I can insert T-t below
                 q_eval = q_x(T - t)
@@ -189,7 +195,7 @@ class VolumePoly:
                 # Depending on l1 and l2, I get either 3 or 2 intervals here.
                 # The middle part is only added if we get 3 intervals.
                 # The integral borders in terms of T can be inferred symbollically calculated by hand.
-                p1 = poly(integral_p_prod(T- a_) - integral_p_prod(a), T)
+                p1 = poly(integral_p_prod(T - a_) - integral_p_prod(a), T)
                 polys.append(p1)
 
                 if len(new_ints) == 3:
@@ -205,27 +211,36 @@ class VolumePoly:
 
         if self.delta:
             intervals += other.intervals
-            polys += [int(self.delta)*p for p in other.polys]
+            polys += [int(self.delta) * p for p in other.polys]
+            pass
 
         if other.delta:
             intervals += self.intervals
-            polys += [int(other.delta)*p for p in self.polys]
-
+            polys += [int(other.delta) * p for p in self.polys]
+            pass
 
         # TODO this is where the bugs happen: the two lines below switch the bug on and off for n = 6, but introduce it for n = 3
         # out = VolumePoly(intervals, polys, delta=int(self.delta) + int(other.delta))
         out = VolumePoly(intervals, polys, delta=False)
 
+
+        # out.fancy_print()
         out.simplify()
+        # out.fancy_print()
+
         return out
 
     def __bool__(self):
         return bool(self.polys)
 
     def __eq__(self, other):
-        return self.intervals == other.intervals and self.polys == other.polys
+        alphanum = lambda x: str(x)
 
-    def time_restriction(self, restriction_inter:tuple):
+        return sorted(self.intervals, key=alphanum) == sorted(other.intervals, key=alphanum) and sorted(self.polys,
+                                                                                                        key=alphanum) == sorted(
+            other.polys, key=alphanum)
+
+    def time_restriction(self, restriction_inter: tuple):
         # intersect all the intervals with the input interval
         delete_indices = []
 
@@ -274,7 +289,6 @@ class VolumePoly:
             color = cmap(
                 i % cmap.N)  # Looping over colors in case the number of functions exceeds the number of colors in the colormap
 
-
             plt.plot(x, y, label=f"$V_n^e$ on [{start}, {end}]", color=color)
 
             # Plot interval boundaries
@@ -285,15 +299,20 @@ class VolumePoly:
         plt.xlim(left=min(0, plt.xlim()[0]), right=max(0, plt.xlim()[1]))
         plt.ylim(bottom=min(0, plt.ylim()[0]), top=max(0, plt.ylim()[1]))
 
-
         plt.xlabel('T')
-        plt.ylabel(r'$V^e_{n}(T)$       ', rotation = 0)
+        plt.ylabel(r'$V^e_{n}(T)$       ', rotation=0)
         plt.title(f'Slice Volume:\ne = {self.exp}, n = {self.n}.')
         # plt.legend()
         plt.grid(False)  # Remove background lattice
         plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
         plt.gca().yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
         plt.show()
+
+
+    def fancy_print(self):
+        for i, inter in enumerate(self.intervals):
+            print(inter, self.polys[i].as_expr())
+
 
 
 if __name__ == '__main__':
