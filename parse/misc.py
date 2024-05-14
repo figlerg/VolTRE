@@ -22,8 +22,8 @@ def intersect(int1, int2):
 
 def length(interval):
     check_int(interval)
-
-    return interval[1] - interval[0]
+    out = interval[1] - interval[0]
+    return out
 
 
 def interval_convolution(int1, int2):

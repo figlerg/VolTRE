@@ -15,7 +15,7 @@ class VolumePoly:
     # a wrapper class for the piecewise polynomials.
     # Each has the form     sum for I in J, p_I 1_I [+ delta in some cases]
 
-    def __init__(self, intervals: list = None, polys: list = None, delta: bool = False):
+    def __init__(self, intervals: list = None, polys: list = None, delta: int = 0):
         # TODO this is bad - I want to use a hashmap, but there might be multiple equal intervals with different polys,
         #  so I either need to make them distinguishable as keys (e.g. numbering multiples), or just treat it as lists.
         #  I chose lists here for simplcity, and because it shouldn't change computation.
@@ -96,21 +96,8 @@ class VolumePoly:
         self.intervals = new_intervals
         self.polys = new_polys
 
-
-
         self.check()
 
-    def simplify_new(self):
-        # Adds up polys with overlapping intervals. Sweep line algo!
-        starts = [a for a, b in self.intervals]
-        ends = [b for a, b in self.intervals]
-
-        raise NotImplementedError
-
-        self.intervals = new_intervals
-        self.polys = new_polys
-
-        self.check()
 
     def __add__(self, other):
         intervals = self.intervals + other.intervals
@@ -192,6 +179,9 @@ class VolumePoly:
                 a_, b_ = I2  # see calculations in "convolution poly closed form"
                 l1, l2 = length(I1), length(I2)
 
+                # TODO TODO TODO i bet the mistake is here... look at the two prints_factorizations side by side
+
+
                 # Depending on l1 and l2, I get either 3 or 2 intervals here.
                 # The middle part is only added if we get 3 intervals.
                 # The integral borders in terms of T can be inferred symbollically calculated by hand.
@@ -199,7 +189,15 @@ class VolumePoly:
                 polys.append(p1)
 
                 if len(new_ints) == 3:
-                    p2 = poly(integral_p_prod(T) - integral_p_prod(T - min(l1, l2)), T)
+
+                    if l1 < l2:
+                        p2 = poly(integral_p_prod(b) - integral_p_prod(a), T)
+                    elif l1 >l2:
+                        p2 = poly(integral_p_prod(b_) - integral_p_prod(a_), T)
+                    else:
+                        raise AssertionError('This should not be possible.')
+
+
                     polys.append(p2)
 
                 p3 = poly(integral_p_prod(b) - integral_p_prod(T - b_), T)
@@ -210,11 +208,13 @@ class VolumePoly:
             "up we might need to think about this more.")
 
         if self.delta:
+            # print(f"Convolution of delta = {self.delta} with {other}")
             intervals += other.intervals
             polys += [int(self.delta) * p for p in other.polys]
             pass
 
         if other.delta:
+            # print(f"Convolution of delta = {other.delta} with {self}")
             intervals += self.intervals
             polys += [int(other.delta) * p for p in self.polys]
             pass
@@ -257,7 +257,7 @@ class VolumePoly:
             del self.polys[i]
 
     # noinspection PyTypeChecker
-    def plot(self):
+    def plot(self, no_show = False):
 
         num_points = 100
 
@@ -306,7 +306,9 @@ class VolumePoly:
         plt.grid(False)  # Remove background lattice
         plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
         plt.gca().yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-        plt.show()
+
+        if not no_show:
+            plt.show()
 
 
     def fancy_print(self):

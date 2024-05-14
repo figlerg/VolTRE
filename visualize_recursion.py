@@ -36,7 +36,7 @@ def generate_syntax_tree(ctx, graph=None, parent_node=None):
     return graph
 
 # Parse the input and generate syntax tree
-input_stream = FileStream(join('parse', 'test.txt'))
+input_stream = FileStream(join('parse', 'test_spec.txt'))
 lexer = TRELexer(input_stream)
 stream = CommonTokenStream(lexer)
 parser = TREParser(stream)

@@ -9,11 +9,12 @@ from parse.TRELexer import TRELexer
 from parse.TREParser import TREParser
 from os.path import join
 
+from visualize_recursion import generate_syntax_tree
 
 
 ## PARSING
 
-input_stream = FileStream(join('parse', 'test.txt'))
+input_stream = FileStream(join('parse', 'test_spec.txt'))
 print(f'input: {input_stream}')
 
 lexer = TRELexer(input_stream)
@@ -22,16 +23,9 @@ parser = TREParser(stream)
 parser._errHandler = HardSyntaxErrorStrategy()
 ctx = parser.expr()
 
-
-
-
-
 ### SUBEXPERIMENT
 
-case = 3
-
-
-
+case = 0
 
 
 
@@ -57,7 +51,7 @@ if case == 0:
     plt.plot(ts)
     plt.show()
 
-# SUSPICIOUS TEST
+# SUSPICIOUS TEST - why do different factorizations have different results?
 if case == 1:
     n = 6
     a = time.time()
@@ -135,39 +129,27 @@ if case == 2:
     test.plot()
 
 
+# direct comparison in one plot
 if case == 3:
     n = 6
     test1 = slice_volume(ctx,n)
 
     sub1 = slice_volume(ctx,1)
     sub2 = slice_volume(ctx,2)
-    sub3 = slice_volume(ctx,3)
     sub4 = slice_volume(ctx,4)
     sub5 = slice_volume(ctx,5)
 
     sub1.delta = False  # this is one expr unfolded and shouldn't have delta
+
+
     newtest = sub1 ** sub5
+    newtest.plot(no_show = True)
 
-    newtest.plot()
+    newtest = sub2 ** sub4
+    newtest.plot(no_show = True)
 
-
-    # print(sub1)
-    # print(sub5)
-    #
-    # newtest.plot()
-    # print(newtest == test1)
-    #
-    # newtest = sub2 ** sub4
-    # newtest.plot()
-    # print(newtest == test1)
-    #
-    # newtest = sub4 ** sub2
-    # newtest.plot()
-    # print(newtest == test1)
-    #
-    # newtest = sub5 ** sub1
-    # newtest.plot()
-    # print(newtest == test1)
+    plt.title("Comparison with different factorizations of 6")
+    plt.show()
 
 
 
