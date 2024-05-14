@@ -25,12 +25,25 @@ ctx = parser.expr()
 
 ### SUBEXPERIMENT
 
-case = 0
+case = 1
 
 
-
-# VARY N
+# fixed n
 if case == 0:
+    n = 1
+
+    a = time.time()
+    test = slice_volume(ctx, n)
+    b = time.time()
+
+    print(f"Computation complete for n = {n} and exp = {ctx.getText()}.\n"
+          f"Elapsed time = {b - a}s")
+
+    test.plot()
+
+
+# VARY n
+if case == 1:
     n_max = 30
 
     ts = []
@@ -50,106 +63,5 @@ if case == 0:
     # this goes up to ~20s with the cache, so we got a huge speedup by remembering the results
     plt.plot(ts)
     plt.show()
-
-# SUSPICIOUS TEST - why do different factorizations have different results?
-if case == 1:
-    n = 6
-    a = time.time()
-    test = slice_volume(ctx, n)
-    b = time.time()
-
-    print(f"Computation complete for n = {n} and exp = {ctx.getText()}.\n"
-          f"Elapsed time = {b - a}s")
-
-    test.plot()
-
-    a = time.time()
-    n1 = 5
-    n2 = 1
-    testa = slice_volume(ctx, n1)
-    testb = slice_volume(ctx, n2)
-    testa.delta = False
-    test2 = testa ** testb
-    test2.n = f'{n1} + {n2}'
-    test2.exp = ctx.expr().getText() + '.' + ctx.getText()
-    b = time.time()
-
-    print(f"Computation 2 complete for n = {n1} + {n2} and exp = {test2.exp}.\n"
-          f"Elapsed time = {b - a}s")
-
-    test2.plot()
-
-    a = time.time()
-    n1 = 2
-    n2 = 4
-    testa = slice_volume(ctx, n1)
-    testa.delta = False
-    testb = slice_volume(ctx, n2)
-    test3 = testa ** testb
-    test3.n = f'{n1} + {n2}'
-    test3.exp = ctx.expr().getText() + '.' + ctx.getText()
-    b = time.time()
-
-    print(f"Computation 3 complete for n = {n1} + {n2} and exp = {test3.exp}.\n"
-          f"Elapsed time = {b - a}s")
-
-    print(f"test2 == test3: {test2 == test3}")
-
-    test3.plot()
-
-    a = time.time()
-    n1 = 1
-    n2 = 5
-    testa = slice_volume(ctx, n1)
-    testb = slice_volume(ctx, n2)
-    testa.delta = False
-    test3 = testa ** testb
-    test3.n = f'{n1} + {n2}'
-    test3.exp = ctx.expr().getText() + '.' + ctx.getText()
-    b = time.time()
-
-    print(f"Computation 3 complete for n = {n1} + {n2} and exp = {test3.exp}.\n"
-          f"Elapsed time = {b - a}s")
-
-    print(f"test2 == test3: {test2 == test3}")
-
-    test3.plot()
-
-
-# SUSPICIOUS TEST
-if case == 2:
-    n = 6
-    a = time.time()
-    test = slice_volume(ctx, n)
-    b = time.time()
-
-    print(f"Computation complete for n = {n} and exp = {ctx.getText()}.\n"
-          f"Elapsed time = {b - a}s")
-
-    test.plot()
-
-
-# direct comparison in one plot
-if case == 3:
-    n = 6
-    test1 = slice_volume(ctx,n)
-
-    sub1 = slice_volume(ctx,1)
-    sub2 = slice_volume(ctx,2)
-    sub4 = slice_volume(ctx,4)
-    sub5 = slice_volume(ctx,5)
-
-    sub1.delta = False  # this is one expr unfolded and shouldn't have delta
-
-
-    newtest = sub1 ** sub5
-    newtest.plot(no_show = True)
-
-    newtest = sub2 ** sub4
-    newtest.plot(no_show = True)
-
-    plt.title("Comparison with different factorizations of 6")
-    plt.show()
-
 
 

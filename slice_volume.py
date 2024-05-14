@@ -18,22 +18,26 @@ def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mod
     if not vis and debug_mode:
         vis = generate_syntax_tree(node)
 
-    if debug_mode:
-        print(f"node = {node_text}, n = {n}")
-        highlight_node(vis, str(node), n)
+    ## moved this to end so it also captures cached calls
+    # if debug_mode:
+        # highlight_node(vis, str(node), comment=f"n = {n}")
+        # print(f"node = {node_text}, n = {n}")
+        # highlight_node(vis, str(node), comment=f"n = {n}")
+
 
     if cache is None:
         cache = {}
     assert n >= 0, "Recursion bug."
 
-    # # memoizer
-    # if (n,node) in cache:
-    #     if debug_mode:
-    #         print(f"n = {n}\t node = {node.getText()}\t poly = {cache[(n,node)]} \t (cached)")
-    #
-    #     return cache[(n,node)]
 
-    if n == 0:
+    # memoizer: i ask this first in the elif, in case we already computed the poly we just jump right to return
+    if (n,node) in cache:
+        if debug_mode:
+            print(f"n = {n}\t node = {node.getText()}\t poly = {cache[(n,node)]} \t (cached)")
+
+        out =  cache[(n,node)]
+
+    elif n == 0:
         # TODO check for deltas? probably by asking whether the node accepts epsilon.
         #  THIS IS NOT TRIVIAL! I basically need to check children for whether they allow epsilon?
         #  For now I say that only Kleene admits epsilon, since epsilon is not really present elsewhere.
@@ -111,6 +115,10 @@ def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mod
 
     if debug_mode:
         print(f"n = {n}\t node = {node.getText()}\t poly = {out}")
+
+        print(f"node = {node_text}, n = {n}")
+        highlight_node(vis, str(node), comment=f"n = {n}, p/T) = {out}")
+
 
     return out
 

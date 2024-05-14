@@ -53,7 +53,7 @@ G = generate_syntax_tree(ctx)
 
 
 
-def highlight_node(G:nx.DiGraph, node, n):
+def highlight_node(G:nx.DiGraph, node, comment):
     # assert(node in G.nodes), "trying to highlight a non-existing node"
 
     # Draw the graph
@@ -67,7 +67,7 @@ def highlight_node(G:nx.DiGraph, node, n):
         cs.append(c)
 
     labels = nx.get_node_attributes(G, 'label').copy()
-    labels[node] += f"     n = {n}"
+    labels[node] += f"     {comment}"
 
     nx.draw(G, pos, with_labels=True, labels=labels, node_color = cs)
     # plt.show()

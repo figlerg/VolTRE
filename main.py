@@ -17,9 +17,9 @@ parser = TREParser(stream)
 parser._errHandler = HardSyntaxErrorStrategy()
 ctx = parser.expr()
 
-n = 3
+n = 6
 
-V = slice_volume(ctx, n, debug_mode=True)  # debug mode generates files in vis_cache
+V = slice_volume(ctx, n, debug_mode=False)  # debug mode generates files in vis_cache
 
 print(V)
 V.plot()
