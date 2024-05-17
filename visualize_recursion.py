@@ -35,21 +35,6 @@ def generate_syntax_tree(ctx, graph=None, parent_node=None):
 
     return graph
 
-# Parse the input and generate syntax tree
-input_stream = FileStream(join('parse', 'test_spec.txt'))
-lexer = TRELexer(input_stream)
-stream = CommonTokenStream(lexer)
-parser = TREParser(stream)
-ctx = parser.expr()
-
-# Generate the syntax tree graph
-G = generate_syntax_tree(ctx)
-
-# Draw the graph
-# pos = graphviz_layout(G, prog="dot")
-# nx.draw(G, pos, with_labels=True, labels=nx.get_node_attributes(G, 'label'), node_color='none', edge_color='black', node_size=100, font_size=12, font_color='black', linewidths=1, edgecolors='black', bbox=dict(facecolor="white"))
-# plt.show()
-
 
 
 

@@ -1,30 +1,28 @@
-from sympy import poly
-from sympy.abc import T, t, \
-    x  # I will treat T as the slice duration, and t as the variable in the convolution integrals
+import warnings
 
-from sympy import S
+from math import inf
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import ticker
-from math import inf
 
-from parse.misc import intersect, length, interval_convolution
+from sympy import poly
+from sympy.polys import Poly
+from sympy.abc import T, t, x  # I will treat T as the slice duration, and t as the variable in convolutions.
+
+# this is my code
+from misc import intersect, length, interval_convolution, determine_convolution_case, ConvolutionCase
 
 
 class VolumePoly:
-    # a wrapper class for the piecewise polynomials.
-    # Each has the form     sum for I in J, p_I 1_I [+ delta in some cases]
+    """
+    A wrapper class for the piecewise polynomials.
+    Each has the form     sum for I in J, p_I 1_I [+ delta in some cases]
+    """
 
     def __init__(self, intervals: list = None, polys: list = None, delta: int = 0):
-        # TODO this is bad - I want to use a hashmap, but there might be multiple equal intervals with different polys,
-        #  so I either need to make them distinguishable as keys (e.g. numbering multiples), or just treat it as lists.
-        #  I chose lists here for simplcity, and because it shouldn't change computation.
-        #  However, I will always need to use indices instead of the intervals themselves when matching a poly:interval
-        #  pair.
 
         self.intervals = intervals if intervals else list()  # empty intervals is just the zero poly
         self.polys = polys if polys else list()
-
         self.delta = delta
 
         # during creating with slice_volumes, these are set
@@ -36,6 +34,7 @@ class VolumePoly:
         return zip(self.intervals, self.polys)
 
     def check(self):
+        # TODO I could do a bunch of sanity checks here.
         assert (len(self.intervals) == len(self.polys)), "Invalid poly!"
 
     def __str__(self):
@@ -53,13 +52,26 @@ class VolumePoly:
             return '0'
         return out
 
+    def fancy_print(self):
+        """
+        This prints The polynomial in a simpler form, as pairs of intervals and polys. Useful for debugging.
+        :return: None
+        """
+        for i, inter in enumerate(self.intervals):
+            print(inter, self.polys[i].as_expr())
+
     def __repr__(self):
         return self.__str__()
 
-    def simplify(self):
+    def simplify_old(self):
+        """
+        Deprecated! I keep it here just to compare.
+        """
+
+        warnings.warn("This function is deprecated - use the .simplify method.", DeprecationWarning)
 
         c_max = 0
-        for a, b in self.intervals:
+        for i, (a, b) in enumerate(self.intervals):
             c_max = max(c_max, b)  # assumes that the interval is well-ordered, i.e. a < b
 
         min_int_repr = dict()
@@ -98,6 +110,83 @@ class VolumePoly:
 
         self.check()
 
+    def simplify(self):
+
+        events = []
+        is_infinite = dict()
+
+        # this loop builds the event queue (unsorted)
+        for i, (a, b) in enumerate(self.intervals):
+            if a != inf:
+                # this tuple has:
+                #       i           ... index of the right interval/poly in the lists
+                #       a           ... the actual value for sorting in the event queue
+                #       True        ... True indicates that it is the left boundary of the interval
+                events.append((i, a, True))
+            else:
+                raise Exception('Invalid interval.')
+
+            if b != inf:
+                #       i           ... index of the right interval/poly in the lists
+                #       b           ... the actual value for sorting in the event queue
+                #       False        ... False indicates that it is the right boundary of the interval
+                events.append((i, b, False))
+            else:
+                is_infinite[i] = True
+
+        events.sort(key=lambda y: y[1])  # I sort for the values (so the border points of the intervals).
+        # Python uses Timsort, a hybrid sorting algo with O(n log n), so this influences the complexity.
+
+        current_poly = Poly('0', T)
+
+        current_interval_start = 0
+
+        intervals = []
+        polys = []
+
+
+
+        for i, val, is_start in events:
+            delta_poly = self.polys[i]  # this is either added or subtracted later
+
+            # this flag will signify that we didn't progress in time with this event, leading to some special cases
+            simultaneous_events = val == current_interval_start
+
+            # skip 0 after adding poly
+            if val == 0:
+                current_poly += delta_poly
+                continue
+
+
+            # 1) normal case: the interval of this event is the only event happening at this val. We also skip 0 here
+            if not simultaneous_events:
+                intervals.append((current_interval_start, val))
+                polys.append(current_poly)
+                current_interval_start = val
+
+            # 2) multiple interval borders at same time
+            else:
+                pass
+
+            # It doesn't matter what case we are in above, the current poly is always updated.
+            # Here it is clear, that for finite intervals it will always be zero in the end since we add and subtract
+            # each poly once. (Only at t=0 do we not do not enter here, but still add the poly above so the invariant
+            # holds.)
+            if is_start:
+                current_poly += delta_poly
+            else:
+                current_poly -= delta_poly
+
+
+        # Handle case for intervals that extend to infinity
+        if current_poly != Poly('0', T):
+            intervals.append((current_interval_start, inf))
+            polys.append(current_poly)
+
+        self.intervals = intervals
+        self.polys = polys
+
+        return None
 
     def __add__(self, other):
         intervals = self.intervals + other.intervals
@@ -117,14 +206,14 @@ class VolumePoly:
 
         return out
 
-    # def __iadd__(self, other):
-    #     # quality of life for the discrete convolution stuff
-    #     if not self:
-    #         return other
-    #     elif not other:
-    #         return self
-    #     else:
-    #         return other + self
+    def __iadd__(self, other):
+        # quality of life for the discrete convolution stuff
+        if not self:
+            return other
+        elif not other:
+            return self
+        else:
+            return other + self
 
     def __mul__(self, other):
         """
@@ -175,33 +264,55 @@ class VolumePoly:
                 # indef integral for the computation of the definite integrals with symbols below
                 integral_p_prod = p_prod.integrate(t)
 
-                a, b = I1  # see calculations in "convolution poly closed form"
-                a_, b_ = I2  # see calculations in "convolution poly closed form"
+                a1, b1 = I1  # see calculations in "convolution poly closed form"
+                a2, b2 = I2  # see calculations in "convolution poly closed form"
                 l1, l2 = length(I1), length(I2)
-
-                # TODO TODO TODO i bet the mistake is here... look at the two prints_factorizations side by side
-
 
                 # Depending on l1 and l2, I get either 3 or 2 intervals here.
                 # The middle part is only added if we get 3 intervals.
                 # The integral borders in terms of T can be inferred symbollically calculated by hand.
-                p1 = poly(integral_p_prod(T - a_) - integral_p_prod(a), T)
-                polys.append(p1)
 
-                if len(new_ints) == 3:
+                case = determine_convolution_case(I1, I2)
 
-                    if l1 < l2:
-                        p2 = poly(integral_p_prod(b) - integral_p_prod(a), T)
-                    elif l1 >l2:
-                        p2 = poly(integral_p_prod(b_) - integral_p_prod(a_), T)
-                    else:
-                        raise AssertionError('This should not be possible.')
+                # I always compute the three polys, but in some cases below only some of them are added to the list.
+                # For the logic, draw the five pictures of the case distinction! TODO I will provide my notes somewhere in this repo.
 
+                # this poly is always in the first interval, no matter the case.
+                p1 = poly(integral_p_prod(T - a2) - integral_p_prod(a1), T)
 
-                    polys.append(p2)
+                # Depending on the case (also the infinite ones) and which length is bigger, this is the 2nd poly.
+                if l1 < l2:
+                    p2 = poly(integral_p_prod(b1) - integral_p_prod(a1), T)
+                elif l1 > l2:
+                    p2 = poly(integral_p_prod(b2) - integral_p_prod(a2), T)
+                else:
+                    p2 = None
 
-                p3 = poly(integral_p_prod(b) - integral_p_prod(T - b_), T)
-                polys.append(p3)
+                # this is added only in the last case
+                p3 = poly(integral_p_prod(b1) - integral_p_prod(T - b2), T)
+
+                match case:
+                    case ConvolutionCase.BOTH_INFINITE:
+                        polys.append(p1)  # on [0,                      inf)
+
+                    case ConvolutionCase.FIRST_INFINITE:
+                        polys.append(p1)  # on [a1 + a2,                a1 + a2 + l2]
+                        polys.append(p2)  # on [a1+ a2 + l2,            inf)
+
+                    case ConvolutionCase.SECOND_INFINITE:
+                        polys.append(p1)  # on [a1 + a2,                a1 + a2 + l1]
+                        polys.append(p2)  # on [a1+ a2 + l1,            inf)
+
+                    case ConvolutionCase.BOTH_FINITE_SAME_LENGTH:
+                        polys.append(p1)  # on [a1 + a2,                a1 + a2 + l]
+                        polys.append(p3)  # on [a1 + a2 + l,            b1 + b2]
+
+                    case ConvolutionCase.BOTH_FINITE_DIFFERENT_LENGTH:
+                        polys.append(p1)  # on [a1 + a2,                a1 + a2 + min(l1,l2)]
+                        polys.append(p2)  # on [a1 + a2 + min(l1,l2),   a1 + a2 + max(l1,l2)]
+                        polys.append(p3)  # on [a1 + a2 + max(l1,l2),   b1 + b2]
+
+        assert len(intervals) == len(polys), "Convolution bug, invalid VolumePoly created."
 
         assert not (self.delta and other.delta), (
             "Tried to convolve two deltas - this is not well defined, if this pops "
@@ -219,10 +330,7 @@ class VolumePoly:
             polys += [int(other.delta) * p for p in self.polys]
             pass
 
-        # TODO this is where the bugs happen: the two lines below switch the bug on and off for n = 6, but introduce it for n = 3
-        # out = VolumePoly(intervals, polys, delta=int(self.delta) + int(other.delta))
         out = VolumePoly(intervals, polys, delta=False)
-
 
         # out.fancy_print()
         out.simplify()
@@ -231,14 +339,14 @@ class VolumePoly:
         return out
 
     def __bool__(self):
-        return bool(self.polys)
+        return bool(self.polys) or bool(self.delta)
 
     def __eq__(self, other):
+        # TODO I think this doesn't actually work, not sure why.
         alphanum = lambda x: str(x)
 
-        return sorted(self.intervals, key=alphanum) == sorted(other.intervals, key=alphanum) and sorted(self.polys,
-                                                                                                        key=alphanum) == sorted(
-            other.polys, key=alphanum)
+        return (sorted(self.intervals, key=alphanum) == sorted(other.intervals, key=alphanum) and
+                sorted(self.polys, key=alphanum) == sorted(other.polys, key=alphanum))
 
     def time_restriction(self, restriction_inter: tuple):
         # intersect all the intervals with the input interval
@@ -256,8 +364,7 @@ class VolumePoly:
             del self.intervals[i]
             del self.polys[i]
 
-    # noinspection PyTypeChecker
-    def plot(self, no_show = False):
+    def plot(self, no_show=False):
 
         num_points = 100
 
@@ -266,7 +373,14 @@ class VolumePoly:
 
         last_val = 0
         for i, (function, interval) in enumerate(zip(self.polys, self.intervals)):
+
             start, end = interval
+
+            inf_flag = False
+            if end == inf:
+                end = start + 3  # just to see something, I arbitrarily visualize a little bit of the inf interval
+                inf_flag = True
+
 
             # If function is not callable, convert it to a lambda function
             if not callable(function):
@@ -278,9 +392,9 @@ class VolumePoly:
             x = np.linspace(start, end, num_points)
 
             # Evaluate the function at each point
-            y = [f(point) for point in x]
+            y = [float(f(point)) for point in x]
 
-            ## stryictly speaking, at the border points we want something like the sum of the two polys.
+            ## strictly speaking, at the border points we want something like the sum of the two polys.
             ## under the assumption that we get continuous volumes, we can do the below.
             # if self.n not in [0,1]:
             #     plt.scatter(x[-1], 2*y[-1], color = 'black', s = 6)
@@ -293,7 +407,37 @@ class VolumePoly:
 
             # Plot interval boundaries
             plt.axvline(x=start, linestyle='--', color='grey', alpha=0.5)  # Start of interval
-            plt.axvline(x=end, linestyle='--', color='grey', alpha=0.5)  # End of interval
+
+            if not inf_flag:
+                plt.axvline(x=end, linestyle='--', color='grey', alpha=0.5)  # End of interval
+            else:
+                plt.axvline(x=end + 1, linestyle='--', color='grey', alpha=0.5)  # End of interval
+
+            # Indicate that the function goes on like this if we have an infinite interval.
+            # This is just for visual clarity, there is no real "right" solution to plot an infinite function,
+            # but I wanted to make clear in the pictures when we have an interval [c, inf).
+            if i == len(self.intervals)-1 and inf_flag:
+
+                # Add an arrow indicating the function continues to infinity
+                plt.annotate('', xy=(x[-1], y[-1]),
+                 xytext=(x[-2], y[-2]),
+                 arrowprops=dict(arrowstyle='->', color='black'))
+
+                # TODO for some reason arrow is not actually at the end in some examples.
+                #  This is not important but annoys me.
+
+
+                # Retrieve current x-tick positions
+                ax = plt.gca()
+                current_ticks = ax.get_xticks()
+
+                # Modify x-tick labels to include ellipsis and infinity symbol
+                new_labels = [f'{int(tick)}' for tick in current_ticks[:-3]] + [r'$\cdots$', r'$\infty$','']
+
+                new_ticks = list(current_ticks)
+                # Set the x-tick labels
+                ax.set_xticks(new_ticks)
+                ax.set_xticklabels(new_labels)
 
         # Ensure that (0, 0) is included in the plot
         plt.xlim(left=min(0, plt.xlim()[0]), right=max(0, plt.xlim()[1]))
@@ -307,14 +451,19 @@ class VolumePoly:
         plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
         plt.gca().yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
+
         if not no_show:
             plt.show()
 
+    def copy(self):
+        """
+        Method for deepcopy.
+        :return: Deepcopy of self.
+        """
+        intervals = self.intervals.copy()
+        polys = self.polys.copy()
 
-    def fancy_print(self):
-        for i, inter in enumerate(self.intervals):
-            print(inter, self.polys[i].as_expr())
-
+        return VolumePoly(intervals, polys, self.delta)
 
 
 if __name__ == '__main__':

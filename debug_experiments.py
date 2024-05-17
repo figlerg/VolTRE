@@ -44,7 +44,7 @@ if case == 0:
 
 # VARY n
 if case == 1:
-    n_max = 30
+    n_max = 20
 
     ts = []
     for n in range(n_max):
