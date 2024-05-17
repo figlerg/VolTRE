@@ -158,20 +158,23 @@ class VolumePoly:
                 continue
 
 
-            # 1) normal case: the interval of this event is the only event happening at this val. We also skip 0 here
-            if not simultaneous_events:
+            # 1) normal case: the interval of this event is the only event happening at this val.
+            #  We also skip val==0 here, since we always start an interval here.
+            #  We skip current_poly==0 just to ignore a leading zero poly as it's not necessary
+            if not simultaneous_events and current_poly:
                 intervals.append((current_interval_start, val))
                 polys.append(current_poly)
-                current_interval_start = val
 
             # 2) multiple interval borders at same time
             else:
                 pass
 
+
             # It doesn't matter what case we are in above, the current poly is always updated.
             # Here it is clear, that for finite intervals it will always be zero in the end since we add and subtract
             # each poly once. (Only at t=0 do we not do not enter here, but still add the poly above so the invariant
             # holds.)
+            current_interval_start = val
             if is_start:
                 current_poly += delta_poly
             else:
@@ -465,6 +468,55 @@ class VolumePoly:
 
         return VolumePoly(intervals, polys, self.delta)
 
+    def volume(self):
+
+        """
+        Evaluates the int _0 ^inf self(x) dx. Admits infinite values.
+        :return: Overall volume V_n(e)
+        """
+
+        out = 0
+
+        for interval, p in zip(self.intervals, self.polys):
+            a,b = interval
+
+            antiderivative = p.integrate(T)
+            segment_vol = antiderivative(b) - antiderivative(a)  # this often knows how to deal with inf, it seems.
+
+            out += segment_vol
+
+        return out
+
+    def __call__(self, x):
+
+        assert x >= 0, "VolumePolys are defined on R+."
+
+        out = 0
+
+        # We can assume that the list of intervals is sorted and not overlapping, since we always simplify.
+        for i, (a,b) in enumerate(self.intervals):
+            cur_p = self.polys[i]
+
+            if a <= x <= b:
+                # technically not the optimal solution, but it works also with not simplified polys.
+                out += cur_p(x)
+
+            if a == x or b == x:
+                warning = f"""
+                You are trying to evaluate the function {self} on the point {x} which is on the
+                boundary of an interval. It is not clear a priori how to evaluate this, but the 
+                sensible thing to do is to add the left and right limit of this point. 
+                Be aware that this is not the continuous extension, but it makes more sense for slice 
+                volumes. Since these points are a null-set, it doesn't matter when integrating over it.
+                """
+
+                warnings.warn(warning, UserWarning)
+
+        return out
+
+
+
+
 
 if __name__ == '__main__':
     p = poly("1 + T", T)
@@ -486,5 +538,34 @@ if __name__ == '__main__':
 
     print(vol1 + vol2)
 
-    print(f"addition: {vol1 + vol2}")  # checked by hand
-    print(f"Convolution: {vol1 ** vol2}")  # checked by wolfram (assuming my integration intervals are correct)
+    # print(f"addition: {vol1 + vol2}")  # checked by hand
+    # print(f"Convolution: {vol1 ** vol2}")  # checked by wolfram (assuming my integration intervals are correct)
+
+    vol1.fancy_print()
+    print('')
+    vol1.simplify() # checked by hand (the new simplify)
+    vol1.fancy_print()
+    print('')
+
+    """
+    test for the integral below checks out
+    (3, 4) T
+    (4, 5) 2*T + 1
+    (5, 7) T
+    
+    -> T^2 /2       on [3,4]
+    -> 2T^2/2 + T   on [4,5]
+    -> T^2/2        on [5,7]
+    
+    checks out with value below
+    """
+
+    # integrate from 0 to inf
+    print(vol1.volume())
+
+    # eval works too it seems
+    print(vol1(4.5))
+    try:
+        print(vol1(-1))
+    except AssertionError:
+        print("Successfully caught invalid input.")
