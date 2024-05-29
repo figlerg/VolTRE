@@ -8,7 +8,7 @@ from parse.TREParser import TREParser
 from os.path import join, curdir
 from os import listdir
 
-from slice_volume import slice_volume
+from volume.slice_volume import slice_volume
 
 input_stream = FileStream(join('parse', 'test_spec.txt'))
 lexer = TRELexer(input_stream)

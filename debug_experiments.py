@@ -4,7 +4,7 @@ from antlr4 import FileStream, CommonTokenStream
 from matplotlib import pyplot as plt
 
 from parse.SyntaxError import HardSyntaxErrorStrategy
-from slice_volume import slice_volume
+from volume.slice_volume import slice_volume
 from parse.TRELexer import TRELexer
 from parse.TREParser import TREParser
 from os.path import join

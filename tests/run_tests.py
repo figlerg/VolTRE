@@ -3,7 +3,7 @@ from os.path import join, curdir
 from os import listdir
 
 from parse.quickparse import quickparse
-from slice_volume import slice_volume
+from volume.slice_volume import slice_volume
 
 path0 = join('../parse', 'test_spec.txt')
 path1 = join('../tests', 'spec_01.txt')
