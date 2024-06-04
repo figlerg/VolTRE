@@ -5,13 +5,13 @@ from antlr4 import FileStream, CommonTokenStream
 from sympy import Piecewise, poly
 from sympy.abc import T, t
 
-from VolumePoly import VolumePoly
+from volume.VolumePoly import VolumePoly
 from parse.SyntaxError import HardSyntaxErrorStrategy
 from parse.TREParser import TREParser
 from visualize_recursion import generate_syntax_tree, highlight_node
 
-
-def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mode=False):
+from functools import lru_cache
+def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mode=False, return_cache=False):
 
     node_text = node.getText()  # just for debugging
 
@@ -119,8 +119,11 @@ def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mod
         print(f"node = {node_text}, n = {n}")
         highlight_node(vis, str(node), comment=f"n = {n}, p/T) = {out}")
 
+    # in some cases we want to reuse the cache
+    if return_cache:
+        return out, cache
 
-    return out
+    return out # this is the standard output
 
 
 # easy test case

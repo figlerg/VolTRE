@@ -1,8 +1,10 @@
+import random
 import warnings
 
 from math import inf
 import numpy as np
 import matplotlib.pyplot as plt
+import sympy.core.numbers
 from matplotlib import ticker
 
 from sympy import poly
@@ -10,7 +12,8 @@ from sympy.polys import Poly
 from sympy.abc import T, t, x  # I will treat T as the slice duration, and t as the variable in convolutions.
 
 # this is my code
-from misc import intersect, length, interval_convolution, determine_convolution_case, ConvolutionCase
+from volume.misc import intersect, length, interval_convolution, determine_convolution_case, ConvolutionCase
+
 
 
 class VolumePoly:
@@ -57,8 +60,10 @@ class VolumePoly:
         This prints The polynomial in a simpler form, as pairs of intervals and polys. Useful for debugging.
         :return: None
         """
+        print('')
         for i, inter in enumerate(self.intervals):
             print(inter, self.polys[i].as_expr())
+        print('')
 
     def __repr__(self):
         return self.__str__()
@@ -112,30 +117,7 @@ class VolumePoly:
 
     def simplify(self):
 
-        events = []
-        is_infinite = dict()
-
-        # this loop builds the event queue (unsorted)
-        for i, (a, b) in enumerate(self.intervals):
-            if a != inf:
-                # this tuple has:
-                #       i           ... index of the right interval/poly in the lists
-                #       a           ... the actual value for sorting in the event queue
-                #       True        ... True indicates that it is the left boundary of the interval
-                events.append((i, a, True))
-            else:
-                raise Exception('Invalid interval.')
-
-            if b != inf:
-                #       i           ... index of the right interval/poly in the lists
-                #       b           ... the actual value for sorting in the event queue
-                #       False        ... False indicates that it is the right boundary of the interval
-                events.append((i, b, False))
-            else:
-                is_infinite[i] = True
-
-        events.sort(key=lambda y: y[1])  # I sort for the values (so the border points of the intervals).
-        # Python uses Timsort, a hybrid sorting algo with O(n log n), so this influences the complexity.
+        events = event_queue(self.intervals)
 
         current_poly = Poly('0', T)
 
@@ -143,8 +125,6 @@ class VolumePoly:
 
         intervals = []
         polys = []
-
-
 
         for i, val, is_start in events:
             delta_poly = self.polys[i]  # this is either added or subtracted later
@@ -157,7 +137,6 @@ class VolumePoly:
                 current_poly += delta_poly
                 continue
 
-
             # 1) normal case: the interval of this event is the only event happening at this val.
             #  We also skip val==0 here, since we always start an interval here.
             #  We skip current_poly==0 just to ignore a leading zero poly as it's not necessary
@@ -169,7 +148,6 @@ class VolumePoly:
             else:
                 pass
 
-
             # It doesn't matter what case we are in above, the current poly is always updated.
             # Here it is clear, that for finite intervals it will always be zero in the end since we add and subtract
             # each poly once. (Only at t=0 do we not do not enter here, but still add the poly above so the invariant
@@ -179,7 +157,6 @@ class VolumePoly:
                 current_poly += delta_poly
             else:
                 current_poly -= delta_poly
-
 
         # Handle case for intervals that extend to infinity
         if current_poly != Poly('0', T):
@@ -220,23 +197,78 @@ class VolumePoly:
 
     def __mul__(self, other):
         """
-        scalar multiplication - TODO not sure what the canonical way is. I just want to multiply with ints
-        :param other:
-        :return:
+        This can mean two things:
+        p(x) * n = n p(x)
+        p(x) * q(x)... point-wise multiplication
         """
-        assert isinstance(other, int), "For now only poly * int is supported."
 
-        polys = []
-        for p in self.polys:
-            polys.append(p * other)
+        # Note to the reader of this code: the case p(x) * q(x) is a bit involved. Probably there is a nicer way.
 
-        intervals = self.intervals.copy()
-        delta = int(self.delta) * other
+        if isinstance(other, VolumePoly):
+            f = 0
+            g = 0
 
-        out = VolumePoly(intervals, polys, delta)
-        out.n = self.n
+            assert not (self.delta and other.delta), ("Problem during VolumePoly operastions. "
+                                                      "Delta times delta is undefined.")
 
-        out.check()
+            # need to have both event queues fused, while remembering which ones are from the first via a flag
+            events1 = [(e, True) for e in event_queue(self.intervals)]
+            events2 = [(e, False) for e in event_queue(other.intervals)]
+
+            events = sorted(events1 + events2, key=lambda q: q[0][1])
+            # possibly adds another nlogn, I could bring it down to n since the two lists are sorted already
+
+            current_interval_start = 0
+            intervals = []
+            polys = []
+
+            for (i, val, is_start), is_f_event in events:
+                # I hope this never has bugs, because it is horrifying to think through.
+
+                # this flag will signify that we didn't progress in time with this event, leading to some special cases
+                simultaneous_events = val == current_interval_start
+
+                # 1) simultaneous events, both polys nonzero and not val=0
+                if not simultaneous_events and f and g and val:
+                    intervals.append((current_interval_start, val))
+                    polys.append(f * g)
+
+                # 2) multiple interval borders at same time, or product is constant zero - nothing happens
+                else:
+                    pass
+
+                if is_f_event and is_start:
+                    f = self.polys[i]
+                elif is_f_event and not is_start:
+                    f = 0
+                elif not is_f_event and is_start:
+                    g = other.polys[i]
+                else:
+                    g = 0
+
+                # always update the current interval start. there is no case where we do not update it at an event,
+                # but we could have some repeats.
+                current_interval_start = val
+
+            # now, if both of them are nonzero, they both had an interval [c, inf)
+            if f and g:
+                intervals.append((current_interval_start, inf))
+                polys.append(f * g)
+
+            out = VolumePoly(intervals, polys)
+
+        else:
+            polys = []
+            for p in self.polys:
+                polys.append(p * other)
+
+            intervals = self.intervals.copy()
+            delta = int(self.delta) * other
+
+            out = VolumePoly(intervals, polys, delta)
+            out.n = self.n
+
+            out.check()
 
         return out
 
@@ -315,6 +347,7 @@ class VolumePoly:
                         polys.append(p2)  # on [a1 + a2 + min(l1,l2),   a1 + a2 + max(l1,l2)]
                         polys.append(p3)  # on [a1 + a2 + max(l1,l2),   b1 + b2]
 
+
         assert len(intervals) == len(polys), "Convolution bug, invalid VolumePoly created."
 
         assert not (self.delta and other.delta), (
@@ -384,7 +417,6 @@ class VolumePoly:
                 end = start + 3  # just to see something, I arbitrarily visualize a little bit of the inf interval
                 inf_flag = True
 
-
             # If function is not callable, convert it to a lambda function
             if not callable(function):
                 f = lambda z: function
@@ -419,23 +451,21 @@ class VolumePoly:
             # Indicate that the function goes on like this if we have an infinite interval.
             # This is just for visual clarity, there is no real "right" solution to plot an infinite function,
             # but I wanted to make clear in the pictures when we have an interval [c, inf).
-            if i == len(self.intervals)-1 and inf_flag:
-
+            if i == len(self.intervals) - 1 and inf_flag:
                 # Add an arrow indicating the function continues to infinity
                 plt.annotate('', xy=(x[-1], y[-1]),
-                 xytext=(x[-2], y[-2]),
-                 arrowprops=dict(arrowstyle='->', color='black'))
+                             xytext=(x[-2], y[-2]),
+                             arrowprops=dict(arrowstyle='->', color='black'))
 
                 # TODO for some reason arrow is not actually at the end in some examples.
                 #  This is not important but annoys me.
-
 
                 # Retrieve current x-tick positions
                 ax = plt.gca()
                 current_ticks = ax.get_xticks()
 
                 # Modify x-tick labels to include ellipsis and infinity symbol
-                new_labels = [f'{int(tick)}' for tick in current_ticks[:-3]] + [r'$\cdots$', r'$\infty$','']
+                new_labels = [f'{int(tick)}' for tick in current_ticks[:-3]] + [r'$\cdots$', r'$\infty$', '']
 
                 new_ticks = list(current_ticks)
                 # Set the x-tick labels
@@ -454,7 +484,6 @@ class VolumePoly:
         plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
         plt.gca().yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
-
         if not no_show:
             plt.show()
 
@@ -468,7 +497,45 @@ class VolumePoly:
 
         return VolumePoly(intervals, polys, self.delta)
 
-    def volume(self):
+    def integral(self):
+        """
+        For the sampler, we need to evaluate int_0^T (self) dT' for a given T. The easiest way to do that is by
+        creating an antiderivative directly. TODO Save this function the first time it is run so we do not redo work.
+        :return: The antiderivative of the piecewise polynomial. (Expressed as a VolumePoly itself).
+        """
+
+        intervals = self.intervals.copy()
+        assert not self.delta, "Unsure how this should be handled."
+
+        polys = []
+        current_cumulative_sum = poly('0', T)
+
+        for i, p in enumerate(self.polys):
+            a, b = intervals[i]
+
+            # create antiderivative of the poly
+            sub_antideriv = p.integrate(T)
+
+            # for the segment itself we need to have the indefinite integral from a to x
+            # (not from 0). without any arguments the sub_antideriv is 0 to x
+            sub_antideriv = sub_antideriv - sub_antideriv(a)
+
+            # add the aggregated volume of all earlier segments
+            sub_antideriv += current_cumulative_sum
+
+            # now the poly represents the actual integral from 0 to T, for any T in current interval
+            polys.append(sub_antideriv)
+
+            # now we add the total volume of the current segment to the cumulative sum
+            current_cumulative_sum += sub_antideriv(b) - sub_antideriv(a)
+
+        if self.intervals:
+            intervals.append((b, inf))
+            polys.append(current_cumulative_sum)
+
+        return VolumePoly(intervals, polys)
+
+    def total_volume(self):
 
         """
         Evaluates the int _0 ^inf self(x) dx. Admits infinite values.
@@ -477,8 +544,8 @@ class VolumePoly:
 
         out = 0
 
-        for interval, p in zip(self.intervals, self.polys):
-            a,b = interval
+        for interval, p in self.pairs:
+            a, b = interval
 
             antiderivative = p.integrate(T)
             segment_vol = antiderivative(b) - antiderivative(a)  # this often knows how to deal with inf, it seems.
@@ -494,7 +561,7 @@ class VolumePoly:
         out = 0
 
         # We can assume that the list of intervals is sorted and not overlapping, since we always simplify.
-        for i, (a,b) in enumerate(self.intervals):
+        for i, (a, b) in enumerate(self.intervals):
             cur_p = self.polys[i]
 
             if a <= x <= b:
@@ -514,8 +581,131 @@ class VolumePoly:
 
         return out
 
+    def translation_operator(self, val):
+        """
+        Implements the horizontal shift operator T_delta(f(x)) = f(x+delta). I need this for sampling to represent things like p(T-x).
+        :param val: Value by which we move the input. It is added to the input of the function.
+        :return: VolumePoly after application of the operator.
+        """
+
+        intervals = []
+        polys = self.polys.copy()
+
+        for (a, b) in self.intervals:
+            # adding T to the input means all intervals move by -T
+            moved_interval = (a - val, b - val)
+            intervals.append(moved_interval)
+
+        return VolumePoly(intervals, polys, self.delta)
+
+    def flip_operator(self):
+        """
+        Implements the horizontal scaling operator T_lambda(f(x)) = f(x*lambda), but for lambda = -1. TODO generalize?
+        I need this for sampling to represent things like p(T-x).
+        :param val: Value by which we scale the input. It multiplies the input of the function.
+        :return: VolumePoly after application of the operator.
+        """
+
+        intervals = []
+        polys = []
+
+        # I use reversed so the intervals are ordered normally in the end.
+        for i, (a, b) in enumerate(reversed(self.intervals)):
+            # symmetry by y-axis
+            flipped_interval = (-b, -a)
+            intervals.append(flipped_interval)
+
+            p = self.polys[i]
+            flipped_poly = poly(p(-x), x)  # need to do renaming, otherwise it can't unify
+            flipped_poly = poly(flipped_poly(T), T)  # back to T poly
+            polys.append(flipped_poly)
+
+        return VolumePoly(intervals, polys, self.delta)
+
+    def convolution_operator(self, val):
+        """
+        Maps function f(x) to f(val - x), for use in the sampling algorithm.
+        :return: VolumePoly after the operator has been applied.
+        """
+
+        intervals = []
+        polys = []
+
+        for (a, b), p in reversed(list(self.pairs)):
+            new_interval = (val - b, val - a)
+
+            new_poly = poly(p(x), x)  # need to do renaming, otherwise it can't unify
+            new_poly = new_poly(val - T)
+
+            intervals.append(new_interval)
+            polys.append(new_poly)
+
+        return VolumePoly(intervals,
+                          polys)  # TODO I ignore delta here because it would be delta_T and doesn't fit. also should not matter for actual sampling
+
+    def inverse_sampling(self):
+        """
+        Assumes this is a pdf and simplified.
+        :return: A sample of the distribution.
+        """
+
+        u = random.uniform(0, 1)
+
+        # assert self.total_volume() == 1, "Invalid distribution. This is no pdf. It is likely this is caused by a bug."
+
+        cdf = self.integral()
+
+        for (a, b), p in cdf.pairs:
+
+            # this is the only case we need to consider, immediately return
+            if p(a) <= u <= p(b):
+                # solutions = sympy.solve(p - u, T)  # the T is symbolic from sympy
+
+                # solutions = sympy.polys.polytools.real_roots(p - u)
+                ## according to docs this is more efficient and should work for arbitrary degree. No complex solutions!
+
+                solutions = sympy.polys.polytools.nroots(p - u, n=10, maxsteps=50, cleanup=True)
+
+                solutions = [float(sol) for sol in solutions if sol.is_real]
+
+                for sol in solutions:
+                    if a <= sol <= b:
+                        ## the solutions appear to be good
+                        # plt.plot(sol, u, 'ro')
+                        # cdf.plot()
+                        # plt.show()
+                        return sol
+
+        raise Exception("Inverse sampling failed.")
 
 
+def event_queue(intervals, tag=''):
+    events = []
+    is_infinite = dict()
+
+    # this loop builds the event queue (unsorted)
+    for i, (a, b) in enumerate(intervals):
+        if a != inf:
+            # this tuple has:
+            #       i           ... index of the right interval/poly in the lists
+            #       a           ... the actual value for sorting in the event queue
+            #       True        ... True indicates that it is the left boundary of the interval
+            events.append((i, a, True))
+        else:
+            raise Exception('Invalid interval.')
+
+        if b != inf:
+            #       i           ... index of the right interval/poly in the lists
+            #       b           ... the actual value for sorting in the event queue
+            #       False        ... False indicates that it is the right boundary of the interval
+            events.append((i, b, False))
+        else:
+            is_infinite[i] = True
+
+    events.sort(key=lambda y: y[1])  # I sort for the values (so the border points of the intervals).
+    # Python uses Timsort, a hybrid sorting algo with O(n log n), so this influences the complexity.
+
+    return events
 
 
 if __name__ == '__main__':
@@ -534,18 +724,30 @@ if __name__ == '__main__':
     # vol1.simplify()
     # print(vol1)
 
-    vol2 = VolumePoly([(1, 2), ], [poly('7*T', T)])
+    vol2 = VolumePoly([(1, inf), ], [poly('7*T', T)])
 
     print(vol1 + vol2)
 
     # print(f"addition: {vol1 + vol2}")  # checked by hand
     # print(f"Convolution: {vol1 ** vol2}")  # checked by wolfram (assuming my integration intervals are correct)
 
-    vol1.fancy_print()
-    print('')
-    vol1.simplify() # checked by hand (the new simplify)
-    vol1.fancy_print()
-    print('')
+    # vol1.fancy_print()
+    # print('')
+    vol1.simplify()  # checked by hand (the new simplify)
+    # vol1.fancy_print()
+    # vol1.plot()
+    # vol1.integral().fancy_print()
+    # vol1.integral().plot() # looks good
+    # print('')
+    vol2.fancy_print()
+    vol2.plot()
+    prod = vol1 * vol2
+    prod.fancy_print()
+    prod.plot()
+
+    prod.flip_operator().plot()
+
+    prod.translation_operator(3).plot()
 
     """
     test for the integral below checks out
@@ -561,7 +763,7 @@ if __name__ == '__main__':
     """
 
     # integrate from 0 to inf
-    print(vol1.volume())
+    print(vol1.total_volume())
 
     # eval works too it seems
     print(vol1(4.5))
