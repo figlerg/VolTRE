@@ -11,6 +11,8 @@ from parse.TREParser import TREParser
 from visualize_recursion import generate_syntax_tree, highlight_node
 
 from functools import lru_cache
+
+@lru_cache
 def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mode=False, return_cache=False):
 
     node_text = node.getText()  # just for debugging
@@ -25,19 +27,19 @@ def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mod
         # highlight_node(vis, str(node), comment=f"n = {n}")
 
 
-    if cache is None:
-        cache = {}
-    assert n >= 0, "Recursion bug."
+    # if cache is None:
+    #     cache = {}
+    # assert n >= 0, "Recursion bug."
 
 
-    # memoizer: i ask this first in the elif, in case we already computed the poly we just jump right to return
-    if (n,node) in cache:
-        if debug_mode:
-            print(f"n = {n}\t node = {node.getText()}\t poly = {cache[(n,node)]} \t (cached)")
+    # # memoizer: i ask this first in the elif, in case we already computed the poly we just jump right to return
+    # if (n,node) in cache:
+    #     if debug_mode:
+    #         print(f"n = {n}\t node = {node.getText()}\t poly = {cache[(n,node)]} \t (cached)")
+    #
+    #     out =  cache[(n,node)]
 
-        out =  cache[(n,node)]
-
-    elif n == 0:
+    if n == 0:
         # TODO check for deltas? probably by asking whether the node accepts epsilon.
         #  THIS IS NOT TRIVIAL! I basically need to check children for whether they allow epsilon?
         #  For now I say that only Kleene admits epsilon, since epsilon is not really present elsewhere.
@@ -111,7 +113,8 @@ def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mod
     out.exp = node.getText()
     out.n = n
 
-    cache[(n,node)] = out
+    # if cache:
+    #     cache[(n,node)] = out
 
     if debug_mode:
         print(f"n = {n}\t node = {node.getText()}\t poly = {out}")
@@ -122,6 +125,8 @@ def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mod
     # in some cases we want to reuse the cache
     if return_cache:
         return out, cache
+
+
 
     return out # this is the standard output
 

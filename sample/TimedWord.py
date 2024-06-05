@@ -18,11 +18,13 @@ class TimedWord:
         """
         return TimedWord(self.symbols + other.symbols, self.delays + other.delays)
 
-    def get_length(self):
+    @property
+    def length(self):
         assert len(self.symbols) == len(self.delays), "Invalid timed word."
         return len(self.symbols)
 
-    def get_duration(self):
+    @property
+    def duration(self):
         assert len(self.symbols) == len(self.delays), "Invalid timed word."
         return sum(self.delays)
 
@@ -40,5 +42,5 @@ if __name__ == '__main__':
     w = TimedWord(symbols, delays)
 
     print(w)
-    print(w.get_length())
-    print(w.get_duration())
+    print(w.length())
+    print(w.duration())

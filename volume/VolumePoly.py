@@ -1,5 +1,6 @@
 import random
 import warnings
+from functools import lru_cache
 
 from math import inf
 import numpy as np
@@ -168,6 +169,7 @@ class VolumePoly:
 
         return None
 
+    @lru_cache
     def __add__(self, other):
         intervals = self.intervals + other.intervals
         polys = self.polys + other.polys
@@ -195,6 +197,7 @@ class VolumePoly:
         else:
             return other + self
 
+    @lru_cache
     def __mul__(self, other):
         """
         This can mean two things:
@@ -272,6 +275,7 @@ class VolumePoly:
 
         return out
 
+    @lru_cache
     def __pow__(self, other):
         """
         This is the convolution of two functions: int_0^T f(T') g(T-T') dT'
@@ -378,11 +382,15 @@ class VolumePoly:
         return bool(self.polys) or bool(self.delta)
 
     def __eq__(self, other):
-        # TODO I think this doesn't actually work, not sure why.
-        alphanum = lambda x: str(x)
+        if isinstance(other, VolumePoly):
+            return (tuple(self.intervals) == tuple(other.intervals) and
+                    tuple(self.polys) == tuple(other.polys) and
+                    self.delta == other.delta)
+        return False
 
-        return (sorted(self.intervals, key=alphanum) == sorted(other.intervals, key=alphanum) and
-                sorted(self.polys, key=alphanum) == sorted(other.polys, key=alphanum))
+    def __hash__(self):
+        return hash((tuple(self.intervals), tuple(self.polys), self.delta))
+
 
     def time_restriction(self, restriction_inter: tuple):
         # intersect all the intervals with the input interval
@@ -478,7 +486,8 @@ class VolumePoly:
 
         plt.xlabel('T')
         plt.ylabel(r'$V^e_{n}(T)$       ', rotation=0)
-        plt.title(f'Slice Volume:\ne = {self.exp}, n = {self.n}.')
+        if self.exp and self.n:
+            plt.title(f'Slice Volume:\ne = {self.exp}, n = {self.n}.')
         # plt.legend()
         plt.grid(False)  # Remove background lattice
         plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
@@ -497,6 +506,7 @@ class VolumePoly:
 
         return VolumePoly(intervals, polys, self.delta)
 
+    @lru_cache
     def integral(self):
         """
         For the sampler, we need to evaluate int_0^T (self) dT' for a given T. The easiest way to do that is by
@@ -580,6 +590,8 @@ class VolumePoly:
                 warnings.warn(warning, UserWarning)
 
         return out
+
+
 
     def translation_operator(self, val):
         """
