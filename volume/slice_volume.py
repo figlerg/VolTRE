@@ -13,31 +13,12 @@ from visualize_recursion import generate_syntax_tree, highlight_node
 from functools import lru_cache
 
 @lru_cache
-def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mode=False, return_cache=False):
+def slice_volume(node: TREParser.ExprContext, n, vis=None, debug_mode=False):
 
     node_text = node.getText()  # just for debugging
 
     if not vis and debug_mode:
         vis = generate_syntax_tree(node)
-
-    ## moved this to end so it also captures cached calls
-    # if debug_mode:
-        # highlight_node(vis, str(node), comment=f"n = {n}")
-        # print(f"node = {node_text}, n = {n}")
-        # highlight_node(vis, str(node), comment=f"n = {n}")
-
-
-    # if cache is None:
-    #     cache = {}
-    # assert n >= 0, "Recursion bug."
-
-
-    # # memoizer: i ask this first in the elif, in case we already computed the poly we just jump right to return
-    # if (n,node) in cache:
-    #     if debug_mode:
-    #         print(f"n = {n}\t node = {node.getText()}\t poly = {cache[(n,node)]} \t (cached)")
-    #
-    #     out =  cache[(n,node)]
 
     if n == 0:
         # TODO check for deltas? probably by asking whether the node accepts epsilon.
@@ -58,11 +39,11 @@ def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mod
 
     elif isinstance(node, TREParser.ParenExprContext):
         expr = node.expr()
-        out = slice_volume(expr, n, cache=cache, vis=vis, debug_mode=debug_mode)
+        out = slice_volume(expr, n, vis=vis, debug_mode=debug_mode)
 
     elif isinstance(node, TREParser.UnionExprContext):
         # the plus is overloaded: normal addition of piecewise polynomials
-        out = slice_volume(node.expr(0), n, cache=cache, vis=vis, debug_mode=debug_mode) + slice_volume(node.expr(1), n, cache=cache, vis=vis, debug_mode=debug_mode)
+        out = slice_volume(node.expr(0), n, vis=vis, debug_mode=debug_mode) + slice_volume(node.expr(1), n, vis=vis, debug_mode=debug_mode)
 
     elif isinstance(node, TREParser.ConcatExprContext):
         out = VolumePoly()  # the zero poly
@@ -70,10 +51,10 @@ def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mod
         # discrete convolution
         for i in range(n + 1):
             # continuous convolution - ** is overloaded with convolution of two piecewise poly objects
-            out += slice_volume(node.expr(0), i, cache=cache, vis=vis, debug_mode=debug_mode) ** slice_volume(node.expr(1), n - i, cache=cache, vis=vis, debug_mode=debug_mode)
+            out += slice_volume(node.expr(0), i, vis=vis, debug_mode=debug_mode) ** slice_volume(node.expr(1), n - i, vis=vis, debug_mode=debug_mode)
 
     elif isinstance(node, TREParser.TimedExprContext):
-        child_volume = slice_volume(node.expr(), n, cache=cache, vis=vis, debug_mode=debug_mode)
+        child_volume = slice_volume(node.expr(), n, vis=vis, debug_mode=debug_mode)
         restriction_interval = (int(node.interval().INT(0).getText()), int(node.interval().INT(1).getText()))
 
         child_volume.time_restriction(restriction_interval)  # does the interval intersection in place for all intervals
@@ -99,8 +80,8 @@ def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mod
             ## Note: the dirac is now handled in the convolution in __pow__
 
             # continuous convolution - unfolding one e from e**. TODO fast squaring would have to happen with two "node" inputs, right? but what is the base case?
-            intermediate_poly = (slice_volume(expr, i, cache=cache, vis=vis, debug_mode=debug_mode) **
-                                 slice_volume(node, n - i, cache=cache, vis=vis, debug_mode=debug_mode))
+            intermediate_poly = (slice_volume(expr, i, vis=vis, debug_mode=debug_mode) **
+                                 slice_volume(node, n - i, vis=vis, debug_mode=debug_mode))
 
             out += intermediate_poly
 
@@ -121,11 +102,6 @@ def slice_volume(node: TREParser.ExprContext, n, cache=None, vis=None, debug_mod
 
         print(f"node = {node_text}, n = {n}")
         highlight_node(vis, str(node), comment=f"n = {n}, p/T) = {out}")
-
-    # in some cases we want to reuse the cache
-    if return_cache:
-        return out, cache
-
 
 
     return out # this is the standard output

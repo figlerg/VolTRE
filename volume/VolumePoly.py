@@ -591,8 +591,6 @@ class VolumePoly:
 
         return out
 
-
-
     def translation_operator(self, val):
         """
         Implements the horizontal shift operator T_delta(f(x)) = f(x+delta). I need this for sampling to represent things like p(T-x).
@@ -663,7 +661,8 @@ class VolumePoly:
 
         u = random.uniform(0, 1)
 
-        # assert self.total_volume() == 1, "Invalid distribution. This is no pdf. It is likely this is caused by a bug."
+        assert abs(self.total_volume() -1) < 0.0001, ("Invalid distribution. This is no pdf. "
+                                                      "It is likely this is caused by a bug.")
 
         cdf = self.integral()
 
@@ -671,13 +670,13 @@ class VolumePoly:
 
             # this is the only case we need to consider, immediately return
             if p(a) <= u <= p(b):
-                # solutions = sympy.solve(p - u, T)  # the T is symbolic from sympy
+                # solutions = sympy.solve(p - u, T)  # would fail for large n
 
-                # solutions = sympy.polys.polytools.real_roots(p - u)
-                ## according to docs this is more efficient and should work for arbitrary degree. No complex solutions!
+                # solutions = sympy.polys.polytools.real_roots(p - u)  # weird output format and errors
 
                 solutions = sympy.polys.polytools.nroots(p - u, n=10, maxsteps=50, cleanup=True)
 
+                # ignore complex solutions, cast to float
                 solutions = [float(sol) for sol in solutions if sol.is_real]
 
                 for sol in solutions:

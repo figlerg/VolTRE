@@ -20,7 +20,7 @@ print(ctx.getText())
 def experiment():
     n = 10
 
-    V, cache = slice_volume(ctx, n, debug_mode=False, return_cache=True)  # debug mode generates files in vis_cache
+    V = slice_volume(ctx, n, debug_mode=False)
 
     V.fancy_print()
     V.plot()
@@ -29,8 +29,7 @@ def experiment():
 
     random.seed(42)
 
-    # Your code here
-    s1: TimedWord = sample(ctx, n, T, cache)
+    s1: TimedWord = sample(ctx, n, T)
 
     print(s1, s1.duration)
 

@@ -18,6 +18,12 @@ class TimedWord:
         """
         return TimedWord(self.symbols + other.symbols, self.delays + other.delays)
 
+    def __str__(self):
+        return str(tuple(zip(self.symbols, self.delays)))
+
+    def __iter__(self):
+        return zip(self.symbols, self.delays)
+
     @property
     def length(self):
         assert len(self.symbols) == len(self.delays), "Invalid timed word."
@@ -28,11 +34,6 @@ class TimedWord:
         assert len(self.symbols) == len(self.delays), "Invalid timed word."
         return sum(self.delays)
 
-    def __str__(self):
-        return str(tuple(zip(self.symbols, self.delays)))
-
-    def __iter__(self):
-        return zip(self.symbols, self.delays)
 
 
 if __name__ == '__main__':
