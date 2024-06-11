@@ -16,13 +16,13 @@ seed = random.seed(42)
 
 start = time.time()
 
-ctx = quickparse(join('parse', 'test_spec.txt'))
+ctx = quickparse(join('experiments', 'spec_00.txt'))
 print(ctx.getText())
 t1 = time.time()
 print(f'Successfully parsed expression in {t1 - start}s.')
 
 nr_exp = 5000
-n = 2
+n = 3
 # T = 3.7
 
 
@@ -96,4 +96,4 @@ plt.scatter(pts[:,0], pts[:,1], s=2)
 # plt.show()
 
 plt.tight_layout()
-plt.savefig(join('tests', 'test_out', 'scatter_vis.png'))
+plt.savefig(join('experiments', 'test_out', 'scatter_vis.png'))

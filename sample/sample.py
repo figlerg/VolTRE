@@ -38,6 +38,7 @@ def sample(node: TREParser.ExprContext, n, T=None):
         vol = slice_volume(node, n)
         total = vol.total_volume()
         assert total != inf, "In the current state the tool can only sample T on a finite volume."
+        assert total, "Problem sampling T. Is the language empty?"
         normalisation_factor = 1/total
         pdf:VolumePoly = vol*normalisation_factor
         T = pdf.inverse_sampling()

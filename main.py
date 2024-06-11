@@ -5,20 +5,27 @@ import pstats
 
 from os.path import join, curdir
 
+import matplotlib.pyplot as plt
+
 from parse.quickparse import quickparse
 from sample.TimedWord import TimedWord
+from visualize_recursion import generate_syntax_tree, highlight_node
 from volume.slice_volume import slice_volume
 from sample.sample import sample
 
 
 
-ctx = quickparse(join('parse', 'test_spec.txt'))
+# ctx = quickparse(join('experiments', 'working_example.txt'))
+ctx = quickparse(join('experiments', 'spec_00.txt'))
 print(ctx.getText())
 
+# visualizes the tree
+G = generate_syntax_tree(ctx)
+highlight_node(G, str(ctx), comment='')
 
 
 def experiment():
-    n = 10
+    n = 4
 
     V = slice_volume(ctx, n, debug_mode=False)
 
@@ -38,4 +45,4 @@ cProfile.run('experiment()', 'profiling_results')
 
 # Print the profiling results
 p = pstats.Stats('profiling_results')
-p.strip_dirs().sort_stats('cumulative').print_stats(30)
+p.strip_dirs().sort_stats('cumulative').print_stats(10)

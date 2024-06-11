@@ -160,9 +160,11 @@ class VolumePoly:
                 current_poly -= delta_poly
 
         # Handle case for intervals that extend to infinity
-        if current_poly != Poly('0', T):
+        if current_poly:
             intervals.append((current_interval_start, inf))
             polys.append(current_poly)
+
+
 
         self.intervals = intervals
         self.polys = polys
