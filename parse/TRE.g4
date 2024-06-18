@@ -15,3 +15,6 @@ atomic_expr : LETTER ;
 LETTER : [a-zA-Z] ;
 INT : [0-9]+ ;
 WS : [ \t\r\n]+ -> skip ;
+
+// Rule to handle Python-style comments
+COMMENT : '#' ~[\r\n]* -> skip ;

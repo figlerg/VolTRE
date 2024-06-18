@@ -1,7 +1,8 @@
 # helpers and similar
 import math
 from enum import Enum
-
+import sympy as sp
+from scipy.integrate import quad
 
 def check_int(interval):
     assert len(interval) == 2, "Intervals are not two-valued?"
@@ -101,3 +102,38 @@ def multiset_interval_convolution(intervals1: list, intervals2: list):
             out += interval_convolution(int1, int2)
 
     return out
+
+
+def numerical_integral(self, expr, var, lower, upper):
+    """
+    Numerical integration via sympy is a bottleneck. I will outsource this part for better control.
+    :param self:
+    :param expr:
+    :param var:
+    :param lower:
+    :param upper:
+    :return:
+    """
+    # Convert sympy expression to a lambda function for scipy
+    f = sp.lambdify(var, expr, 'numpy')
+    # Perform numerical integration using scipy
+    result, error = quad(f, lower, upper)
+    return result
+
+def eval_sympy_integral(self, integral):
+    """
+    Evaluate an unevaluated SymPy Integral object numerically.
+    """
+    if not isinstance(integral, sp.Integral):
+        raise ValueError("Input must be an unevaluated SymPy Integral object")
+
+    # Extract the expression, variable, and limits from the Integral object
+    expr = integral.function
+    var, lower, upper = integral.limits[0]
+
+    # Convert sympy expression to a lambda function for scipy
+    f = sp.lambdify(var, expr, 'numpy')
+
+    # Perform numerical integration using scipy
+    result, error = quad(f, lower, upper)
+    return result

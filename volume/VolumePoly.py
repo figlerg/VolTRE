@@ -517,7 +517,7 @@ class VolumePoly:
         """
 
         intervals = self.intervals.copy()
-        assert not self.delta, "Unsure how this should be handled."
+        assert not self.delta, "Not implemented. Unsure how this should be handled."
 
         polys = []
         current_cumulative_sum = poly('0', T)

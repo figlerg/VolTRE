@@ -7,11 +7,11 @@ from matplotlib import pyplot as plt
 from parse.quickparse import quickparse
 from volume.slice_volume import slice_volume
 
-path0 = join('experiments', 'spec_00.txt')
-path1 = join('experiments', 'spec_01.txt')
-path2 = join('experiments', 'spec_02.txt')
-path3 = join('experiments', 'spec_03.txt')
-path4 = join('experiments', 'spec_04.txt')
+path0 = join('experiments', 'spec_00.tre')
+path1 = join('experiments', 'spec_01.tre')
+path2 = join('experiments', 'spec_02.tre')
+path3 = join('experiments', 'spec_03.tre')
+path4 = join('experiments', 'spec_04.tre')
 
 ctx0 = quickparse(path0)  # my original toy example
 ctx1 = quickparse(path1)  # here I have a convolution with a c that is not bounded at first. This fails

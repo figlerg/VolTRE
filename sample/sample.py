@@ -1,13 +1,17 @@
+import warnings
+
 import numpy as np
 from antlr4 import ParserRuleContext
 
 from parse.TREParser import TREParser
 
 import random  # i haven't used numpy anywhere, wo why not (maybe it is imported with sympy though)
+from enum import Enum, auto
 
 from sympy.abc import x,y,z
 
 from sample.TimedWord import TimedWord
+from volume.MaxEntDist import MaxEntDist
 from volume.VolumePoly import VolumePoly
 from volume.slice_volume import slice_volume
 from math import inf
@@ -30,18 +34,54 @@ I want to "sample downwards". So we start at top with a specific input (n,T) and
         - like convolution for e.e*
 """
 
-def sample(node: TREParser.ExprContext, n, T=None):
+
+class DurationSamplerMode(Enum):
+    VANILLA = auto()
+    MAX_ENT = auto()
+
+    def __str__(self):
+        return self.name
+
+def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = DurationSamplerMode.VANILLA, lambdas = None):
+    """
+    TODO streamline the signature of this function. Should I have two functions or is the mode here okay?
+        Should I check for illegal combinations, like lambdas and vanilla?
+    :param node:
+    :param n:
+    :param T:
+    :param mode:
+    :param lambdas:
+    :return:
+    """
+
+    if mode == DurationSamplerMode.VANILLA and lambdas:
+        warnings.warn("Invalid usage of the sampling function: vanilla mode shouldn't be used together with a lambdas "
+                      "input. Lambdas are being ignored.")
+    if mode == DurationSamplerMode.MAX_ENT and T:
+        warnings.warn("Invalid usage of the sampling function: For fixed T, max_ent and vanilla are equivalent.")
+
+
     # TODO not sure if my handling of T with the standard value None leads to any problems with sampling
 
-    # top call will not fix T, so we sample according to the volumes
+    # This only concerns the top level call:
+    # If no fixed T is provided, we sample either according to volumes, or use MaxEnt distribution.
+    # Recursive calls fix a T.
     if T is None:
-        vol = slice_volume(node, n)
-        total = vol.total_volume()
-        assert total != inf, "In the current state the tool can only sample T on a finite volume."
-        assert total, "Problem sampling T. Is the language empty?"
-        normalisation_factor = 1/total
-        pdf:VolumePoly = vol*normalisation_factor
-        T = pdf.inverse_sampling()
+        match mode:
+
+            case DurationSamplerMode.VANILLA:
+                vol = slice_volume(node, n)
+                total = vol.total_volume()
+                assert total != inf, "In the current state the tool can only sample T on a finite volume."
+                assert total, "Problem sampling T. Is the language empty?"
+                normalisation_factor = 1/total
+                pdf:VolumePoly = vol*normalisation_factor
+                T = pdf.inverse_sampling()
+
+            case DurationSamplerMode.MAX_ENT:
+                vol = slice_volume(node, n)
+                weighted_vol = MaxEntDist(vol, lambdas)
+                T = weighted_vol.inverse_sampling()
 
 
 
@@ -203,6 +243,8 @@ def sample_k(n, T, concat_vol, e1, e2) -> int:
 
         # This function desribes the volumes of words w1w2 where l(w1) = k and l(w2) = n-k.
         V_k = v1 ** v2
+
+        assert concat_vol(T) > 0, "Division by zero during concatenation sampling. Is the language empty for this T?"
 
         # Dividing the part for k by the overall volume (both for input T) gives the right proba to choose k.
         p_k = V_k(T) / concat_vol(T)

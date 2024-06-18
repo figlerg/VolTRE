@@ -3,6 +3,14 @@ Playground for volume based sampling method for timed regular expressions.
 
 
 ## Meetings
+
+### 
+- [ ] compute the blackbox (lambda1, lambda2) -> (mu, sigma)
+- [ ] maybe invert it with some sampling/optimization/whatever scheme
+- [ ] look at special case lambda2=0, lambda1=-s - compare with benoit
+- [ ] find example where TAs are hard for sampling, but TRE easier? 
+     10 clocks? <<<<<<<<a>_[0,1].b>_[0,2].c>_[0,3].d>_[0,4].e>_[0,5].f>_[0,6].g>_[0,7].h>_[0,8], put nested timed restriction
+
 ### 11.06.
 - [ ] read region paper of alur
 - [ ] T sampling with mu, sigma (derivative trick on whiteboard at 11.06.)

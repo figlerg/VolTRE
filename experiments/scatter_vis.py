@@ -16,7 +16,7 @@ seed = random.seed(42)
 
 start = time.time()
 
-ctx = quickparse(join('experiments', 'spec_00.txt'))
+ctx = quickparse(join('experiments', 'spec_00.tre'))
 print(ctx.getText())
 t1 = time.time()
 print(f'Successfully parsed expression in {t1 - start}s.')

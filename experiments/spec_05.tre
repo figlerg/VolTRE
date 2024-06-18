@@ -1,0 +1,2 @@
+# thought of an interesting testcase: not sure how my tool deals with 'holes' in the support
+<a>_[0,1] + <b>_[2,3]
