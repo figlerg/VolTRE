@@ -23,7 +23,7 @@ print(ctx.getText())
 
 def experiment():
     random.seed(42)
-    n = 3
+    n = 10
 
     V = slice_volume(ctx, n, debug_mode=False)
 
@@ -34,7 +34,7 @@ def experiment():
     # cdf.plot()
 
     print('Sampling...')
-    nr = 10
+    nr = 3
     t1 = time.time()
     t = t1
     for _ in range(nr):

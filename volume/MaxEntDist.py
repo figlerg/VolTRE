@@ -1,24 +1,20 @@
+import random
 import warnings
 from functools import lru_cache, cached_property
 
 import numpy as np
 from matplotlib import pyplot as plt, ticker
+from mpmath import findroot
+from scipy.integrate import quad
+from sympy import Expr
+from sympy import lambdify
+from sympy import oo, Integral, sympify
+from sympy.abc import T, v
 
 from volume.FreePiecewise import FreePiecewise
 from volume.VolumePoly import VolumePoly
-
-from sympy import symbols, exp, integrate, oo, Integral, Poly, sympify, solve, solveset
-from sympy.abc import T, v
-import random
-from sympy import nsolve, Expr
-
-# from sympy.utilities.lambdify import implemented_function
-from sympy import lambdify
-from scipy.integrate import quad
-
-from mpmath import findroot
-
 from volume.misc import cached_lambdify
+from volume.tuning import exp_term
 
 
 # TODO i could have probably include this in volume poly (or inherit from it),
@@ -29,62 +25,17 @@ class MaxEntDist:
     entropy and can control mean and variance (or any moment))."""
 
     def __init__(self, volume: VolumePoly, lambdas: list[float]):
-        m = len(lambdas)
-
         self.volume = volume
         self.lambdas = lambdas
-        self.sym = [symbols(f'lambda{i}') for i in range(m)]
-        self.T = symbols('T')
 
-        # Create the polynomial sum
-        polynomial_sum = sum([s * self.T ** (i + 1) for i, s in enumerate(self.sym)])
-        # Exponential term
-        self.exp_term = exp(polynomial_sum)
-        # insert lambdas. TODO think about it - do I ever need the variables?
-        self.subs_lambdas()
-
-    def subs_lambdas(self):
-        """
-        This just instantiates the exponential term with the lambdas, in place.
-        """
-
-        # Create a dictionary for substitution
-        substitution_dict = {self.sym[i]: self.lambdas[i] for i in range(len(self.lambdas))}
-        # Substitute the symbolic lambdas with the float values
-        self.exp_term = self.exp_term.subs(substitution_dict)
-
-    @cached_property
-    def normalising_term(self):
-        """
-        Computes the total volume of the maximum entropy solution. An exponential term times a piecewise poly, which are computed
-        numerically piece by piece.
-        :return: Float (or similar) of total volume.
-        """
-
-        assert self.lambdas[-1] < 0 or self.volume.intervals[-1][1] != oo, ("Integral doesn't exist - we either need a "
-                                                                            "bounded language or lambda_m < 0.")
-
-        self.__cs = []
-
-        s = 0
-        for (a, b), poly in self.volume.pairs:
-            integrand = self.exp_term.as_expr() * poly.as_expr()
-
-            # Tested with wolframalpha, same results for bounded intervals.
-            # TODO numerical, can't deal with inf. This returns just a big number in cases where it should diverge.
-            segment_integral = Integral(integrand, (T, a, b))
-
-            s += segment_integral.evalf()
-
-        tmp = self.__cs.copy()
-
-        return s
+        # compared to VolumePoly we have an additional exp term in the weight function (so integrals change)
+        self.exp_term = exp_term(lambdas)
 
     def __hash__(self):
         return hash((self.volume, self.exp_term))
 
     def __str__(self):
-        return f"{self.exp_term}  *  {self}"
+        return f"{self.exp_term}  *  {self.volume}"
 
     def __call__(self, val):
 
@@ -98,10 +49,59 @@ class MaxEntDist:
             Be aware that this is not the continuous extension, but it makes more sense for slice 
             volumes. Since these points are a null-set, it doesn't matter when integrating over it.
             """
-
             warnings.warn(warning, UserWarning)
 
         return sum([p(val) for (a, b), p in self.volume.pairs if a <= val <= b])
+
+    def __mul__(self, other):
+        """
+        Basically only works for MaxEntDist * number right now.
+        """
+
+        if isinstance(other, MaxEntDist):
+            raise NotImplementedError("Multiplication not supported for two MaxEnt functions.")
+
+        if isinstance(other, VolumePoly):
+            raise NotImplementedError("Multiplication not supported for MaxEnt and VolumePoly functions.")
+
+        else:
+            new_volume = self.volume * other
+            return MaxEntDist(new_volume, self.lambdas)
+
+    @cached_property
+    def pairs(self):
+        """
+        This is a little helper which generates callable functions for each segment. Is cached, so it is only computed
+        once.
+        """
+        intervals = self.volume.intervals
+        terms = [self.exp_term.subs(T, v) * p(v) for p in self.volume.polys]
+
+        # zip makes a generator, which cannot be cached
+        return tuple(zip(intervals, terms))
+
+    @cached_property
+    def normalising_term(self):
+        """
+        Computes the total volume of the maximum entropy solution. An exponential term times a piecewise poly, which are computed
+        numerically piece by piece.
+        :return: Float (or similar) of total volume.
+        """
+
+        assert self.lambdas[-1] < 0 or self.volume.intervals[-1][1] != oo, ("Integral doesn't exist - we either need a "
+                                                                            "bounded language or lambda_m < 0.")
+
+        s = 0
+        for (a, b), poly in self.volume.pairs:
+            integrand = self.exp_term.as_expr() * poly.as_expr()
+
+            # Tested with wolframalpha, same results for bounded intervals.
+            # TODO numerical, can't deal with inf. This returns just a big number in cases where it should diverge.
+            segment_integral = Integral(integrand, (T, a, b))
+
+            s += segment_integral.evalf()
+
+        return s
 
     def plot(self, no_show=False):
         """
@@ -194,38 +194,13 @@ class MaxEntDist:
         if not no_show:
             plt.show()
 
-    def __mul__(self, other):
-        """
-        Basically only works for MaxEntDist * number right now.
-        """
-
-        if isinstance(other, MaxEntDist):
-            raise NotImplementedError("Multiplication not supported for two MaxEnt functions.")
-
-        if isinstance(other, VolumePoly):
-            raise NotImplementedError("Multiplication not supported for MaxEnt and VolumePoly functions.")
-
-        else:
-            new_volume = self.volume * other
-            return MaxEntDist(new_volume, self.lambdas)
-
-    @cached_property
-    def pairs(self):
-        """
-        This is a little helper which generates callable functions for each segment. Is cached, so it is only computed
-        once.
-        """
-        intervals = self.volume.intervals
-        terms = [self.exp_term.subs(T, v) * p(v) for p in self.volume.polys]
-
-        # zip makes a generator, which cannot be cached
-        return tuple(zip(intervals, terms))
+    # SAMPLING
 
     @lru_cache
     def pdf(self):
         """
-        Returns a normalized version (pdf) of self.
-        :return:
+        Returns a normalized version (pdf) of self. Note: This is not really used anywhere due to numerical instability.
+        :return: A normalized MaxEntDist
         """
         div_factor = 1 / self.normalising_term
         return self * div_factor
@@ -323,58 +298,6 @@ class MaxEntDist:
                     # cdf.plot(title = 'cdf')
                     # plt.show()
                     return sol
-
-        # cdf.plot(no_show=True)
-        # plt.axhline(y=u, color='r', linestyle='--')
-        # plt.show()
-
-        raise Exception("Inverse sampling failed.")
-
-    def n_inverse_sampling(self, nr):
-        """
-        Assumes this is a pdf and simplified.
-        :return: A sample of the distribution.
-        """
-
-        us = np.random.uniform(0, 1, nr)
-        sols = np.array(nr)
-
-        cdf = self.cdf()
-        # cdf.plot()
-
-        # print(cdf(3.99))  # should be close to 1
-        # TODO how do i check this here? N is sort of the total volume here, right?
-        # assert abs(self.total_volume() -1) < 0.0001, ("Invalid distribution. This is no pdf. "
-        #                                               "It is likely this is caused by a bug.")
-
-        for (a, b), term in cdf.pairs:
-            # f = lambdify(T, term - u, modules=['scipy', 'numpy'])
-
-            for u in us:
-                f = lambda x: cached_lambdify(term)(x) - u
-
-                # this is the only case we need to consider, immediately return
-                if f(a) <= 0 <= f(b):
-                    ## NOTE: (term - u).subs(T,1).evalf() computes a number
-
-                    ## VANILLA PARAMETERS
-                    # sol = nsolve(term - u,T, (b+a)/2)
-
-                    ## BISECTION, DOCS: "One might safely skip the verification if bounds of the root are known and a
-                    #                       bisection method is used"
-                    ## NOTE: this is slower than vanilla
-                    # sol = nsolve(term - u, (a,b), solver='bisect', verify=False)
-
-                    # x0 = (a + b) / 2
-
-                    # Use mpmath.findroot to find the root within the specified interval THIS IS FASTEST
-                    sol = findroot(f, (a, b), solver='anderson')
-
-                    if a <= sol <= b:
-                        # plt.plot(sol, u, 'ro')
-                        # cdf.plot(title = 'cdf')
-                        # plt.show()
-                        return sol
 
         # cdf.plot(no_show=True)
         # plt.axhline(y=u, color='r', linestyle='--')

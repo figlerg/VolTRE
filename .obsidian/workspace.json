@@ -148,8 +148,10 @@
   },
   "active": "02f9a280ab251023",
   "lastOpenFiles": [
-    "volume/tuning.py~",
     "volume/MaxEntDist.py~",
+    "volume/tuning.py~",
+    "main.py~",
+    "volume/__pycache__/tuning.cpython-312.pyc",
     "volume/tuning.py",
     "volume/parameters.py"
   ]

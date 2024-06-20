@@ -5,28 +5,23 @@ import numpy as np
 from volume.FreePiecewise import FreePiecewise
 from volume.VolumePoly import VolumePoly
 
+from sympy import symbols, exp, integrate, oo, Integral, Poly, sympify, solve, solveset, Expr
+
 """
 This module is for controlling the properties of the MaxEntSampler.
 """
 
 
-def exp_term(lambdas):
+def exp_term(lambdas) -> Expr:
+
+    T = symbols('T')
+
     # Create the polynomial sum
-    polynomial_sum = sum([s * self.T ** (i + 1) for i, s in enumerate(self.sym)])
-    # Exponential term
-    self.exp_term = exp(polynomial_sum)
-    # insert lambdas. TODO think about it - do I ever need the variables?
-    self.subs_lambdas()
+    polynomial_sum = sum([s * T ** (i + 1) for i, s in enumerate(lambdas)])
 
-def subs_lambdas(self):
-    """
-    This just instantiates the exponential term with the lambdas, in place.
-    """
+    return exp(polynomial_sum)
 
-    # Create a dictionary for substitution
-    substitution_dict = {self.sym[i]: self.lambdas[i] for i in range(len(self.lambdas))}
-    # Substitute the symbolic lambdas with the float values
-    self.exp_term = self.exp_term.subs(substitution_dict)
+
 
 
 def mu(lambdas: np.array, volume: VolumePoly):
