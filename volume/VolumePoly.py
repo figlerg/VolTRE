@@ -547,6 +547,7 @@ class VolumePoly:
 
         return VolumePoly(intervals, polys)
 
+    @lru_cache
     def total_volume(self):
 
         """
@@ -589,6 +590,7 @@ class VolumePoly:
                 volumes. Since these points are a null-set, it doesn't matter when integrating over it.
                 """
 
+                raise Exception
                 warnings.warn(warning, UserWarning)
 
         return out

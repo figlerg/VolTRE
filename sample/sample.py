@@ -79,6 +79,9 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
                 T = pdf.inverse_sampling()
 
             case DurationSamplerMode.MAX_ENT:
+                # TODO could try to do a vectorized sampling here? Maybe we would get a speedup
+                #  (tried with MaxEntDist.n_inverse_sampling but haven't tested it here yet)
+
                 vol = slice_volume(node, n)
                 weighted_vol = MaxEntDist(vol, lambdas)
                 T = weighted_vol.inverse_sampling()

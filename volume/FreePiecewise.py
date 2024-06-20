@@ -1,6 +1,10 @@
+from functools import cached_property, lru_cache
+
 import sympy as sp
 import matplotlib.pyplot as plt
 import numpy as np
+from sympy import lambdify
+from sympy.abc import T
 
 
 class FreePiecewise:
@@ -14,6 +18,10 @@ class FreePiecewise:
 
         self.intervals = intervals
         self.expressions = expressions
+
+    def __hash__(self):
+        return hash((tuple(self.intervals), tuple(self.expressions)))
+
 
     def __call__(self, value):
         for (a, b), expr in zip(self.intervals, self.expressions):
@@ -36,22 +44,24 @@ class FreePiecewise:
 
     @property
     def pairs(self):
-        return list(zip(self.intervals, self.expressions))
+        return tuple(zip(self.intervals, self.expressions))
 
     def plot(self, no_show=False, title = ''):
         nr = 5
 
         for (a, b), expr in zip(self.intervals, self.expressions):
+
+            f = lambdify(T, expr, modules=['scipy', 'numpy'])
             if b == sp.oo:
                 # Plot on [a, a+1] and mark it
                 x_vals = np.linspace(float(a), float(a) + 1, nr)
-                y_vals = [float(expr.subs('v', x)) for x in x_vals]
+                y_vals = [f(x) for x in x_vals]
                 plt.plot(x_vals, y_vals, label=f"{expr} on [{a}, ∞)", linestyle='dashed')
                 plt.axvline(x=float(a) + 1, color='gray', linestyle='dotted')
                 plt.text(float(a) + 0.5, max(y_vals), '∞', ha='center', va='bottom')
             else:
                 x_vals = np.linspace(float(a), float(b), nr)
-                y_vals = [expr.subs('T', x).evalf() for x in x_vals]
+                y_vals = [f(x) for x in x_vals]
                 plt.plot(x_vals, y_vals, label=f"{expr} on [{a}, {b})")
 
             # Add dotted vertical lines at the borders of the intervals
@@ -73,7 +83,7 @@ if __name__ == '__main__':
 
     # Example usage
     intervals = [(0, 1), (1, 2), (2, sp.oo)]
-    expressions = [sp.sympify('v**2'), sp.sympify('2*v + 1'), sp.sympify('v - 1')]
+    expressions = [sp.sympify('T**2'), sp.sympify('2*T + 1'), sp.sympify('T - 1')]
 
     piecewise_function = FreePiecewise(intervals, expressions)
 

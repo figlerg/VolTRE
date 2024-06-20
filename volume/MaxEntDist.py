@@ -12,6 +12,14 @@ from sympy.abc import T, v
 import random
 from sympy import nsolve, Expr
 
+# from sympy.utilities.lambdify import implemented_function
+from sympy import lambdify
+from scipy.integrate import quad
+
+from mpmath import findroot
+
+from volume.misc import cached_lambdify
+
 
 # TODO i could have probably include this in volume poly (or inherit from it),
 #  but I am worried that things get too complex if I do.
@@ -34,8 +42,6 @@ class MaxEntDist:
         self.exp_term = exp(polynomial_sum)
         # insert lambdas. TODO think about it - do I ever need the variables?
         self.subs_lambdas()
-
-
 
     def subs_lambdas(self):
         """
@@ -210,10 +216,10 @@ class MaxEntDist:
         once.
         """
         intervals = self.volume.intervals
-        functions = [lambda x: self.exp_term.subs(T, x) * p(x) for p in self.volume.polys]
+        terms = [self.exp_term.subs(T, v) * p(v) for p in self.volume.polys]
 
         # zip makes a generator, which cannot be cached
-        return tuple(zip(intervals, functions))
+        return tuple(zip(intervals, terms))
 
     @lru_cache
     def pdf(self):
@@ -227,44 +233,53 @@ class MaxEntDist:
     @lru_cache
     def cdf(self) -> FreePiecewise:
         """
-        Returns a MaxEntDist that is the cdf of self.
-        :return: MaxEntDist cdf
+        Returns a piecewise function that is a cdf of the Maximum Entropy cdf. Note that this is not itself a MaxEntDist
+        but instead a FreePiecewise - we have no way of finding a symbolic integral for the expressions here and we
+        do not have the nice closedness result as with VolumePolys (that the cdf remains in the class of piecewise
+        polys.)
+        :return: The cdf as a collection of (interval, sympy term) pairs
         """
-        # pdf = self.pdf()
 
         intervals = self.volume.intervals.copy()
-        polys = []
-
-        # TODO TODO TODO THERE IS A MAJOR PROBLEM HERE: this will not be a MaxEntDist in most cases. There might be
-        #  a representation as such, but it is not easily found... since we can't efficiently compute the cdf
-        #  symbolically, we need to return all the things here to compute the value. Basically the full piecewise
-        #  definition as sympy terms
+        terms = []
 
         c = 0
-        for (a, b), f in self.pairs:
-            f_expr: Expr = f(v)  # since f is a lambda function I will first create an sympy expression with fresh v
+        c2 = 0
+        for (a, b), integrand in self.pairs:
+            integrand: Expr  # this is already p(T)*exp_term(T)
 
-            # create antiderivative of the poly, with variable v as endpoint.
-            # This is an unevaluated integral (which we can approximate later)
-            sub_antideriv = Integral(f_expr, (v, a, T))
+            # ## THIS IS SLOW
+            # # create antiderivative of the poly, with variable T as endpoint.
+            # # This is an unevaluated integral (which we can approximate later)
+            sub_antideriv = Integral(integrand, (v, a, T))
 
-            # move it down so it intersects 0 at a
-            # sub_antideriv = sub_antideriv - sub_antideriv.subs(T, a).evalf()
+            sub_antideriv += c2  # move by the current cumulative sum divided by N (we saved this before in self.__cs)
+            terms.append(sub_antideriv)
+            #
+            # c = sub_antideriv.subs(T,b).evalf()
 
-            sub_antideriv += c  # move by the current cumulative sum divided by N (we saved this before in self.__cs)
-            polys.append(sub_antideriv)
-            c = sub_antideriv.subs(T,b)
+            ## HOPE THIS IS FAST
+            integrand_func = lambdify(v, integrand, modules=['scipy', 'numpy'])
+            # noinspection PyTupleAssignmentBalance
+            tmp_c2 = c2
+            c2, err = quad(integrand_func, a, b)
 
-        N = polys[-1].subs(T,b)
+            c2 += tmp_c2
 
-        polys = [p/N for p in polys]
+            # assert abs(c2 - c) < 0.001
 
-        a,b = intervals[-1]
+        # test = FreePiecewise(intervals, terms)
+
+        N = terms[-1].subs(T, b)
+
+        terms = [p / N for p in terms]
+
+        a, b = intervals[-1]
         if b != oo:
             intervals.append((b, oo))
-            polys.append(sympify(1))
+            terms.append(sympify(1))
 
-        return FreePiecewise(intervals,expressions=polys)
+        return FreePiecewise(intervals, expressions=terms)
 
     def inverse_sampling(self):
         """
@@ -277,21 +292,31 @@ class MaxEntDist:
         cdf = self.cdf()
         # cdf.plot()
 
-        # print(cdf(3.99))  # should be close to 1
         # TODO how do i check this here? N is sort of the total volume here, right?
         # assert abs(self.total_volume() -1) < 0.0001, ("Invalid distribution. This is no pdf. "
         #                                               "It is likely this is caused by a bug.")
 
         for (a, b), term in cdf.pairs:
-            f = lambda x: term.subs(T,x)
+            # f = lambdify(T, term - u, modules=['scipy', 'numpy'])
+
+            f = lambda x: cached_lambdify(term)(x) - u
 
             # this is the only case we need to consider, immediately return
-            if f(a) <= u <= f(b):
-                # solutions = solve(term, u)
-                # solutions = solveset(term, u)
-
+            if f(a) <= 0 <= f(b):
                 ## NOTE: (term - u).subs(T,1).evalf() computes a number
-                sol = nsolve(term - u,T, (b+a)/2)
+
+                ## VANILLA PARAMETERS
+                # sol = nsolve(term - u,T, (b+a)/2)
+
+                ## BISECTION, DOCS: "One might safely skip the verification if bounds of the root are known and a
+                #                       bisection method is used"
+                ## NOTE: this is slower than vanilla
+                # sol = nsolve(term - u, (a,b), solver='bisect', verify=False)
+
+                # x0 = (a + b) / 2
+
+                # Use mpmath.findroot to find the root within the specified interval THIS IS FASTEST
+                sol = findroot(f, (a, b), solver='anderson')
 
                 if a <= sol <= b:
                     # plt.plot(sol, u, 'ro')
@@ -305,4 +330,54 @@ class MaxEntDist:
 
         raise Exception("Inverse sampling failed.")
 
+    def n_inverse_sampling(self, nr):
+        """
+        Assumes this is a pdf and simplified.
+        :return: A sample of the distribution.
+        """
 
+        us = np.random.uniform(0, 1, nr)
+        sols = np.array(nr)
+
+        cdf = self.cdf()
+        # cdf.plot()
+
+        # print(cdf(3.99))  # should be close to 1
+        # TODO how do i check this here? N is sort of the total volume here, right?
+        # assert abs(self.total_volume() -1) < 0.0001, ("Invalid distribution. This is no pdf. "
+        #                                               "It is likely this is caused by a bug.")
+
+        for (a, b), term in cdf.pairs:
+            # f = lambdify(T, term - u, modules=['scipy', 'numpy'])
+
+            for u in us:
+                f = lambda x: cached_lambdify(term)(x) - u
+
+                # this is the only case we need to consider, immediately return
+                if f(a) <= 0 <= f(b):
+                    ## NOTE: (term - u).subs(T,1).evalf() computes a number
+
+                    ## VANILLA PARAMETERS
+                    # sol = nsolve(term - u,T, (b+a)/2)
+
+                    ## BISECTION, DOCS: "One might safely skip the verification if bounds of the root are known and a
+                    #                       bisection method is used"
+                    ## NOTE: this is slower than vanilla
+                    # sol = nsolve(term - u, (a,b), solver='bisect', verify=False)
+
+                    # x0 = (a + b) / 2
+
+                    # Use mpmath.findroot to find the root within the specified interval THIS IS FASTEST
+                    sol = findroot(f, (a, b), solver='anderson')
+
+                    if a <= sol <= b:
+                        # plt.plot(sol, u, 'ro')
+                        # cdf.plot(title = 'cdf')
+                        # plt.show()
+                        return sol
+
+        # cdf.plot(no_show=True)
+        # plt.axhline(y=u, color='r', linestyle='--')
+        # plt.show()
+
+        raise Exception("Inverse sampling failed.")
