@@ -5,7 +5,7 @@ from functools import lru_cache
 
 import sympy as sp
 from scipy.integrate import quad
-from sympy import lambdify
+from sympy import lambdify, Expr
 from sympy.abc import T
 
 
@@ -82,7 +82,7 @@ def interval_convolution(int1, int2):
             new_ints = [(a1 + a2, math.inf),]
         case ConvolutionCase.FIRST_INFINITE:
             new_ints = [(a1 + a2, a1 + a2 + l2),
-                        (a1 + a2 + l2, math.inf)], 1
+                        (a1 + a2 + l2, math.inf)]
         case ConvolutionCase.SECOND_INFINITE:
             new_ints = [(a1 + a2, a1 + a2 + l1),
                         (a1 + a2 + l1, math.inf)]
@@ -108,6 +108,13 @@ def multiset_interval_convolution(intervals1: list, intervals2: list):
 
     return out
 
+def num_int_evalf(integrand:Expr, a, b, var = T):
+    """This is just so I don't use 5 different procedures for evaluating integrals."""
+
+    integrand_func = lambdify(var, integrand, modules=['scipy', 'numpy'])
+    # noinspection PyTupleAssignmentBalance
+    s, err = quad(integrand_func, a, b)
+    return s
 
 @lru_cache
 def my_eval(expr):

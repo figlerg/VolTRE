@@ -10,7 +10,7 @@ else:
 
 def serializedATN():
     return [
-        4,1,14,42,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+        4,1,15,42,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
         0,1,0,1,0,1,0,1,0,3,0,19,8,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,5,0,
         29,8,0,10,0,12,0,32,9,0,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,2,1,2,0,1,
         0,3,0,2,4,0,0,43,0,18,1,0,0,0,2,33,1,0,0,0,4,39,1,0,0,0,6,7,6,0,
@@ -41,7 +41,7 @@ class TREParser ( Parser ):
     symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                      "LETTER", "INT", "WS" ]
+                      "LETTER", "INT", "WS", "COMMENT" ]
 
     RULE_expr = 0
     RULE_interval = 1
@@ -64,6 +64,7 @@ class TREParser ( Parser ):
     LETTER=12
     INT=13
     WS=14
+    COMMENT=15
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)

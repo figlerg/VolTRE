@@ -25,6 +25,9 @@ class TimedWord:
     def __iter__(self):
         return zip(self.symbols, self.delays)
 
+    def __getitem__(self, item):
+        return tuple(self.__iter__())[item]
+
     @property
     def length(self):
         assert len(self.symbols) == len(self.delays), "Invalid timed word."

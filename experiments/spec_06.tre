@@ -1,0 +1,7 @@
+# TODO trying to reproduce the TAkiller result for simpler expressions. Why is the volume not continuous for n=10 and TAkiller?
+# NOTE: this might just be correct... This is very different to the typical smooth examples
+# 		- here, we have a smooth thing and smooothen THEN cut it repeatedly, not smoothen a time restricted segment
+#<a. <b*>_[0,1]>_[0,2]
+
+# the original spec:
+< a.<b.<c.<d*>_[0,1]>_[0,2]>_[0,3]>_[0,4]

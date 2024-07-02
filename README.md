@@ -2,7 +2,23 @@
 Playground for volume based sampling method for timed regular expressions.
 
 
+
 ## Meetings
+
+
+### 25.06. experiments, comp with wordgen
+
+``TAkiller:  < a.<b.<c.<d*>_[0,1]>_[0,2]>_[0,3]>_[0,4]
+
+``Small TAkiller: <a.<b.<d*>_[0,1]>_[0,2]>_[0,3]  
+
+  
+
+- The two tools' results are different for the TAkiller example. 
+	- [ ] Benoît will visualize his volume function so we can compare better.
+- My tool produces strange jumps at the borders of intervals - the smallest example where this happens was n=4, small TAkiller.
+-  (New for Nicolas:) We noticed that both tools couldn't produce a volume for TAkiller with n=3, even though L_3 should have a volume. We will investigate.  
+- At the integer points weird things often happen, in both tools.
 
 ### 20.06
 - we now have better idea of how to fix the moments: we have a formula for $\lambda_1,...,\lambda_m\ \rightarrow \mu_1, ..., \mu_m$ 

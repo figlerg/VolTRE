@@ -1,75 +1,138 @@
+from functools import lru_cache
 
 import sympy as sp
 import numpy as np
+from scipy.integrate import quad
+from scipy.optimize import least_squares
 
 from volume.FreePiecewise import FreePiecewise
 from volume.VolumePoly import VolumePoly
 
-from sympy import symbols, exp, integrate, oo, Integral, Poly, sympify, solve, solveset, Expr
+from sympy import symbols, exp, integrate, oo, Integral, Poly, sympify, solve, solveset, Expr, lambdify
+from sympy.abc import T, v
+
+from volume.misc import num_int_evalf
 
 """
 This module is for controlling the properties of the MaxEntSampler.
 """
 
-
-def exp_term(lambdas) -> Expr:
-
-    T = symbols('T')
-
+@lru_cache
+def build_exp_term(lambdas) -> Expr:
     # Create the polynomial sum
     polynomial_sum = sum([s * T ** (i + 1) for i, s in enumerate(lambdas)])
 
     return exp(polynomial_sum)
 
+# TODO move this somewhere more sensible, i just refactored it out as a function cause it is used in multiple places
+@lru_cache
+def normalising_constant(lambdas, volume) -> float:
+    assert lambdas[-1] < 0 or volume.intervals[-1][1] != oo, ("Integral doesn't exist - we either need a "
+                                                                        "bounded language or lambda_m < 0.")
+
+    exp_term = build_exp_term(lambdas)
+
+    s = 0
+    for (a, b), poly in volume.pairs:
+        integrand = exp_term.as_expr() * poly.as_expr()
+
+        # old version - Tested with wolframalpha, same results for bounded intervals.
+        # segment_integral = Integral(integrand, (T, a, b))
+
+        # TODO test again with wolfram this version
+        s += num_int_evalf(integrand, a, b)
+
+    return s
 
 
+# mu -> lambda HARD
+#
+# lambda -> mu EASY
+#     -> Euler, gradient descent
+#
+#
+# fixed lambda -> fgenerate mus
 
-def mu(lambdas: np.array, volume: VolumePoly):
+def mu(lambdas: np.array, volume: VolumePoly, m = None):
+
+    # Any moment can be computed,
+    # but sometimes we are only interested in the first m moments where m is the nr of lambdas.
+    if not m:
+        m = len(lambdas)
+
+
     intervals = volume.intervals.copy()
-    terms = []
 
-    c = 0
-    c2 = 0
-    for (a, b), integrand in self.pairs:
-        integrand: Expr  # this is already p(T)*exp_term(T)
+    # here I take exp(...)*p(T) for all segments
+    terms = [(build_exp_term(lambdas).as_expr() * p.as_expr()) for p in volume.polys]
 
-        # ## THIS IS SLOW
-        # # create antiderivative of the poly, with variable T as endpoint.
-        # # This is an unevaluated integral (which we can approximate later)
-        sub_antideriv = Integral(integrand, (v, a, T))
+    N = normalising_constant(lambdas, volume)
 
-        sub_antideriv += c2  # move by the current cumulative sum divided by N (we saved this before in self.__cs)
-        terms.append(sub_antideriv)
-        #
-        # c = sub_antideriv.subs(T,b).evalf()
+    # here I just need to integrate from 0 to inf, not create functions for each segment
+    out = np.ndarray((m, 1))
 
-        ## HOPE THIS IS FAST
-        integrand_func = lambdify(v, integrand, modules=['scipy', 'numpy'])
-        # noinspection PyTupleAssignmentBalance
-        tmp_c2 = c2
-        c2, err = quad(integrand_func, a, b)
+    for i in range(m):
 
-        c2 += tmp_c2
+        cum_sum = 0
+        for (a, b), integrand in zip(intervals, terms):
+            integrand: Expr = integrand * T ** (i+1)  # computing the i-th moment, diff gives T^i
 
-        # assert abs(c2 - c) < 0.001
+            cum_sum += num_int_evalf(integrand, a, b)
 
-    # test = FreePiecewise(intervals, terms)
+        out[i] = cum_sum / N
 
-    N = terms[-1].subs(T, b)
+    return out
 
-    terms = [p / N for p in terms]
+def jacobi(lambdas: np.array, volume: VolumePoly, d1 : int):
+    """
+    Generate the jacobi matrix d mu_i/d lambda_j with dimensions d1 x len(lambdas).
+    We have found a nice representation for j <= m, where m is the number of lambdas.
 
-    a, b = intervals[-1]
-    if b != oo:
-        intervals.append((b, oo))
-        terms.append(sympify(1))
+    Formula:
+        $$ \frac{d\mu_i}{d \lambda_j}(\lambda) = \mu_{i+j}(\lambda) - \mu_i(\lambda) \cdot \mu_j(\lambda)$$
 
-    return FreePiecewise(intervals, expressions=terms)
+    :param lambdas:
+    :param volume:
+    :param m:
+    :param n:
+    :return:
+    """
+    d2 = len(lambdas)
+    mus = mu(lambdas, volume,d1+d2)  # I need up to m+n to use the nice form nicolas found
 
-def jacobi():
-    # this should be a mapping of lambdas to a matrix?
-    raise NotImplementedError
+    # I will first create a square matrix, and then cut out the ones that reference non-existing lambda_i
+    d_max = max(d1, d2)
+    M = np.ndarray((d_max, d_max))
 
-def lambdas(mu : np.array, vol : VolumePoly):
-    # this will need some optimization algo
+    # this is the square matrix with nice representation. TODO can we do this without a loop for speed?
+    for i in range(d_max):
+        for j in range(d_max):
+            M[i,j] = mus[i+j]
+
+    # matrix version of -mu_i*mu_j
+    M -= mus[:d_max] @ mus[:d_max].T
+
+    # this is the part that we simply calculate
+
+    # some of these have no meaning because they are basically derivatives for lambdas that we do not have -> cut them
+    return M[:d1,:d2]
+
+def hesse(lambdas: np.array, volume: VolumePoly, d1 : int):
     pass
+
+def lambdas(target_mu : np.array, vol : VolumePoly):
+
+    mus = lambda ls: mu(ls, vol,len(target_mu))
+
+    initial_guess = np.random.random([len(target_mu), 1])  # Example initial guess
+
+    result = least_squares(residuals, initial_guess, args=(mu_t,))
+
+
+
+def residuals(mu, target_mu):
+    return mu - target_mu
+
+
+
+

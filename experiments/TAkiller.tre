@@ -1,3 +1,17 @@
-# <<<<<<<<a>_[0,1].b>_[0,2].c>_[0,3].d>_[0,4].e>_[0,5].f>_[0,6].g>_[0,7].(h*)>_[0,8]
+# this is hard for wordgen and better for us
+< a.<b.<c.<d*>_[0,1]>_[0,2]>_[0,3]>_[0,4]  # n=3 is empty?
+#< a.<b.<a.<d*>_[0,1]>_[0,2]>_[0,3]>_[0,4]
 
-# <<<<a>_[0,1].<b>_[0,1]>_[0,1].<c>_[0,1]>_[0,3].d_[0,1]>_[0,5]
+#< a.<b.<c*>_[0,1]>_[0,2]>_[0,3]  # 'small TAkiller n = 4 smallest example that breaks
+#< a.<b>_[0,2]>_[0,3]  # should be the same for n=2 CHECKED!
+#<d*>_[0,1]  # this works, but TAkiller has a weird added delta in subexpressions
+
+
+#< a.<b.<d.d*>_[0,1]>_[0,2]>_[0,3]  # with d+ instead of d*
+
+# the below don't have the behavior
+#<b.<d*>_[0,1]>_[0,2]
+#<d*>_[0,1]
+
+# bigger TAkiller
+#<a.<b.<c.<d.<e*>_[0,1]>_[0,2]>_[0,3]>_[0,4]>_[0,5]

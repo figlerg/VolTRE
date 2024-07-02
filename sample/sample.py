@@ -15,6 +15,8 @@ from volume.MaxEntDist import MaxEntDist
 from volume.VolumePoly import VolumePoly
 from volume.slice_volume import slice_volume
 from math import inf
+
+
 """
 So at this point we can compute V_n^e(T) and V_n(e). Now we can begin to sample.
 
@@ -60,6 +62,9 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
     if mode == DurationSamplerMode.MAX_ENT and T:
         warnings.warn("Invalid usage of the sampling function: For fixed T, max_ent and vanilla are equivalent.")
 
+    if mode == DurationSamplerMode.MAX_ENT and not lambdas:
+        raise ValueError("Invalid usage of the sampling function: mode MAXENT needs a lambda input.")
+
 
     # TODO not sure if my handling of T with the standard value None leads to any problems with sampling
 
@@ -71,11 +76,11 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
 
             case DurationSamplerMode.VANILLA:
                 vol = slice_volume(node, n)
-                total = vol.total_volume()
-                assert total != inf, "In the current state the tool can only sample T on a finite volume."
-                assert total, "Problem sampling T. Is the language empty?"
-                normalisation_factor = 1/total
-                pdf:VolumePoly = vol*normalisation_factor
+
+                pdf = vol.pdf  # this normalizes
+
+                # HERE
+
                 T = pdf.inverse_sampling()
 
             case DurationSamplerMode.MAX_ENT:

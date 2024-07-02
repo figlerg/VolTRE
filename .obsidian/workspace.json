@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "README.md",
+                "file": "notes/Update 2 June.md",
                 "mode": "source",
                 "source": false
               }
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "README.md",
+                "file": "notes/Update 2 June.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "README.md",
+                "file": "notes/Update 2 June.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "README.md"
+                "file": "notes/Update 2 June.md"
               }
             }
           }
@@ -148,11 +148,28 @@
   },
   "active": "02f9a280ab251023",
   "lastOpenFiles": [
-    "volume/MaxEntDist.py~",
-    "volume/tuning.py~",
+    "volume/VolumePoly.py~",
+    "vis_experiments/bad_testcases/weird_conv/functions.txt",
+    "vis_experiments/bad_testcases/weird_conv/Neues Textdokument.txt",
+    "vis_experiments/bad_testcases/weird_conv/v1_v2_conv.png",
+    "vis_experiments/bad_testcases/weird_conv/v1_v2_conv",
+    "vis_experiments/bad_testcases/weird_conv/v2.png",
+    "vis_experiments/bad_testcases/weird_conv/v1.png",
+    "vis_experiments/bad_testcases/weird_conv",
+    "vis_experiments/bad_testcases/Neuer Ordner",
     "main.py~",
-    "volume/__pycache__/tuning.cpython-312.pyc",
-    "volume/tuning.py",
-    "volume/parameters.py"
+    "volume/slice_volume.py~",
+    "vis_cache/file27.png",
+    "vis_cache/file26.png",
+    "vis_cache/file25.png",
+    "vis_cache/file24.png",
+    "vis_cache/file23.png",
+    "vis_cache/file22.png",
+    "vis_cache/file21.png",
+    "experiments/TAkiller.tre~",
+    "notes/Update 2 June.pdf",
+    "README.md",
+    "notes/Update 2 June.md",
+    "notes"
   ]
 }

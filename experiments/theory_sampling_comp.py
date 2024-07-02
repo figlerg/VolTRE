@@ -3,8 +3,6 @@ import random
 import cProfile
 import pstats
 import time
-from math import factorial
-
 import matplotlib.pyplot as plt
 from os.path import join, curdir
 from parse.quickparse import quickparse
@@ -13,11 +11,10 @@ from visualize_recursion import generate_syntax_tree, highlight_node
 from volume.MaxEntDist import MaxEntDist
 from volume.slice_volume import slice_volume
 from sample.sample import sample, DurationSamplerMode
-from volume.tuning import mu, jacobi
+from volume.tuning import mu
 
-ctx = quickparse(join('experiments', 'TAkiller.tre'))
 # ctx = quickparse(join('experiments', 'spec_00.tre'))
-# ctx = quickparse(join('experiments', 'spec_06.tre'))
+ctx = quickparse(join('TAkiller.tre'))
 print(ctx.getText())
 
 # visualizes the tree
@@ -27,34 +24,42 @@ print(ctx.getText())
 
 def experiment():
     random.seed(42)
-    n = 3
+    n = 4
 
-    V = slice_volume(ctx, n, debug_mode=True)
-    V.fancy_print()
-    # print(float(V.total_volume())- 1/factorial(9))
-    # print(float(V.polys[2](2.3)))
-    print(f"Volume is continuous: {V.is_cont_piece()}")
-    # V.polys[-1] += 2/6
-    V.plot()
-    # print(w1 := sample(ctx, n))
+    V = slice_volume(ctx, n, debug_mode=False)
 
 
-    # lambdas = (1,1,-1)
-    # max_ent = MaxEntDist(V, lambdas)
-    # # max_ent.plot()
-    #
-    # print(f"The jacobi matrix is: \n{jacobi(lambdas, V, 4)}")
-    #
-    # pdf = max_ent.pdf
-    # cdf = max_ent.cdf
-    # # pdf.plot()
-    # # cdf.plot()
-    # print(w2 := sample(ctx, n, mode=DurationSamplerMode.MAX_ENT, lambdas=lambdas))
-    #
-    # # test = w2[-1]
-    # exjskyjsaio= 1
+    lambdas = (1,1,-1)
+    max_ent = MaxEntDist(V, lambdas)
+    cdf = max_ent.cdf
+    # cdf.plot()
+
+    print('Sampling...')
+    nr = 3000
+    t1 = time.time()
+    t = t1
+
+    dur_s = 0
+    dur_2s = 0
+    dur_3s = 0
+    for _ in range(nr):
+        w = sample(ctx,n,mode=DurationSamplerMode.MAX_ENT,lambdas=lambdas)
+        # print(f"Sampled {str(w), w.duration} in {time.time() - t}s.")
+        # t = time.time()
+        dur_s += w.duration
+        dur_2s += w.duration ** 2
+        dur_3s += w.duration ** 3
 
 
+    print(f"Sampled {nr} words in {time.time()-t1}s.")
+    print(f"Average word duration: {dur_s/nr}")
+    print(f"statistical 2nd moment: {dur_2s/nr}")
+    print(f"statistical 3rd moment: {dur_3s/nr}")
+
+    print(mu(lambdas, V))
+
+
+    # print(max_ent.normalising_term)
 
 pr = cProfile.Profile()
 pr.enable()

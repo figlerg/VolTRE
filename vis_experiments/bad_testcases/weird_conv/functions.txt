@@ -1,0 +1,19 @@
+v1 		= 1_(0, inf)(T) * Poly(1, T, domain='ZZ')
+v2 		= 1_(0, 1)(T) * Poly(1/2*T**2, T, domain='QQ') + 1_(1, 2)(T) * Poly(T - 1/2, T, domain='QQ')
+v1 ** v2 	= 1_(0, 1)(T) * Poly(1/6*T**3, T, domain='QQ') + 1_(1, 2)(T) * Poly(T**2 - T + 1/6, T, domain='QQ') + 1_(2, inf)(T) * Poly(1/2*T**2 + 1/2*T - 11/6, T, domain='QQ')
+
+
+OR (different format:
+
+	(0, inf) 1
+
+	**
+
+	(0, 1) T**2/2
+	(1, 2) T - 1/2
+
+	=
+
+	(0, 1) T**3/6
+	(1, 2) T**2 - T + 1/6
+	(2, inf) T**2/2 + T/2 - 11/6

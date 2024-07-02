@@ -13,23 +13,22 @@ from sympy.abc import T, v
 
 from volume.FreePiecewise import FreePiecewise
 from volume.VolumePoly import VolumePoly
-from volume.misc import cached_lambdify
-from volume.tuning import exp_term
+from volume.misc import cached_lambdify, num_int_evalf
+from volume.tuning import build_exp_term, normalising_constant
+from typing import Iterable
 
 
-# TODO i could have probably include this in volume poly (or inherit from it),
-#  but I am worried that things get too complex if I do.
 class MaxEntDist:
     """A container class for the maximum entropy solution for given soft constraints. This is essentially a weight
     function for duration T, with which we could implement a different sampler for T (which maximises language
     entropy and can control mean and variance (or any moment))."""
 
-    def __init__(self, volume: VolumePoly, lambdas: list[float]):
+    def __init__(self, volume: VolumePoly, lambdas: Iterable[float]):
         self.volume = volume
-        self.lambdas = lambdas
+        self.lambdas = tuple(lambdas)  # we want this hashable
 
         # compared to VolumePoly we have an additional exp term in the weight function (so integrals change)
-        self.exp_term = exp_term(lambdas)
+        self.exp_term = build_exp_term(self.lambdas)
 
     def __hash__(self):
         return hash((self.volume, self.exp_term))
@@ -68,6 +67,9 @@ class MaxEntDist:
             new_volume = self.volume * other
             return MaxEntDist(new_volume, self.lambdas)
 
+    def __bool__(self):
+        return self.exp_term and bool(self.volume.polys)
+
     @cached_property
     def pairs(self):
         """
@@ -88,20 +90,7 @@ class MaxEntDist:
         :return: Float (or similar) of total volume.
         """
 
-        assert self.lambdas[-1] < 0 or self.volume.intervals[-1][1] != oo, ("Integral doesn't exist - we either need a "
-                                                                            "bounded language or lambda_m < 0.")
-
-        s = 0
-        for (a, b), poly in self.volume.pairs:
-            integrand = self.exp_term.as_expr() * poly.as_expr()
-
-            # Tested with wolframalpha, same results for bounded intervals.
-            # TODO numerical, can't deal with inf. This returns just a big number in cases where it should diverge.
-            segment_integral = Integral(integrand, (T, a, b))
-
-            s += segment_integral.evalf()
-
-        return s
+        return normalising_constant(self.lambdas, self.volume)
 
     def plot(self, no_show=False):
         """
@@ -113,27 +102,76 @@ class MaxEntDist:
         # Create a colormap
         cmap = plt.get_cmap('tab10')  # You can choose any colormap you prefer
 
-        last_val = 0
-        for i, (function, interval) in enumerate(zip(self.volume.polys, self.volume.intervals)):
 
-            start, end = interval
+        ## TODO for TAkiller and n=10 we get strange incontinuities. But i think they might be correct
+        # def f(val):
+        #     for (a,b), p in self.volume.pairs:
+        #         if a <= val < b:
+        #             fun = lambdify(v, p(v)*self.exp_term.subs(T,v), modules=['scipy', 'numpy'])
+        #             return fun(val)
+        #
+        #     return 0
+        #
+        # self.volume.plot()
+        # x = np.linspace(1.95, 2.05, 1000)
+        #
+        # # Evaluate the function at each point
+        # y = [f(point) for point in x]
+        #
+        # plt.plot(x,y)
+        # plt.title(f'Lambdified function on all intervals')
+        # plt.show()
+        #
+        #
+        #
+        # p1 = tuple(self.volume.pairs)[2][1]
+        # y = [p1(point) for point in x]
+        #
+        # plt.plot(x,y)
+        # plt.title(f'Left poly {p1}')
+        # plt.show()
+        #
+        # p2 = tuple(self.volume.pairs)[3][1]
+        # y = [p2(point) for point in x]
+        #
+        # plt.plot(x,y)
+        # plt.title(f'Right poly {p2}')
+        # plt.show()
+        #
+        # g = lambda t: self.exp_term.subs(T,t).evalf()
+        # y = [g(point) for point in x]
+        #
+        # plt.plot(x,y)
+        # plt.title(f'Exp term {self.exp_term}')
+        # plt.show()
+
+
+
+        for i, ((a, b), term) in enumerate(self.pairs):
+            f = lambdify(v, term, modules=['scipy', 'numpy'])
 
             inf_flag = False
-            if end == oo:
-                end = start + 3  # just to see something, I arbitrarily visualize a little bit of the inf interval
+            if b == oo:
+                b = a + 3  # just to see something, I arbitrarily visualize a little bit of the inf interval
                 inf_flag = True
 
-            # If function is not callable, convert it to a lambda function
-            if not callable(function):
-                f = lambda z: function
-            else:
-                f = function
+            # if i:
+            #     last_y = term.subs(v,b)
+            #     last_x = b
+            # else:
+            #     last_y = 0
 
             # Generate points within the interval
-            x = np.linspace(start, end, num_points)
+            x = np.linspace(a, b, num_points)
 
             # Evaluate the function at each point
-            y = [float(f(point) * self.exp_term.subs(T, point)) for point in x]
+            y = [f(point) for point in x]
+
+            # eps = 1e-5
+            # incontinuity = abs(term.subs(v,a)-last_y).evalf()
+            # assert incontinuity < eps, f'Encountered an inconctinuity - error is {incontinuity}.'
+
+
 
             ## strictly speaking, at the border points we want something like the sum of the two polys.
             ## under the assumption that we get continuous volumes, we can do the below.
@@ -144,15 +182,15 @@ class MaxEntDist:
             color = cmap(
                 i % cmap.N)  # Looping over colors in case the number of functions exceeds the number of colors in the colormap
 
-            plt.plot(x, y, label=f"$V_n^e$ on [{start}, {end}]", color=color)
+            plt.plot(x, y, label=f"$V_n^e$ on [{a}, {b}]", color=color)
 
             # Plot interval boundaries
-            plt.axvline(x=start, linestyle='--', color='grey', alpha=0.5)  # Start of interval
+            plt.axvline(x=a, linestyle='--', color='grey', alpha=0.5)  # Start of interval
 
             if not inf_flag:
-                plt.axvline(x=end, linestyle='--', color='grey', alpha=0.5)  # End of interval
+                plt.axvline(x=b, linestyle='--', color='grey', alpha=0.5)  # End of interval
             else:
-                plt.axvline(x=end + 1, linestyle='--', color='grey', alpha=0.5)  # End of interval
+                plt.axvline(x=b + 1, linestyle='--', color='grey', alpha=0.5)  # End of interval
 
             # Indicate that the function goes on like this if we have an infinite interval.
             # This is just for visual clarity, there is no real "right" solution to plot an infinite function,
@@ -196,7 +234,7 @@ class MaxEntDist:
 
     # SAMPLING
 
-    @lru_cache
+    @cached_property
     def pdf(self):
         """
         Returns a normalized version (pdf) of self. Note: This is not really used anywhere due to numerical instability.
@@ -205,7 +243,7 @@ class MaxEntDist:
         div_factor = 1 / self.normalising_term
         return self * div_factor
 
-    @lru_cache
+    @cached_property
     def cdf(self) -> FreePiecewise:
         """
         Returns a piecewise function that is a cdf of the Maximum Entropy cdf. Note that this is not itself a MaxEntDist
@@ -215,11 +253,12 @@ class MaxEntDist:
         :return: The cdf as a collection of (interval, sympy term) pairs
         """
 
+        assert self, "The zero function has no pdf. Is the language empty?"
+
         intervals = self.volume.intervals.copy()
         terms = []
 
         c = 0
-        c2 = 0
         for (a, b), integrand in self.pairs:
             integrand: Expr  # this is already p(T)*exp_term(T)
 
@@ -227,23 +266,13 @@ class MaxEntDist:
             # # create antiderivative of the poly, with variable T as endpoint.
             # # This is an unevaluated integral (which we can approximate later)
             sub_antideriv = Integral(integrand, (v, a, T))
-
-            sub_antideriv += c2  # move by the current cumulative sum divided by N (we saved this before in self.__cs)
+            sub_antideriv += c
             terms.append(sub_antideriv)
-            #
-            # c = sub_antideriv.subs(T,b).evalf()
 
-            ## HOPE THIS IS FAST
-            integrand_func = lambdify(v, integrand, modules=['scipy', 'numpy'])
-            # noinspection PyTupleAssignmentBalance
-            tmp_c2 = c2
-            c2, err = quad(integrand_func, a, b)
-
-            c2 += tmp_c2
-
-            # assert abs(c2 - c) < 0.001
-
-        # test = FreePiecewise(intervals, terms)
+            # tmp = c
+            # c = num_int_evalf(integrand, a, b)
+            # c += tmp
+            c += num_int_evalf(integrand, a, b, var=v)  # this is the same, no?
 
         N = terms[-1].subs(T, b)
 
@@ -264,7 +293,7 @@ class MaxEntDist:
 
         u = random.uniform(0, 1)
 
-        cdf = self.cdf()
+        cdf = self.cdf
         # cdf.plot()
 
         # TODO how do i check this here? N is sort of the total volume here, right?
@@ -291,7 +320,19 @@ class MaxEntDist:
                 # x0 = (a + b) / 2
 
                 # Use mpmath.findroot to find the root within the specified interval THIS IS FASTEST
-                sol = findroot(f, (a, b), solver='anderson')
+                # TODO we have some numerical instability, it seems.
+                #      u = 0.999706564107641 can't find a solution for precision 1e-32, even though f(a) <= 0 <= f(b)
+                try:
+                    sol = findroot(f, (a, b), solver='anderson')
+                except ValueError:
+                    warnings.warn(f"Inverse sampling problem: Anderson solver failed for u = {u}.\n"
+                                  f"f(a) = {f(a)}, f(b) = {f(b)}. Falling back to bisection.")
+                    sol = findroot(f, (a, b), solver='bisect')
+                    # print(sol)
+                    # print("Plotting cdf...")
+                    # plt.axhline(y=u, color='r', linestyle='--')
+                    # cdf.plot(title = 'Sampling error - cdf')
+                    # plt.show()
 
                 if a <= sol <= b:
                     # plt.plot(sol, u, 'ro')

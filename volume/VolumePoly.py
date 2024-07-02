@@ -1,6 +1,6 @@
 import random
 import warnings
-from functools import lru_cache
+from functools import lru_cache, cached_property
 
 from math import inf
 import numpy as np
@@ -277,108 +277,9 @@ class VolumePoly:
 
         return out
 
-    @lru_cache
-    def __pow__(self, other):
-        """
-        This is the convolution of two functions: int_0^T f(T') g(T-T') dT'
-        """
-
-        intervals = []
-        polys = []
-
-        for I1, pI1 in self.pairs:
-            for I2, pI2 in other.pairs:
-                new_ints = interval_convolution(I1, I2)
-                intervals += new_ints
-
-                """             
-                Here we are computing the convolution:
-                        int p(T') q(T-T') dT'
-                In the original formulation we have something with indicator functions inside, but these can be formed
-                into another interval so they basically only influence the borders of the integral.
-                """
-
-                q_x = poly(pI2(x), x)  # basically renaming the variable T to x so I can insert T-t below
-                q_eval = q_x(T - t)
-                p_prod = poly(pI1(t) * q_eval, t)
-
-                # indef integral for the computation of the definite integrals with symbols below
-                integral_p_prod = p_prod.integrate(t)
-
-                a1, b1 = I1  # see calculations in "convolution poly closed form"
-                a2, b2 = I2  # see calculations in "convolution poly closed form"
-                l1, l2 = length(I1), length(I2)
-
-                # Depending on l1 and l2, I get either 3 or 2 intervals here.
-                # The middle part is only added if we get 3 intervals.
-                # The integral borders in terms of T can be inferred symbollically calculated by hand.
-
-                case = determine_convolution_case(I1, I2)
-
-                # I always compute the three polys, but in some cases below only some of them are added to the list.
-                # For the logic, draw the five pictures of the case distinction! TODO I will provide my notes somewhere in this repo.
-
-                # this poly is always in the first interval, no matter the case.
-                p1 = poly(integral_p_prod(T - a2) - integral_p_prod(a1), T)
-
-                # Depending on the case (also the infinite ones) and which length is bigger, this is the 2nd poly.
-                if l1 < l2:
-                    p2 = poly(integral_p_prod(b1) - integral_p_prod(a1), T)
-                elif l1 > l2:
-                    p2 = poly(integral_p_prod(b2) - integral_p_prod(a2), T)
-                else:
-                    p2 = None
-
-                # this is added only in the last case
-                p3 = poly(integral_p_prod(b1) - integral_p_prod(T - b2), T)
-
-                match case:
-                    case ConvolutionCase.BOTH_INFINITE:
-                        polys.append(p1)  # on [0,                      inf)
-
-                    case ConvolutionCase.FIRST_INFINITE:
-                        polys.append(p1)  # on [a1 + a2,                a1 + a2 + l2]
-                        polys.append(p2)  # on [a1+ a2 + l2,            inf)
-
-                    case ConvolutionCase.SECOND_INFINITE:
-                        polys.append(p1)  # on [a1 + a2,                a1 + a2 + l1]
-                        polys.append(p2)  # on [a1+ a2 + l1,            inf)
-
-                    case ConvolutionCase.BOTH_FINITE_SAME_LENGTH:
-                        polys.append(p1)  # on [a1 + a2,                a1 + a2 + l]
-                        polys.append(p3)  # on [a1 + a2 + l,            b1 + b2]
-
-                    case ConvolutionCase.BOTH_FINITE_DIFFERENT_LENGTH:
-                        polys.append(p1)  # on [a1 + a2,                a1 + a2 + min(l1,l2)]
-                        polys.append(p2)  # on [a1 + a2 + min(l1,l2),   a1 + a2 + max(l1,l2)]
-                        polys.append(p3)  # on [a1 + a2 + max(l1,l2),   b1 + b2]
-
-
-        assert len(intervals) == len(polys), "Convolution bug, invalid VolumePoly created."
-
-        assert not (self.delta and other.delta), (
-            "Tried to convolve two deltas - this is not well defined, if this pops "
-            "up we might need to think about this more.")
-
-        if self.delta:
-            # print(f"Convolution of delta = {self.delta} with {other}")
-            intervals += other.intervals
-            polys += [int(self.delta) * p for p in other.polys]
-            pass
-
-        if other.delta:
-            # print(f"Convolution of delta = {other.delta} with {self}")
-            intervals += self.intervals
-            polys += [int(other.delta) * p for p in self.polys]
-            pass
-
-        out = VolumePoly(intervals, polys, delta=False)
-
-        # out.fancy_print()
-        out.simplify()
-        # out.fancy_print()
-
-        return out
+    # # TODO the cache fails here mysteriously?
+    # def __pow__(self, other):
+    #     return continuous_convolution(self, other)  # needed to outsource this in order to make caching work
 
     def __bool__(self):
         return bool(self.polys) or bool(self.delta)
@@ -395,20 +296,35 @@ class VolumePoly:
 
 
     def time_restriction(self, restriction_inter: tuple):
+        """
+        Returns the restricted version of itself.
+        """
+
         # intersect all the intervals with the input interval
         delete_indices = []
 
+        intervals = self.intervals.copy()
+        polys = self.polys.copy()
         for i, interval in enumerate(self.intervals):
             constrained = intersect(interval, restriction_inter)
             if constrained:
-                self.intervals[i] = constrained
+                intervals[i] = constrained
             else:
                 delete_indices.append(i)
 
         # the reverse is necessary so that the indices don't get disturbed
         for i in reversed(delete_indices):
-            del self.intervals[i]
-            del self.polys[i]
+            del intervals[i]
+            del polys[i]
+
+        a,b = restriction_inter
+
+        # if we intersect with positive interval, delta is killed. If it was not there in the beginning, it is not added
+        delta = (a <= 0 <= b) and self.delta
+
+        return VolumePoly(intervals, polys, delta)
+
+
 
     def plot(self, no_show=False):
 
@@ -567,6 +483,16 @@ class VolumePoly:
 
         return out
 
+    @cached_property
+    def pdf(self):
+        total = self.total_volume()
+        assert total != inf, "In the current state the tool can only sample T on a finite volume."
+        assert total, "Problem generating pdf. Is the language empty?"
+        normalisation_factor = 1 / total
+        out: VolumePoly = self * normalisation_factor
+
+        return out
+
     def __call__(self, x):
 
         assert x >= 0, "VolumePolys are defined on R+."
@@ -590,7 +516,6 @@ class VolumePoly:
                 volumes. Since these points are a null-set, it doesn't matter when integrating over it.
                 """
 
-                raise Exception
                 warnings.warn(warning, UserWarning)
 
         return out
@@ -665,10 +590,11 @@ class VolumePoly:
 
         u = random.uniform(0, 1)
 
-        assert abs(self.total_volume() -1) < 0.0001, ("Invalid distribution. This is no pdf. "
-                                                      "It is likely this is caused by a bug.")
+        assert abs(self.pdf.total_volume() -1) < 0.0001, ("Invalid distribution. This is no pdf. "
+                                                      "It is likely this is caused by a bug."
+                                                      "\n Note: This function is usually used through the function sample in sample.py. Tho use it directly as a method, call vol_pol.pdf().inverse_sampling()")
 
-        cdf = self.integral()
+        cdf = self.pdf.integral()
 
         for (a, b), p in cdf.pairs:
 
@@ -692,6 +618,26 @@ class VolumePoly:
                         return sol
 
         raise Exception("Inverse sampling failed.")
+
+    @lru_cache
+    def is_cont_piece(self) -> bool:
+        """
+        A sort of continuity check: tests whether there are any points where the left poly and right poly evaluate to
+        different points.
+        (This means we only look at the segments where we have a volume, obviously there are often cutoffs in the end.)
+        :return: bool continuous
+        """
+        # last_pt = self.polys[0](self.intervals[0][0])
+        last_pt = 0
+
+        continuous = True
+        for (a,b), p in self.pairs:
+            if p(a) != last_pt:
+                continuous = False
+
+            last_pt = p(b)
+
+        return continuous
 
 
 def event_queue(intervals, tag=''):
@@ -721,6 +667,116 @@ def event_queue(intervals, tag=''):
     # Python uses Timsort, a hybrid sorting algo with O(n log n), so this influences the complexity.
 
     return events
+
+@lru_cache
+def continuous_convolution(v1:VolumePoly, v2:VolumePoly)-> VolumePoly:
+    """
+    In order to cache things correctly, I need this to not be an instance method.
+    :param v1: V1
+    :param v2: V2
+    :return: convolution of v1, v2 = int_0^T v1(T') v2(T-T') dT'
+    """
+
+    intervals = []
+    polys = []
+
+
+    for I1, pI1 in v1.pairs:
+        for I2, pI2 in v2.pairs:
+            new_ints = interval_convolution(I1, I2)
+            intervals += new_ints
+
+            """             
+            Here we are computing the convolution:
+                    int p(T') q(T-T') dT'
+            In the original formulation we have something with indicator functions inside, but these can be formed
+            into another interval so they basically only influence the borders of the integral.
+            """
+
+            q_x = poly(pI2(x), x)  # basically renaming the variable T to x so I can insert T-t below
+            q_eval = q_x(T - t)
+            p_prod = poly(pI1(t) * q_eval, t)
+
+            # indef integral for the computation of the definite integrals with symbols below
+            integral_p_prod = p_prod.integrate(t)
+
+            a1, b1 = I1  # see calculations in "convolution poly closed form"
+            a2, b2 = I2  # see calculations in "convolution poly closed form"
+            l1, l2 = length(I1), length(I2)
+
+            # Depending on l1 and l2, I get either 3 or 2 intervals here.
+            # The middle part is only added if we get 3 intervals.
+            # The integral borders in terms of T can be inferred symbollically calculated by hand.
+
+            case = determine_convolution_case(I1, I2)
+
+            # I always compute the three polys, but in some cases below only some of them are added to the list.
+            # For the logic, draw the five pictures of the case distinction! TODO I will provide my notes somewhere in this repo.
+
+            # this poly is always in the first interval, no matter the case.
+            p1 = poly(integral_p_prod(T - a2) - integral_p_prod(a1), T)
+
+            # Depending on the case (also the infinite ones) and which length is bigger, this is the 2nd poly.
+            if l1 < l2:
+                p2 = poly(integral_p_prod(b1) - integral_p_prod(a1), T)
+            elif l1 > l2:
+                p2 = poly(integral_p_prod(T-a2) - integral_p_prod(T-b2), T)
+            else:
+                p2 = None
+
+            # this is added only in the last case
+            p3 = poly(integral_p_prod(b1) - integral_p_prod(T - b2), T)
+
+            match case:
+                case ConvolutionCase.BOTH_INFINITE:
+                    polys.append(p1)  # on [0,                      inf)
+
+                case ConvolutionCase.FIRST_INFINITE:
+                    polys.append(p1)  # on [a1 + a2,                a1 + a2 + l2]
+                    polys.append(p2)  # on [a1+ a2 + l2,            inf)
+
+                case ConvolutionCase.SECOND_INFINITE:
+                    polys.append(p1)  # on [a1 + a2,                a1 + a2 + l1]
+                    polys.append(p2)  # on [a1+ a2 + l1,            inf)
+
+                case ConvolutionCase.BOTH_FINITE_SAME_LENGTH:
+                    polys.append(p1)  # on [a1 + a2,                a1 + a2 + l]
+                    polys.append(p3)  # on [a1 + a2 + l,            b1 + b2]
+
+                case ConvolutionCase.BOTH_FINITE_DIFFERENT_LENGTH:
+                    polys.append(p1)  # on [a1 + a2,                a1 + a2 + min(l1,l2)]
+                    polys.append(p2)  # on [a1 + a2 + min(l1,l2),   a1 + a2 + max(l1,l2)]
+                    polys.append(p3)  # on [a1 + a2 + max(l1,l2),   b1 + b2]
+
+    assert len(intervals) == len(polys), "Convolution bug, invalid VolumePoly created."
+
+    assert not (v1.delta and v2.delta), (
+        "Tried to convolve two deltas - this is not well defined, if this pops "
+        "up we might need to think about this more.")
+
+    if v1.delta:
+        intervals += v2.intervals
+        polys += [int(v1.delta) * p for p in v2.polys]
+        pass
+
+    if v2.delta:
+        intervals += v1.intervals
+        polys += [int(v2.delta) * p for p in v1.polys]
+        pass
+
+    out = VolumePoly(intervals, polys, delta=False)
+
+
+    # out.fancy_print()
+    out.simplify()
+    # out.fancy_print()
+
+    if not( out.is_cont_piece() or (v1.delta and v2.is_cont_piece() or v2.delta and v1.is_cont_piece()) ):
+        print(f"v1 = {v1}")
+        print(f"v2 = {v2}")
+        print(f"v1 ** v2 = {out}")
+
+    return out
 
 
 if __name__ == '__main__':
