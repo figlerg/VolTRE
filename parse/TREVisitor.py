@@ -19,6 +19,11 @@ class TREVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by TREParser#PlusExpr.
+    def visitPlusExpr(self, ctx:TREParser.PlusExprContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by TREParser#UnionExpr.
     def visitUnionExpr(self, ctx:TREParser.UnionExprContext):
         return self.visitChildren(ctx)

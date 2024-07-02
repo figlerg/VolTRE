@@ -15,9 +15,10 @@ from volume.slice_volume import slice_volume
 from sample.sample import sample, DurationSamplerMode
 from volume.tuning import mu, jacobi
 
-ctx = quickparse(join('experiments', 'TAkiller.tre'))
 # ctx = quickparse(join('experiments', 'spec_00.tre'))
 # ctx = quickparse(join('experiments', 'spec_06.tre'))
+ctx = quickparse(join('experiments', 'TAkiller.tre'))
+# ctx = quickparse(join('experiments', 'TAkiller_15_gen.tre'))
 print(ctx.getText())
 
 # visualizes the tree
@@ -27,9 +28,9 @@ print(ctx.getText())
 
 def experiment():
     random.seed(42)
-    n = 3
+    n = 4
 
-    V = slice_volume(ctx, n, debug_mode=True)
+    V = slice_volume(ctx, n)
     V.fancy_print()
     # print(float(V.total_volume())- 1/factorial(9))
     # print(float(V.polys[2](2.3)))

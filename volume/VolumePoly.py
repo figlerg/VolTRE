@@ -277,9 +277,8 @@ class VolumePoly:
 
         return out
 
-    # # TODO the cache fails here mysteriously?
-    # def __pow__(self, other):
-    #     return continuous_convolution(self, other)  # needed to outsource this in order to make caching work
+    def __pow__(self, other):
+        return continuous_convolution(self, other)  # needed to outsource this in order to make caching work
 
     def __bool__(self):
         return bool(self.polys) or bool(self.delta)
@@ -770,11 +769,6 @@ def continuous_convolution(v1:VolumePoly, v2:VolumePoly)-> VolumePoly:
     # out.fancy_print()
     out.simplify()
     # out.fancy_print()
-
-    if not( out.is_cont_piece() or (v1.delta and v2.is_cont_piece() or v2.delta and v1.is_cont_piece()) ):
-        print(f"v1 = {v1}")
-        print(f"v2 = {v2}")
-        print(f"v1 ** v2 = {out}")
 
     return out
 
