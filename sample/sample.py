@@ -45,16 +45,11 @@ class DurationSamplerMode(Enum):
     def __str__(self):
         return self.name
 
-def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = DurationSamplerMode.VANILLA, lambdas = None):
+def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = DurationSamplerMode.VANILLA,
+           lambdas = None, top = True):
     """
     TODO streamline the signature of this function. Should I have two functions or is the mode here okay?
         Should I check for illegal combinations, like lambdas and vanilla?
-    :param node:
-    :param n:
-    :param T:
-    :param mode:
-    :param lambdas:
-    :return:
     """
 
     if mode == DurationSamplerMode.VANILLA and lambdas:
@@ -72,6 +67,9 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
     if mode == DurationSamplerMode.MAX_ENT and not lambdas_flag:
         raise ValueError("Invalid usage of the sampling function: mode MAXENT needs a lambda input.")
 
+    if isinstance(node,(TREParser.IntersectionExprContext, TREParser.RenameExprContext)) and (not top or not T):
+        raise ValueError("Invalid use of the sampling funtcion: Intersection and Renaming can only be used at top level"
+                         "and with a given duration T, since neither fit in the inductive volume computation.")
 
     # TODO not sure if my handling of T with the standard value None leads to any problems with sampling
 
@@ -114,7 +112,7 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
         case TREParser.ParenExprContext:
             node: TREParser.ParenExprContext
             e0 = node.expr()
-            return sample(e0, n, T)
+            return sample(e0, n, T, top=False)
 
 
         case TREParser.UnionExprContext:
@@ -135,7 +133,7 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
 
             chosen_expr = node.expr(outcome)
 
-            return sample(chosen_expr,n,T)
+            return sample(chosen_expr,n,T, top=False)
 
         case TREParser.TimedExprContext:
             node: TREParser.TimedExprContext
@@ -149,7 +147,7 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
             assert interval[0] <= T <= interval[1], (f"Bad sampling call: The expression {sub.getText()} cannot"
                                                      f" be sampled with T = {T}")
 
-            return sample(sub, n, T)
+            return sample(sub, n, T, top=False)
 
 
         case TREParser.ConcatExprContext:
@@ -168,15 +166,15 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
 
             return concat_sampling(node, e1, e2, n, T)
 
-def sample_T(pdf):
-    """
-    Inverse sampling method for a SymPy polynomial.
-    :param pdf:
-    :return:
-    """
+        case TREParser.IntersectionExprContext:
+            warnings.warn("Sampling for intersection and renaming is experimental and may not terminate.")
+            raise NotImplementedError
+
+        case TREParser.RenameExprContext:
+            warnings.warn("Sampling for intersection and renaming is experimental and may not terminate.")
+            raise NotImplementedError
 
 
-    raise NotImplementedError
 
 
 def concat_sampling(node, e1:TREParser.ExprContext, e2:TREParser.ExprContext, n, T):
@@ -215,9 +213,9 @@ def concat_sampling(node, e1:TREParser.ExprContext, e2:TREParser.ExprContext, n,
 
     # in the delta case we directly call the sampler for the child that isn't delta
     elif vol1.delta and not vol1.intervals:
-        return sample(e2, n-k, T)
+        return sample(e2, n-k, T, top=False)
     elif vol2.delta and not vol2.intervals:
-        return sample(e1, k, T)
+        return sample(e1, k, T, top=False)
 
     else:
         # above I excluded the case where delta AND some piecewise polynomials appear in the same function.
@@ -234,7 +232,7 @@ def concat_sampling(node, e1:TREParser.ExprContext, e2:TREParser.ExprContext, n,
     T1 = pdf.inverse_sampling()
     T2 = T-T1
 
-    return sample(e1,k,T1) * sample(e2, n-k, T2)  # overloaded for concatenation
+    return sample(e1,k,T1, top=False) * sample(e2, n-k, T2, top=False)  # overloaded for concatenation
 
 def sample_k(n, T, concat_vol, e1, e2) -> int:
     """

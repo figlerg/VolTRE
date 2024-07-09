@@ -71,6 +71,14 @@ def slice_volume(node: TREParser.ExprContext, n, vis=None, debug_mode=False, deb
         # else:
         #     out = hybrid_conv(expr, node, n, vis, debug_mode, debug_container, is_kleene=True)
 
+    elif isinstance(node, TREParser.IntersectionExprContext):
+        raise NotImplementedError(f'Volume computation for intersection operator & is not supported. '
+                                  f'Problematic subexpression: {node.getText()}')
+
+    elif isinstance(node, TREParser.RenameExprContext):
+        raise NotImplementedError(f'Volume computation for renaming operator is not supported. '
+                                  f'Problematic subexpression: {node.getText()}')
+
     else:
         raise Exception("Bad state.")
 

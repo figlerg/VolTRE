@@ -1,13 +1,14 @@
 grammar TRE;
 
-expr : atomic_expr								#AtomicExpr
-	 | '(' expr ')'								#ParenExpr
-     | expr '*'									#KleeneExpr
-     | expr '.' expr							#ConcatExpr
-     | expr '+'									#PlusExpr
-     | expr '+' expr							#UnionExpr
-     | '<' expr '>' '_' interval				#TimedExpr
-//     | '{' atomic_expr ':' atomic_expr '}'		#RenameExpr
+expr : atomic_expr									#AtomicExpr
+	 | '(' expr ')'									#ParenExpr
+     | expr '*'										#KleeneExpr
+     | expr '.' expr								#ConcatExpr
+     | expr '+'										#PlusExpr
+     | expr '+' expr								#UnionExpr
+     | expr '&' expr								#IntersectionExpr
+     | '<' expr '>' '_' interval					#TimedExpr
+     | '{' atomic_expr ':' atomic_expr '}' expr		#RenameExpr
      ;
 
 interval : '[' INT ',' INT ']';

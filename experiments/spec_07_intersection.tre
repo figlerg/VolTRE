@@ -1,0 +1,3 @@
+# testing the intersection operator
+
+(<a>_[0,2] + <b>_[0,1])* & a

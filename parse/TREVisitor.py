@@ -29,6 +29,16 @@ class TREVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by TREParser#RenameExpr.
+    def visitRenameExpr(self, ctx:TREParser.RenameExprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by TREParser#IntersectionExpr.
+    def visitIntersectionExpr(self, ctx:TREParser.IntersectionExprContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by TREParser#KleeneExpr.
     def visitKleeneExpr(self, ctx:TREParser.KleeneExprContext):
         return self.visitChildren(ctx)

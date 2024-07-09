@@ -10,20 +10,23 @@ else:
 
 def serializedATN():
     return [
-        4,1,15,44,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-        0,1,0,1,0,1,0,1,0,3,0,19,8,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-        1,0,5,0,31,8,0,10,0,12,0,34,9,0,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,2,
-        1,2,0,1,0,3,0,2,4,0,0,46,0,18,1,0,0,0,2,35,1,0,0,0,4,41,1,0,0,0,
-        6,7,6,0,-1,0,7,19,3,4,2,0,8,9,5,1,0,0,9,10,3,0,0,0,10,11,5,2,0,0,
-        11,19,1,0,0,0,12,13,5,6,0,0,13,14,3,0,0,0,14,15,5,7,0,0,15,16,5,
-        8,0,0,16,17,3,2,1,0,17,19,1,0,0,0,18,6,1,0,0,0,18,8,1,0,0,0,18,12,
-        1,0,0,0,19,32,1,0,0,0,20,21,10,5,0,0,21,22,5,3,0,0,22,31,3,0,0,6,
-        23,24,10,2,0,0,24,25,5,5,0,0,25,31,3,0,0,3,26,27,10,4,0,0,27,31,
-        5,4,0,0,28,29,10,3,0,0,29,31,5,5,0,0,30,20,1,0,0,0,30,23,1,0,0,0,
-        30,26,1,0,0,0,30,28,1,0,0,0,31,34,1,0,0,0,32,30,1,0,0,0,32,33,1,
-        0,0,0,33,1,1,0,0,0,34,32,1,0,0,0,35,36,5,9,0,0,36,37,5,13,0,0,37,
-        38,5,10,0,0,38,39,5,13,0,0,39,40,5,11,0,0,40,3,1,0,0,0,41,42,5,12,
-        0,0,42,5,1,0,0,0,3,18,30,32
+        4,1,19,54,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+        0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,3,0,26,8,0,1,0,1,0,
+        1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,5,0,41,8,0,10,0,12,0,
+        44,9,0,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,2,1,2,0,1,0,3,0,2,4,0,0,58,
+        0,25,1,0,0,0,2,45,1,0,0,0,4,51,1,0,0,0,6,7,6,0,-1,0,7,26,3,4,2,0,
+        8,9,5,1,0,0,9,10,3,0,0,0,10,11,5,2,0,0,11,26,1,0,0,0,12,13,5,7,0,
+        0,13,14,3,0,0,0,14,15,5,8,0,0,15,16,5,9,0,0,16,17,3,2,1,0,17,26,
+        1,0,0,0,18,19,5,10,0,0,19,20,3,4,2,0,20,21,5,11,0,0,21,22,3,4,2,
+        0,22,23,5,12,0,0,23,24,3,0,0,1,24,26,1,0,0,0,25,6,1,0,0,0,25,8,1,
+        0,0,0,25,12,1,0,0,0,25,18,1,0,0,0,26,42,1,0,0,0,27,28,10,6,0,0,28,
+        29,5,4,0,0,29,41,3,0,0,7,30,31,10,4,0,0,31,32,5,5,0,0,32,41,3,0,
+        0,5,33,34,10,3,0,0,34,35,5,6,0,0,35,41,3,0,0,4,36,37,10,7,0,0,37,
+        41,5,3,0,0,38,39,10,5,0,0,39,41,5,5,0,0,40,27,1,0,0,0,40,30,1,0,
+        0,0,40,33,1,0,0,0,40,36,1,0,0,0,40,38,1,0,0,0,41,44,1,0,0,0,42,40,
+        1,0,0,0,42,43,1,0,0,0,43,1,1,0,0,0,44,42,1,0,0,0,45,46,5,13,0,0,
+        46,47,5,17,0,0,47,48,5,14,0,0,48,49,5,17,0,0,49,50,5,15,0,0,50,3,
+        1,0,0,0,51,52,5,16,0,0,52,5,1,0,0,0,3,25,40,42
     ]
 
 class TREParser ( Parser ):
@@ -36,10 +39,12 @@ class TREParser ( Parser ):
 
     sharedContextCache = PredictionContextCache()
 
-    literalNames = [ "<INVALID>", "'('", "')'", "'.'", "'*'", "'+'", "'<'", 
-                     "'>'", "'_'", "'['", "','", "']'" ]
+    literalNames = [ "<INVALID>", "'('", "')'", "'*'", "'.'", "'+'", "'&'", 
+                     "'<'", "'>'", "'_'", "'{'", "':'", "'}'", "'['", "','", 
+                     "']'" ]
 
     symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "IDENTIFIER", "INT", "WS", "COMMENT" ]
@@ -62,10 +67,14 @@ class TREParser ( Parser ):
     T__8=9
     T__9=10
     T__10=11
-    IDENTIFIER=12
-    INT=13
-    WS=14
-    COMMENT=15
+    T__11=12
+    T__12=13
+    T__13=14
+    T__14=15
+    IDENTIFIER=16
+    INT=17
+    WS=18
+    COMMENT=19
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
@@ -166,6 +175,49 @@ class TREParser ( Parser ):
                 return visitor.visitChildren(self)
 
 
+    class RenameExprContext(ExprContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a TREParser.ExprContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def atomic_expr(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(TREParser.Atomic_exprContext)
+            else:
+                return self.getTypedRuleContext(TREParser.Atomic_exprContext,i)
+
+        def expr(self):
+            return self.getTypedRuleContext(TREParser.ExprContext,0)
+
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitRenameExpr" ):
+                return visitor.visitRenameExpr(self)
+            else:
+                return visitor.visitChildren(self)
+
+
+    class IntersectionExprContext(ExprContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a TREParser.ExprContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def expr(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(TREParser.ExprContext)
+            else:
+                return self.getTypedRuleContext(TREParser.ExprContext,i)
+
+
+        def accept(self, visitor:ParseTreeVisitor):
+            if hasattr( visitor, "visitIntersectionExpr" ):
+                return visitor.visitIntersectionExpr(self)
+            else:
+                return visitor.visitChildren(self)
+
+
     class KleeneExprContext(ExprContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a TREParser.ExprContext
@@ -230,10 +282,10 @@ class TREParser ( Parser ):
         self.enterRecursionRule(localctx, 0, self.RULE_expr, _p)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 18
+            self.state = 25
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [12]:
+            if token in [16]:
                 localctx = TREParser.AtomicExprContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
@@ -252,26 +304,43 @@ class TREParser ( Parser ):
                 self.state = 10
                 self.match(TREParser.T__1)
                 pass
-            elif token in [6]:
+            elif token in [7]:
                 localctx = TREParser.TimedExprContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 12
-                self.match(TREParser.T__5)
+                self.match(TREParser.T__6)
                 self.state = 13
                 self.expr(0)
                 self.state = 14
-                self.match(TREParser.T__6)
-                self.state = 15
                 self.match(TREParser.T__7)
+                self.state = 15
+                self.match(TREParser.T__8)
                 self.state = 16
                 self.interval()
+                pass
+            elif token in [10]:
+                localctx = TREParser.RenameExprContext(self, localctx)
+                self._ctx = localctx
+                _prevctx = localctx
+                self.state = 18
+                self.match(TREParser.T__9)
+                self.state = 19
+                self.atomic_expr()
+                self.state = 20
+                self.match(TREParser.T__10)
+                self.state = 21
+                self.atomic_expr()
+                self.state = 22
+                self.match(TREParser.T__11)
+                self.state = 23
+                self.expr(1)
                 pass
             else:
                 raise NoViableAltException(self)
 
             self._ctx.stop = self._input.LT(-1)
-            self.state = 32
+            self.state = 42
             self._errHandler.sync(self)
             _alt = self._interp.adaptivePredict(self._input,2,self._ctx)
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
@@ -279,59 +348,72 @@ class TREParser ( Parser ):
                     if self._parseListeners is not None:
                         self.triggerExitRuleEvent()
                     _prevctx = localctx
-                    self.state = 30
+                    self.state = 40
                     self._errHandler.sync(self)
                     la_ = self._interp.adaptivePredict(self._input,1,self._ctx)
                     if la_ == 1:
                         localctx = TREParser.ConcatExprContext(self, TREParser.ExprContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 20
-                        if not self.precpred(self._ctx, 5):
+                        self.state = 27
+                        if not self.precpred(self._ctx, 6):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 5)")
-                        self.state = 21
-                        self.match(TREParser.T__2)
-                        self.state = 22
-                        self.expr(6)
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 6)")
+                        self.state = 28
+                        self.match(TREParser.T__3)
+                        self.state = 29
+                        self.expr(7)
                         pass
 
                     elif la_ == 2:
                         localctx = TREParser.UnionExprContext(self, TREParser.ExprContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 23
-                        if not self.precpred(self._ctx, 2):
-                            from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 2)")
-                        self.state = 24
-                        self.match(TREParser.T__4)
-                        self.state = 25
-                        self.expr(3)
-                        pass
-
-                    elif la_ == 3:
-                        localctx = TREParser.KleeneExprContext(self, TREParser.ExprContext(self, _parentctx, _parentState))
-                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 26
+                        self.state = 30
                         if not self.precpred(self._ctx, 4):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 4)")
-                        self.state = 27
-                        self.match(TREParser.T__3)
+                        self.state = 31
+                        self.match(TREParser.T__4)
+                        self.state = 32
+                        self.expr(5)
                         pass
 
-                    elif la_ == 4:
-                        localctx = TREParser.PlusExprContext(self, TREParser.ExprContext(self, _parentctx, _parentState))
+                    elif la_ == 3:
+                        localctx = TREParser.IntersectionExprContext(self, TREParser.ExprContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
-                        self.state = 28
+                        self.state = 33
                         if not self.precpred(self._ctx, 3):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 3)")
-                        self.state = 29
+                        self.state = 34
+                        self.match(TREParser.T__5)
+                        self.state = 35
+                        self.expr(4)
+                        pass
+
+                    elif la_ == 4:
+                        localctx = TREParser.KleeneExprContext(self, TREParser.ExprContext(self, _parentctx, _parentState))
+                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
+                        self.state = 36
+                        if not self.precpred(self._ctx, 7):
+                            from antlr4.error.Errors import FailedPredicateException
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 7)")
+                        self.state = 37
+                        self.match(TREParser.T__2)
+                        pass
+
+                    elif la_ == 5:
+                        localctx = TREParser.PlusExprContext(self, TREParser.ExprContext(self, _parentctx, _parentState))
+                        self.pushNewRecursionContext(localctx, _startState, self.RULE_expr)
+                        self.state = 38
+                        if not self.precpred(self._ctx, 5):
+                            from antlr4.error.Errors import FailedPredicateException
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 5)")
+                        self.state = 39
                         self.match(TREParser.T__4)
                         pass
 
              
-                self.state = 34
+                self.state = 44
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,2,self._ctx)
 
@@ -375,16 +457,16 @@ class TREParser ( Parser ):
         self.enterRule(localctx, 2, self.RULE_interval)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 35
-            self.match(TREParser.T__8)
-            self.state = 36
+            self.state = 45
+            self.match(TREParser.T__12)
+            self.state = 46
             self.match(TREParser.INT)
-            self.state = 37
-            self.match(TREParser.T__9)
-            self.state = 38
+            self.state = 47
+            self.match(TREParser.T__13)
+            self.state = 48
             self.match(TREParser.INT)
-            self.state = 39
-            self.match(TREParser.T__10)
+            self.state = 49
+            self.match(TREParser.T__14)
         except RecognitionException as re:
             localctx.exception = re
             self._errHandler.reportError(self, re)
@@ -422,7 +504,7 @@ class TREParser ( Parser ):
         self.enterRule(localctx, 4, self.RULE_atomic_expr)
         try:
             self.enterOuterAlt(localctx, 1)
-            self.state = 41
+            self.state = 51
             self.match(TREParser.IDENTIFIER)
         except RecognitionException as re:
             localctx.exception = re
@@ -446,19 +528,23 @@ class TREParser ( Parser ):
 
     def expr_sempred(self, localctx:ExprContext, predIndex:int):
             if predIndex == 0:
-                return self.precpred(self._ctx, 5)
+                return self.precpred(self._ctx, 6)
          
 
             if predIndex == 1:
-                return self.precpred(self._ctx, 2)
-         
-
-            if predIndex == 2:
                 return self.precpred(self._ctx, 4)
          
 
-            if predIndex == 3:
+            if predIndex == 2:
                 return self.precpred(self._ctx, 3)
+         
+
+            if predIndex == 3:
+                return self.precpred(self._ctx, 7)
+         
+
+            if predIndex == 4:
+                return self.precpred(self._ctx, 5)
          
 
 
