@@ -17,13 +17,11 @@ def slice_volume(node: TREParser.ExprContext, n, vis=None, debug_mode=False, deb
 
     node_text = node.getText()  # just for debugging
 
-
     # if not debug_container:
     #     debug_container = set()
 
     if not vis and debug_mode:
         vis = generate_syntax_tree(node)
-
 
     if isinstance(node, TREParser.AtomicExprContext):
         if n == 1:
@@ -42,18 +40,7 @@ def slice_volume(node: TREParser.ExprContext, n, vis=None, debug_mode=False, deb
         out = slice_volume(node.expr(0), n, vis=vis, debug_mode=debug_mode, debug_container=debug_container) + slice_volume(node.expr(1), n, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
 
     elif isinstance(node, TREParser.ConcatExprContext):
-        out = VolumePoly()  # the zero poly
-
-        # discrete convolution
-        for i in range(n + 1):
-            # continuous convolution - ** is overloaded with convolution of two piecewise poly objects
-
-            v1 = slice_volume(node.expr(0), i, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
-            v2 = slice_volume(node.expr(1), n - i, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
-
-            intermediate_poly = v1 ** v2
-
-            out += intermediate_poly
+        out = hybrid_conv(node.expr(0), node.expr(1),n,vis, debug_mode, debug_container)
 
     elif isinstance(node, TREParser.TimedExprContext):
         child_volume = slice_volume(node.expr(), n, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
@@ -64,7 +51,6 @@ def slice_volume(node: TREParser.ExprContext, n, vis=None, debug_mode=False, deb
         out = child_volume
 
     elif isinstance(node, TREParser.KleeneExprContext):
-        # TODO there might still be a way to save some computations with something like fast quaring
         expr = node.expr()
 
         # this is a bit tricky: we don't want to even enter the loop below for n == 0, it is just delta.
@@ -74,22 +60,16 @@ def slice_volume(node: TREParser.ExprContext, n, vis=None, debug_mode=False, deb
 
         # Otherwise it is the zero poly and gets the other stuff added
         else:
-            out = VolumePoly()
+            out = hybrid_conv(expr, node,n,vis, debug_mode, debug_container, is_kleene=True)
 
-        for i in range(0, n + 1):
-
-            # this is the case where no intervals survive, since V(e, 0) is 0 everywhere -> skip this.
-            # This is due to the assumption that epsilon is not in expr.
-            if i == 0:
-                continue
-
-            # continuous convolution - unfolding one e from e**. TODO fast squaring would have to happen with two "node" inputs, right? but what is the base case?
-            v1 = slice_volume(expr, i, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
-            v2 = slice_volume(node, n - i, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
-
-            intermediate_poly = v1 ** v2
-
-            out += intermediate_poly
+    elif isinstance(node, TREParser.PlusExprContext):
+        raise NotImplementedError('exp+ is not supported yet.')
+        # TODO the below is wrong! In the levels below we can't use this node. We would need a kleene node
+        # expr = node.expr()
+        # if n == 0:
+        #     out = VolumePoly()
+        # else:
+        #     out = hybrid_conv(expr, node, n, vis, debug_mode, debug_container, is_kleene=True)
 
     else:
         raise Exception("Bad state.")
@@ -97,25 +77,48 @@ def slice_volume(node: TREParser.ExprContext, n, vis=None, debug_mode=False, deb
     out.exp = node.getText()
     out.n = n
 
-    # if cache:
-    #     cache[(n,node)] = out
-
     if debug_mode:
         print(f"n = {n}\t\t node = {node.getText()}\t\t poly = {out}")
 
         print(f"node = {node_text}, n = {n}")
         highlight_node(vis, str(node), comment=f"n = {n}, p/T) = {out}")
 
-    # cond = isinstance(node, )
+    # cond = isinstance(node, ) TODO maybe create a check here to catch bad polys
     # assert not cond or out.is_cont(), "Encountered a VolumePoly that should be continuous but isn't."
 
     assert not delta_and_function(out)
 
     return out
 
+def hybrid_conv(node1, node2, n, vis=None, debug_mode=False, debug_container = None, is_kleene = False):
+    out = VolumePoly()  # the zero poly
 
-def hybrid_concatenation(node1, node2, n, is_kleene = False):
-    pass
+
+
+    # there is a weird case when concatenating two expressions which admit epsilon, and n = 0. Just return delta here.
+    v1_0 = slice_volume(node1, 0, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
+    v2_0 = slice_volume(node2, 0, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
+
+    if n == 0 and v1_0.delta and v2_0.delta:
+        return VolumePoly(delta=True)
+
+    # discrete convolution
+    for i in range(n + 1):
+        # continuous convolution - ** is overloaded with convolution of two piecewise poly objects
+
+        # For kleene, this is the case where no intervals survive, since V(e, 0) is 0 everywhere -> skip this.
+        # This is due to the assumption that epsilon is not in expr.
+        if is_kleene and i == 0:
+            continue
+
+        v1 = slice_volume(node1, i, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
+        v2 = slice_volume(node2, n - i, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
+
+        intermediate_poly = v1 ** v2
+
+        out += intermediate_poly
+
+    return out
 
 
 # some debugging checks

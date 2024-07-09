@@ -770,6 +770,8 @@ def continuous_convolution(v1:VolumePoly, v2:VolumePoly)-> VolumePoly:
     out.simplify()
     # out.fancy_print()
 
+    assert not out.delta
+
     return out
 
 

@@ -2,11 +2,12 @@ grammar TRE;
 
 expr : atomic_expr								#AtomicExpr
 	 | '(' expr ')'								#ParenExpr
-     | expr '.' expr							#ConcatExpr
      | expr '*'									#KleeneExpr
+     | expr '.' expr							#ConcatExpr
      | expr '+'									#PlusExpr
      | expr '+' expr							#UnionExpr
      | '<' expr '>' '_' interval				#TimedExpr
+//     | '{' atomic_expr ':' atomic_expr '}'		#RenameExpr
      ;
 
 interval : '[' INT ',' INT ']';

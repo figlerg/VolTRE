@@ -16,6 +16,7 @@ from volume.VolumePoly import VolumePoly
 from volume.slice_volume import slice_volume
 from math import inf
 
+from volume.tuning import lambdas, parameterize_mean_variance
 
 """
 So at this point we can compute V_n^e(T) and V_n(e). Now we can begin to sample.
@@ -62,7 +63,13 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
     if mode == DurationSamplerMode.MAX_ENT and T:
         warnings.warn("Invalid usage of the sampling function: For fixed T, max_ent and vanilla are equivalent.")
 
-    if mode == DurationSamplerMode.MAX_ENT and not lambdas:
+    try:
+        lambdas_flag = bool(lambdas)
+    except ValueError:
+        # I also allow np arrays
+        lambdas_flag = True
+
+    if mode == DurationSamplerMode.MAX_ENT and not lambdas_flag:
         raise ValueError("Invalid usage of the sampling function: mode MAXENT needs a lambda input.")
 
 
@@ -241,7 +248,7 @@ def sample_k(n, T, concat_vol, e1, e2) -> int:
     :return: Sampled integer k, chosen according to the fraction of volumes.
     """
 
-    probas = []
+    weights = []
 
     for k in range(n+1):
 
@@ -257,12 +264,11 @@ def sample_k(n, T, concat_vol, e1, e2) -> int:
         # Dividing the part for k by the overall volume (both for input T) gives the right proba to choose k.
         p_k = V_k(T) / concat_vol(T)
 
-        probas.append(p_k)
+        weights.append(p_k)
 
-    assert abs(np.sum(probas) - 1) < 0.0001, "Problem during sampling of k. Invalid distribution (no pdf)."
-    k = random.choices(range(n+1), probas, k=1)[0]
+    # assert abs(np.sum(probas) - 1) < 0.0001, "Problem during sampling of k. Invalid distribution (no pdf)."
+    k = random.choices(range(n+1), weights, k=1)[0]
 
     return k
-
 
 

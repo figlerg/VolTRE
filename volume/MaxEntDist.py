@@ -30,6 +30,8 @@ class MaxEntDist:
         # compared to VolumePoly we have an additional exp term in the weight function (so integrals change)
         self.exp_term = build_exp_term(self.lambdas)
 
+        self.normalised = False
+
     def __hash__(self):
         return hash((self.volume, self.exp_term))
 
@@ -102,51 +104,6 @@ class MaxEntDist:
         # Create a colormap
         cmap = plt.get_cmap('tab10')  # You can choose any colormap you prefer
 
-
-        ## TODO for TAkiller and n=10 we get strange incontinuities. But i think they might be correct
-        # def f(val):
-        #     for (a,b), p in self.volume.pairs:
-        #         if a <= val < b:
-        #             fun = lambdify(v, p(v)*self.exp_term.subs(T,v), modules=['scipy', 'numpy'])
-        #             return fun(val)
-        #
-        #     return 0
-        #
-        # self.volume.plot()
-        # x = np.linspace(1.95, 2.05, 1000)
-        #
-        # # Evaluate the function at each point
-        # y = [f(point) for point in x]
-        #
-        # plt.plot(x,y)
-        # plt.title(f'Lambdified function on all intervals')
-        # plt.show()
-        #
-        #
-        #
-        # p1 = tuple(self.volume.pairs)[2][1]
-        # y = [p1(point) for point in x]
-        #
-        # plt.plot(x,y)
-        # plt.title(f'Left poly {p1}')
-        # plt.show()
-        #
-        # p2 = tuple(self.volume.pairs)[3][1]
-        # y = [p2(point) for point in x]
-        #
-        # plt.plot(x,y)
-        # plt.title(f'Right poly {p2}')
-        # plt.show()
-        #
-        # g = lambda t: self.exp_term.subs(T,t).evalf()
-        # y = [g(point) for point in x]
-        #
-        # plt.plot(x,y)
-        # plt.title(f'Exp term {self.exp_term}')
-        # plt.show()
-
-
-
         for i, ((a, b), term) in enumerate(self.pairs):
             f = lambdify(v, term, modules=['scipy', 'numpy'])
 
@@ -155,28 +112,11 @@ class MaxEntDist:
                 b = a + 3  # just to see something, I arbitrarily visualize a little bit of the inf interval
                 inf_flag = True
 
-            # if i:
-            #     last_y = term.subs(v,b)
-            #     last_x = b
-            # else:
-            #     last_y = 0
-
             # Generate points within the interval
             x = np.linspace(a, b, num_points)
 
             # Evaluate the function at each point
             y = [f(point) for point in x]
-
-            # eps = 1e-5
-            # incontinuity = abs(term.subs(v,a)-last_y).evalf()
-            # assert incontinuity < eps, f'Encountered an inconctinuity - error is {incontinuity}.'
-
-
-
-            ## strictly speaking, at the border points we want something like the sum of the two polys.
-            ## under the assumption that we get continuous volumes, we can do the below.
-            # if self.n not in [0,1]:
-            #     plt.scatter(x[-1], 2*y[-1], color = 'black', s = 6)
 
             # Get color from the colormap TODO - they mix and it looks bad/confusing
             color = cmap(
@@ -221,9 +161,16 @@ class MaxEntDist:
         plt.ylim(bottom=min(0, plt.ylim()[0]), top=max(0, plt.ylim()[1]))
 
         plt.xlabel('T')
-        plt.ylabel(r'$e^{\lambda_1 T + ... + \lambda_m T^m}V^e_{n}(T)$       ', rotation=0)
+
+        if not self.normalised:
+            plt.ylabel(r'$e^{\lambda_1 T + ... + \lambda_m T^m}V^e_{n}(T)$       ', rotation=90)
+        # I give an option to fix the label for an actual pdf
+        else:
+            plt.ylabel(r'$\frac{e^{\lambda_1 T + ... + \lambda_m T^m}V^e_{n}(T)} '
+                       r'{\int_0^\infty e^{\lambda_1 T_1 + ... + \lambda_m T_1^m}V^e_{n}(T_1 dT_1)}$       ', rotation=90)
+
         if self.volume.exp and self.volume.n:
-            plt.title(f'MaxEnt Sol.:\ne = {self.volume.exp}, n = {self.volume.n}.')
+            plt.title(f'MaxEnt Solution\ne = {self.volume.exp}, n = {self.volume.n}.')
         # plt.legend()
         plt.grid(False)  # Remove background lattice
         plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
@@ -231,6 +178,62 @@ class MaxEntDist:
 
         if not no_show:
             plt.show()
+
+    def eval_plot(self, no_show=False):
+        """
+        For debugging it is useful to lambdify the whole function and plot that. Basically a check for .plot().
+        """
+        num_points = 400
+
+        # Create a colormap
+        cmap = plt.get_cmap('tab10')  # You can choose any colormap you prefer
+
+        # basically lambdified piecewise function
+        def f(val):
+            for (a,b), p in self.volume.pairs:
+                if a <= val < b:
+                    fun = lambdify(v, p(v)*self.exp_term.subs(T,v), modules=['scipy', 'numpy'])
+                    return fun(val)
+
+            return 0
+
+        self.volume.plot()
+        x = np.linspace(0, self.volume.intervals[-1][1], num_points)
+
+        # Evaluate the function at each point
+        y = [f(point) for point in x]
+
+
+        plt.plot(x,y)
+        plt.title(f'Lambdified $V_n^{self.volume.exp}')
+        plt.show()
+
+
+
+        p1 = tuple(self.volume.pairs)[2][1]
+        y = [p1(point) for point in x]
+
+        plt.plot(x,y)
+        plt.title(f'Left poly {p1}')
+        plt.show()
+
+        p2 = tuple(self.volume.pairs)[3][1]
+        y = [p2(point) for point in x]
+
+        plt.plot(x,y)
+        plt.title(f'Right poly {p2}')
+        plt.show()
+
+        g = lambda t: self.exp_term.subs(T,t).evalf()
+        y = [g(point) for point in x]
+
+        plt.plot(x,y)
+        plt.title(f'Exp term {self.exp_term}')
+
+        if not no_show:
+            plt.show()
+
+
 
     # SAMPLING
 
@@ -241,7 +244,9 @@ class MaxEntDist:
         :return: A normalized MaxEntDist
         """
         div_factor = 1 / self.normalising_term
-        return self * div_factor
+        pdf = self * div_factor
+        pdf.normalised = True
+        return pdf
 
     @cached_property
     def cdf(self) -> FreePiecewise:
