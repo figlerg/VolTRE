@@ -1,19 +1,14 @@
-from functools import lru_cache
-
-import sympy as sp
 import numpy as np
-from scipy.integrate import quad
-from scipy.optimize import least_squares, root
+from scipy.optimize import root
 
 from parse.quickparse import quickparse
 # from sample.sample import sample, DurationSamplerMode
-from volume.FreePiecewise import FreePiecewise
 from volume.VolumePoly import VolumePoly
 
-from sympy import symbols, exp, integrate, oo, Integral, Poly, sympify, solve, solveset, Expr, lambdify
-from sympy.abc import T, v
+from sympy import exp, oo, Expr
+from sympy.abc import T
 
-from volume.misc import num_int_evalf
+from misc.helpers import num_int_evalf
 from volume.slice_volume import slice_volume
 
 """

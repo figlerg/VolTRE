@@ -8,6 +8,8 @@ class TimedWord:
     """
 
     def __init__(self, symbols : list, delays : list):
+        assert len(symbols) == len(delays), ("Tried to instantiate an invalid timed word. "
+                                             "Symbols and delays need to have same length.")
         self.symbols = symbols
         self.delays = delays
 
@@ -20,12 +22,23 @@ class TimedWord:
         return TimedWord(self.symbols + other.symbols, self.delays + other.delays)
 
     def __str__(self):
-        return str(tuple(zip(self.symbols, self.delays)))
+        if self:
+            return str(tuple(zip(self.symbols, self.delays)))
+        else:
+            return 'EPS'
 
     def __iter__(self):
         return zip(self.symbols, self.delays)
 
+    def __bool__(self):
+        return bool(self.symbols)
+
     def __getitem__(self, item):
+
+        if isinstance(item, slice):
+            # Get the start, stop, and step from the slice
+            return TimedWord(self.symbols[item], self.delays[item])
+
         return tuple(self.__iter__())[item]
 
     @property
@@ -37,6 +50,9 @@ class TimedWord:
     def duration(self):
         assert len(self.symbols) == len(self.delays), "Invalid timed word."
         return sum(self.delays)
+
+    def is_epsilon(self):
+        return not bool(self.symbols)
 
     @property
     def dates(self):
@@ -77,6 +93,11 @@ class TimedWord:
             index.append(sigma_inv[i] + 1)
 
         return tuple(index)
+
+    def apply_renaming(self, rename_map:dict):
+        for i, s in enumerate(self.symbols):
+            self.symbols[i] = rename_map[s]
+
 
 # helper to infer the permutation
 def infer_permutation(a, b):

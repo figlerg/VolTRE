@@ -5,6 +5,26 @@ Playground for volume based sampling method for timed regular expressions.
 
 ## Meetings
 
+### 12.07.
+new ideas:
+- [x] top level intersection (sampling)
+- [ ] top level renaming (sampling)
+- [x] need rejection sampling for the sampling of above
+  - [x] need matching algo for rejection sampling
+- [x] inductive counting of ways of matching a word
+- [x] -> can be used for sampling ambiguous expressions (5 sided dice simulation idea)
+
+
+Update 15.07: 
+Let UTRE' be unambiguous TRE without intersection and renaming. TRE' can be ambiguous but also doesn't have intersection and renaming. Then we currently can do this:
+
+|                           | UTRE'   | UTRE' + top level renaming | UTRE' + top level intersection | UTRE' + both at top? | TRE' |
+| ------------------------- | ------- | -------------------------- | ------------------------------ | -------------------- | ---- |
+| Volume computation        | yes     | ?                          | no                             | ?                    | no   |
+| Exact sampling (1shot)    | yes     | ?                          | no                             | ?                    | no   |
+| Rejection sampling        | trivial | ?                          | yes (for fixed T)              | ?                    | no   |
+| Russian roulette sampling | trivial | ?                          | no                             | ?                    | yes  |
+
 
 ### 25.06. experiments, comp with wordgen
 

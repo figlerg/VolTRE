@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/04 Volume Theorem + Proof.md",
+                "file": "README.md",
                 "mode": "source",
                 "source": false
               }
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "notes/04 Volume Theorem + Proof.md",
+                "file": "README.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "notes/04 Volume Theorem + Proof.md",
+                "file": "README.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "notes/04 Volume Theorem + Proof.md"
+                "file": "README.md"
               }
             }
           }
@@ -148,9 +148,18 @@
   },
   "active": "cffc3244dfc35319",
   "lastOpenFiles": [
+    "parse/TRE.g4~",
+    "sample/sample.py~",
+    "misc/disambiguate.py~",
+    "README.md~",
+    "main.py~",
+    "experiments/spec_09_ambig.tre~",
+    "experiments/spec_09_ambig.tre",
+    "sample/TimedWord.py~",
+    "notes/01 Formalising the Volumes.md",
+    "notes/04 Volume Theorem + Proof.md",
     "notes/03 Status Update April.md",
     "notes/02 Maximum Entropy and Uniformness.md",
-    "notes/01 Formalising the Volumes.md",
     "notes/Pasted image 20230216154550.png",
     "notes/Pasted image 20230216154354.png",
     "notes/Pasted image 20230216153245.png",
@@ -163,16 +172,8 @@
     "notes/Pasted image 20240320173001.png",
     "notes/05 Update 2 June.pdf",
     "notes/05 Update 2 June.md",
-    "notes/04 Volume Theorem + Proof.md",
     "volume/VolumePoly.py~",
     "vis_experiments/bad_testcases/weird_conv/functions.txt",
-    "vis_experiments/bad_testcases/weird_conv/Neues Textdokument.txt",
-    "vis_experiments/bad_testcases/weird_conv/v1_v2_conv",
-    "vis_experiments/bad_testcases/weird_conv",
-    "vis_experiments/bad_testcases/Neuer Ordner",
-    "main.py~",
-    "volume/slice_volume.py~",
-    "experiments/TAkiller.tre~",
     "README.md",
     "notes/Update 2 June.md"
   ]

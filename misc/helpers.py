@@ -123,3 +123,10 @@ def my_eval(expr):
 @lru_cache
 def cached_lambdify(expr):
     return lambdify(T, expr, modules=['scipy', 'numpy'])
+
+
+class BudgetExhaustedException(Exception):
+    """Exception raised when a budget is exhausted and no solution has been found."""
+    def __init__(self, message="Budget exhausted without finding a solution."):
+        self.message = message
+        super().__init__(self.message)

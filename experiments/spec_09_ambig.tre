@@ -1,0 +1,3 @@
+# testing the sampling for ambiguous expressions (russian roulette)
+
+<a*>_[0,3] + (<a + b>_[0,1])*

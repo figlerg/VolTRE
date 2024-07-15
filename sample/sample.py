@@ -3,6 +3,9 @@ import warnings
 import numpy as np
 from antlr4 import ParserRuleContext
 
+from match.match import match
+from misc.disambiguate import disambiguate
+from misc.helpers import BudgetExhaustedException
 from parse.TREParser import TREParser
 
 import random  # i haven't used numpy anywhere, wo why not (maybe it is imported with sympy though)
@@ -10,6 +13,7 @@ from enum import Enum, auto
 
 from sympy.abc import x,y,z
 
+from parse.quickparse import quickparse
 from sample.TimedWord import TimedWord
 from volume.MaxEntDist import MaxEntDist
 from volume.VolumePoly import VolumePoly
@@ -104,7 +108,7 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
     match node_type:
 
         case TREParser.AtomicExprContext:
-            assert n == 1, f"Problem during parsing: Cannot sample letter {node_type.getText()} with {n} letters."
+            assert n == 1, f"Problem during parsing: Cannot sample letter {node.getText()} with {n} letters."
 
             return TimedWord([node.getText(),], [T,])
 
@@ -167,14 +171,47 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
             return concat_sampling(node, e1, e2, n, T)
 
         case TREParser.IntersectionExprContext:
+            node: TREParser.IntersectionExprContext
             warnings.warn("Sampling for intersection and renaming is experimental and may not terminate.")
-            raise NotImplementedError
+
+            """
+            We cannot use the normal method for intersection, since intersection doesn't work with how we compute 
+            volumes. But if the intersection is at the top level only (which is checked above), we can do a trick:
+            Simply sample in one of them and do rejection sampling with membership in the other Language.
+            """
+
+            e1, e2 = node.expr(0), node.expr(1)
+            vol1, vol2 = slice_volume(e1, n), slice_volume(e2,n)
+
+            # we do not randomly select the subexpression: instead choose smaller vol and check membership in other
+            #  (actually we do not care about the order all that much for sampling, but it might be faster)
+            pick1 = vol1(T) < vol2(T)
+            if not pick1:
+                e1, e2 = e2, e1
+
+            budget = 100  # TODO should probably be a param
+
+            counter = 0  # TODO maybe print rejection rate? with this we can estimate the volume of intersection
+            for _ in range(budget):
+                w = sample(e1, n, T, mode=mode, lambdas=lambdas, top=False)
+
+                if match(w, e2):
+                    counter += 1
+                return w
+
+            # print(f"ratio is {counter/budget}")
+            # return w
+            raise BudgetExhaustedException(f"Sampling for intersection failed with budget = {budget} rejections."
+                                           f"The intersection might be empty or small.")
+
 
         case TREParser.RenameExprContext:
+            node: TREParser.RenameExprContext
             warnings.warn("Sampling for intersection and renaming is experimental and may not terminate.")
+
+            expr = node.expr()
+
             raise NotImplementedError
-
-
 
 
 def concat_sampling(node, e1:TREParser.ExprContext, e2:TREParser.ExprContext, n, T):
@@ -269,4 +306,36 @@ def sample_k(n, T, concat_vol, e1, e2) -> int:
 
     return k
 
+def sample_ambig(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = DurationSamplerMode.VANILLA,
+                 lambdas = None, top = True):
+    """
+    Let phi be the original spec (node in code) and phi' be the disambiguated phi.
+        f(phi') = phi
+    and in other words
+        w' in phi' => f(w') in phi.
 
+    Then let
+    """
+
+
+    # create string of phi' from phi. also get f during this process
+    # TODO actually I only need to do this once, so I should extract this somewhere.
+    #  I don't do it yet, because it complicates calling this function. I will probably do a sample_n wrapper function
+    #  somewhere, where I can create f once and reuse it.
+    dis_str, f = disambiguate(node, return_inverse_map=True)
+
+    # parse the string again to get the syntax tree of phi'
+    phi_dis = quickparse(dis_str, string=True)
+
+    # print(f"Transformed phi = {node.getText()} to phi' = {phi_dis.getText()} for russian roulette sampling.")
+
+    while True:
+        # now we pick a regular sample from the disambiguous version with the same sampling parameters
+        w = sample(node = phi_dis, n = n, T=T, mode = mode, lambdas = lambdas)
+
+        # use the inverse renaming to get a word in the non renamed language
+        w.apply_renaming(rename_map=f)
+
+        # accept with proba 1/#matches of w in phi
+        if random.random() < 1/match(w,node):
+            return w

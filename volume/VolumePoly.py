@@ -13,7 +13,7 @@ from sympy.polys import Poly
 from sympy.abc import T, t, x  # I will treat T as the slice duration, and t as the variable in convolutions.
 
 # this is my code
-from volume.misc import intersect, length, interval_convolution, determine_convolution_case, ConvolutionCase
+from misc.helpers import intersect, length, interval_convolution, determine_convolution_case, ConvolutionCase
 
 
 

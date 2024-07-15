@@ -1,11 +1,10 @@
 import random
 import warnings
-from functools import lru_cache, cached_property
+from functools import cached_property
 
 import numpy as np
 from matplotlib import pyplot as plt, ticker
 from mpmath import findroot
-from scipy.integrate import quad
 from sympy import Expr
 from sympy import lambdify
 from sympy import oo, Integral, sympify
@@ -13,7 +12,7 @@ from sympy.abc import T, v
 
 from volume.FreePiecewise import FreePiecewise
 from volume.VolumePoly import VolumePoly
-from volume.misc import cached_lambdify, num_int_evalf
+from misc.helpers import cached_lambdify, num_int_evalf
 from volume.tuning import build_exp_term, normalising_constant
 from typing import Iterable
 
