@@ -1,0 +1,3 @@
+# this is an obvious syntax error for the tests - should fail (the concatenation dot is missing)
+
+a <b>_[1,2]

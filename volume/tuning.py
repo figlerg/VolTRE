@@ -129,14 +129,12 @@ def lambdas(target_mu: np.array, vol: VolumePoly):
 
     res = lambda lambda_vector: residuals(mu(lambda_vector,vol,m=k), target_mu)
 
-    # TODO TODO TODO this needs to be the jacobian of the loss function MSE! this should include the residuals?
-
     # J = lambda lambda_vector: jacobi(lambda_vector, vol, l) @ np.diag(res(mu(lambda_vector, v)))
     #
     # result = least_squares(res, x0, jac=J)
 
     J = lambda x: jacobi(x, vol, l)
-    result = root(res, x0,jac = J, tol=1e-14)
+    result = root(res, x0, jac = J, tol=1e-14)
     # result = root(res, x0,jac = J, method='broyden1', options={'fatol':1e-6}, tol=1e-14)
     # result = root(res, x0,jac = J, method='lm', options={'ftol':1e-10}, tol=1e-14)
 

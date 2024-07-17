@@ -40,7 +40,8 @@ from volume.tuning import mu, jacobi, lambdas, parameterize_mean_variance
 # ctx = quickparse(join('experiments', 'TAkiller_Subfamily.STAR_5_gen.tre'))
 # ctx = quickparse(join('experiments', 'spec_07_intersection.tre'))
 # ctx = quickparse(join('experiments', 'spec_08_renaming.tre'))
-ctx = quickparse(join('experiments', 'spec_09_ambig.tre'))
+# ctx = quickparse(join('experiments', 'spec_09_ambig.tre'))
+ctx = quickparse(join('experiments', 'spec_10_noparse.tre'))
 
 
 print(ctx.getText())
@@ -51,21 +52,24 @@ print(ctx.getText())
 
 
 def experiment():
-    random.seed(42)
+    random.seed(1)
 
-    n = 3
-    T = 0.7
+    n = 10
+    T = 6
+    nr_samples = 5
 
     # V = slice_volume(ctx, n)
     # V.fancy_print()
     # V.plot()
-    #
 
-    for _ in range(10):
-        w = sample_ambig(ctx, n)
+    for i in range(nr_samples):
+        w = sample_ambig(ctx, n, T=T)
         print(w)
 
-
+    # for i in range(10):
+    #     # w = sample_ambig(ctx, n, T)
+    #     w = sample(ctx, n, T=T)
+    #     print(f"w = {w}")
 
 
 

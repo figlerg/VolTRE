@@ -5,6 +5,11 @@ Playground for volume based sampling method for timed regular expressions.
 
 ## Meetings
 
+### 16.07
+use time generation with breach? alexandre donze
+- paper: application for testing, NFM20
+- idea: instead of sampling, enumerate points... eg find all the integer points of an expression (enumeration instead of sampling)
+
 ### 12.07.
 new ideas:
 - [x] top level intersection (sampling)

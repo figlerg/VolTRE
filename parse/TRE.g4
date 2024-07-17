@@ -1,5 +1,7 @@
 grammar TRE;
 
+file : expr EOF ;
+
 expr : atomic_expr																		#AtomicExpr
 	 | '(' expr ')'																		#ParenExpr
      | expr '*'																			#KleeneExpr
@@ -8,7 +10,7 @@ expr : atomic_expr																		#AtomicExpr
      | expr '+' expr																	#UnionExpr
      | expr '&' expr																	#IntersectionExpr
      | '<' expr '>' '_' interval														#TimedExpr
-     | '{' (rename_token ',')* rename_token '}' expr		#RenameExpr
+     | '{' (rename_token ',')* rename_token '}' expr									#RenameExpr
      ;
 
 interval : '[' INT ',' INT ']';

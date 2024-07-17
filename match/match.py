@@ -100,7 +100,10 @@ def match(w:TimedWord, phi: TREParser.ExprContext) -> int:
         case _:
             raise NotImplementedError('Was a new grammar rule added?')
 
-    # print(f"N({phi.getText()}\t,\t{w})= {N}")
+    # if isinstance(phi, TREParser.TimedExprContext):
+    #     print(f"N({phi.getText()}\t,\t{w})= {N}")
+    #     print(w.dates)
+    #     print('')
 
     return N
 

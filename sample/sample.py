@@ -197,7 +197,7 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
 
                 if match(w, e2):
                     counter += 1
-                return w
+                    return w
 
             # print(f"ratio is {counter/budget}")
             # return w
@@ -329,6 +329,7 @@ def sample_ambig(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMod
 
     # print(f"Transformed phi = {node.getText()} to phi' = {phi_dis.getText()} for russian roulette sampling.")
 
+
     while True:
         # now we pick a regular sample from the disambiguous version with the same sampling parameters
         w = sample(node = phi_dis, n = n, T=T, mode = mode, lambdas = lambdas)
@@ -336,6 +337,14 @@ def sample_ambig(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMod
         # use the inverse renaming to get a word in the non renamed language
         w.apply_renaming(rename_map=f)
 
+
+        N = match(w,node)
+        print(w)
+        print(N)
+        # print([w.duration - d for d in w.dates[:-1]])
+        print([w.duration - d - w[-1][1] for d in w.dates[:-1]])
+        print('')
+
         # accept with proba 1/#matches of w in phi
-        if random.random() < 1/match(w,node):
+        if random.random() < 1/N:
             return w

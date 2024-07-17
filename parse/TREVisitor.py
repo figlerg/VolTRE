@@ -9,6 +9,11 @@ else:
 
 class TREVisitor(ParseTreeVisitor):
 
+    # Visit a parse tree produced by TREParser#file.
+    def visitFile(self, ctx:TREParser.FileContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by TREParser#ConcatExpr.
     def visitConcatExpr(self, ctx:TREParser.ConcatExprContext):
         return self.visitChildren(ctx)
@@ -61,6 +66,11 @@ class TREVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by TREParser#atomic_expr.
     def visitAtomic_expr(self, ctx:TREParser.Atomic_exprContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by TREParser#rename_token.
+    def visitRename_token(self, ctx:TREParser.Rename_tokenContext):
         return self.visitChildren(ctx)
 
 

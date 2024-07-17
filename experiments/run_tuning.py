@@ -30,6 +30,9 @@ V.fancy_print()
 ## find lambdas for a
 target_mean = 4
 target_variance = 1
+
+
+print(f"Set for target mean {target_mean} and target variance {target_variance}.")
 tuned_lambdas = parameterize_mean_variance(target_mean, target_variance, V)
 
 
@@ -43,6 +46,6 @@ durations = np.asarray([w.duration for w in samples])
 # print(durations)
 
 print(
-    f'Sampled {nr_samples} samples in {time.time() - t1}s. Set for target mean {target_mean} and target variance {target_variance}:')
+    f'Sampled {nr_samples} samples in {time.time() - t1}s.:')
 print(f"sample mean: {durations.mean()}")
 print(f"sample variance: {durations.var()}")

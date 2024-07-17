@@ -4,6 +4,8 @@ from parse.SyntaxError import HardSyntaxErrorStrategy
 from parse.TRELexer import TRELexer
 from parse.TREParser import TREParser
 
+from antlr4.error.ErrorStrategy import BailErrorStrategy, DefaultErrorStrategy
+
 
 def quickparse(parse_input, string=False) -> TREParser.ExprContext:
     """
@@ -25,7 +27,11 @@ def quickparse(parse_input, string=False) -> TREParser.ExprContext:
     stream = CommonTokenStream(lexer)
     parser = TREParser(stream)
     parser._errHandler = HardSyntaxErrorStrategy()
-    ctx = parser.expr()
+    # parser._errHandler = BailErrorStrategy()
+    # parser._errHandler = DefaultErrorStrategy()
+
+    # the top level is just axpr EOF so we always just return the expression (if it was a valid file)
+    ctx = parser.file_().expr()
 
     return ctx
 
