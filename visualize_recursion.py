@@ -6,10 +6,6 @@ from antlr4 import *
 from parse.TRELexer import TRELexer
 from parse.TREParser import TREParser
 from os.path import join
-
-import matplotlib.pyplot as plt
-import networkx as nx
-import pydot
 from networkx.drawing.nx_pydot import graphviz_layout
 
 # Function to generate syntax tree graph

@@ -1,10 +1,13 @@
+import math
 import random
 import warnings
 from functools import cached_property
 
+import mpmath
 import numpy as np
 from matplotlib import pyplot as plt, ticker
 from mpmath import findroot
+from scipy.integrate import IntegrationWarning
 from sympy import Expr
 from sympy import lambdify
 from sympy import oo, Integral, sympify
@@ -326,17 +329,25 @@ class MaxEntDist:
                 # Use mpmath.findroot to find the root within the specified interval THIS IS FASTEST
                 # TODO we have some numerical instability, it seems.
                 #      u = 0.999706564107641 can't find a solution for precision 1e-32, even though f(a) <= 0 <= f(b)
-                try:
-                    sol = findroot(f, (a, b), solver='anderson')
-                except ValueError:
-                    warnings.warn(f"Inverse sampling problem: Anderson solver failed for u = {u}.\n"
-                                  f"f(a) = {f(a)}, f(b) = {f(b)}. Falling back to bisection.")
-                    sol = findroot(f, (a, b), solver='bisect')
-                    # print(sol)
-                    # print("Plotting cdf...")
-                    # plt.axhline(y=u, color='r', linestyle='--')
-                    # cdf.plot(title = 'Sampling error - cdf')
-                    # plt.show()
+                if b == math.inf:
+                    b = 10000
+
+                # TODO right now I just ignore the integration warnings.
+                #  I should figure out a way to handle these differently
+                with warnings.catch_warnings():
+                    # warnings.filterwarnings("ignore", category=RuntimeWarning)
+                    warnings.filterwarnings("ignore", category=IntegrationWarning)
+                    try:
+                        sol = findroot(f, (a, b), solver='anderson')
+                    except (ValueError, ZeroDivisionError):
+                        # warnings.warn(f"Inverse sampling problem: Anderson solver failed for u = {u}.\n"
+                        #               f"f(a) = {f(a)}, f(b) = {f(b)}. Falling back to bisection.")
+                        sol = findroot(f, (a, b), solver='bisect')
+                        # print(sol)
+                        # print("Plotting cdf...")
+                        # plt.axhline(y=u, color='r', linestyle='--')
+                        # cdf.plot(title = 'Sampling error - cdf')
+                        # plt.show()
 
                 if a <= sol <= b:
                     # plt.plot(sol, u, 'ro')

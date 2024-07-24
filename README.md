@@ -5,6 +5,12 @@ Playground for volume based sampling method for timed regular expressions.
 
 ## Meetings
 
+### 23.07
+
+
+## ?
+3 recursions, ambiguity check, etc...
+
 ### 16.07
 use time generation with breach? alexandre donze
 - paper: application for testing, NFM20
@@ -23,12 +29,12 @@ new ideas:
 Update 15.07: 
 Let UTRE' be unambiguous TRE without intersection and renaming. TRE' can be ambiguous but also doesn't have intersection and renaming. Then we currently can do this:
 
-|                           | UTRE'   | UTRE' + top level renaming | UTRE' + top level intersection | UTRE' + both at top? | TRE' |
-| ------------------------- | ------- | -------------------------- | ------------------------------ | -------------------- | ---- |
-| Volume computation        | yes     | ?                          | no                             | ?                    | no   |
-| Exact sampling (1shot)    | yes     | ?                          | no                             | ?                    | no   |
-| Rejection sampling        | trivial | ?                          | yes (for fixed T)              | ?                    | no   |
-| Russian roulette sampling | trivial | ?                          | no                             | ?                    | yes  |
+|                        | UTRE' | UTRE' + renaming | UTRE' + top level intersection | TRE' |
+|------------------------|-------|------------------|--------------------------------| ---- |
+| Volume computation     | yes   |  TRE'            | no                             | no   |
+| Exact sampling (1shot) | yes   |  TRE'            | no                             | no   |
+| Rejection sampling     |       |  TRE'            | yes (for fixed T)              | no   |
+| Roulette sampling      |       |  TRE'            | no                             | yes  |
 
 
 ### 25.06. experiments, comp with wordgen

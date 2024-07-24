@@ -4,10 +4,11 @@ from enum import Enum
 from functools import lru_cache
 
 import sympy as sp
-from scipy.integrate import quad
+from scipy.integrate import quad, IntegrationWarning
 from sympy import lambdify, Expr
 from sympy.abc import T
 
+import warnings
 
 def check_int(interval):
     assert len(interval) == 2, "Intervals are not two-valued?"
@@ -113,7 +114,12 @@ def num_int_evalf(integrand:Expr, a, b, var = T):
 
     integrand_func = lambdify(var, integrand, modules=['scipy', 'numpy'])
     # noinspection PyTupleAssignmentBalance
-    s, err = quad(integrand_func, a, b)
+
+    # TODO maybe I can do something about the infinite integrals? Right now I just ignore all warnings
+    with warnings.catch_warnings():
+        # warnings.filterwarnings("ignore", category=RuntimeWarning)
+        warnings.filterwarnings("ignore", category=IntegrationWarning)
+        s, err = quad(integrand_func, a, b)
     return s
 
 @lru_cache
