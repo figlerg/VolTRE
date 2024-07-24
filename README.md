@@ -6,6 +6,20 @@ Playground for volume based sampling method for timed regular expressions.
 ## Meetings
 
 ### 23.07
+- Submission: 
+  - HSCC
+  - TACAS (strengthen with TA? go a bit further, inverse laplace transform etc.)
+- case studies
+  - tool tester
+    - RegEx usecase: create benchmarks, with dogan‘s tool. synthetic data generation. Learn
+    - Params from samples? As tester for specification miners! sample phi, learn phi‘, see if phi=phi‘
+  - cps testing
+  - language inclusion
+
+Things i could do right now: 
+- [ ] ambiguity checker
+- [ ] make a grammar rule for language inclusion and implement probabilistic subset check
+- [x] streamline sample container function
 
 
 ## ?

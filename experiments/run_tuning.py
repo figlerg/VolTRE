@@ -8,7 +8,7 @@ import numpy as np
 from scipy.integrate import IntegrationWarning
 
 from parse.quickparse import quickparse
-from sample.sample import sample, DurationSamplerMode
+from sample.sample import sample_unambig, DurationSamplerMode
 from volume.slice_volume import slice_volume
 from volume.tuning import parameterize_mean_variance
 
@@ -49,7 +49,7 @@ with warnings.catch_warnings():
     nr_samples = 1000
 
     t1 = time.time()
-    samples = [sample(ctx, n, mode=DurationSamplerMode.MAX_ENT, lambdas=tuned_lambdas) for i in range(nr_samples)]
+    samples = [sample_unambig(ctx, n, mode=DurationSamplerMode.MAX_ENT, lambdas=tuned_lambdas) for i in range(nr_samples)]
     durations = np.asarray([w.duration for w in samples])
     # print(samples)
     # print(durations)
