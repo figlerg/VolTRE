@@ -47,7 +47,11 @@ def rename(node:TREParser.ExprContext, ren_map = None) -> TREParser.ExprContext:
         case TREParser.TimedExprContext:
             node: TREParser.TimedExprContext
 
-            a,b = (int(node.interval().INT(0).getText()), int(node.interval().INT(1).getText()))
+            try:
+                a,b = (int(node.interval().INT(0).getText()), int(node.interval().INT(1).getText()))
+            except AttributeError:
+                a,b = (int(node.interval().INT(0).getText()), node.interval().INF().getText())
+
             expr: TREParser.ExprContext = node.expr()
 
             out = f"<{rename(expr, ren_map)}>_[{a},{b}]"

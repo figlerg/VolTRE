@@ -485,7 +485,7 @@ class VolumePoly:
     @cached_property
     def pdf(self):
         total = self.total_volume()
-        assert total != inf, "In the current state the tool can only sample T on a finite volume."
+        assert total != inf, "In vanilla mode the tool can only sample T on a finite volume."
         assert total, "Problem generating pdf. Is the language empty?"
         normalisation_factor = 1 / total
         out: VolumePoly = self * normalisation_factor

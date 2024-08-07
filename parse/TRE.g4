@@ -14,12 +14,13 @@ expr : EPS																				#EpsExpr
      | '{' (rename_token ',')* rename_token '}' expr									#RenameExpr
      ;
 
-interval : '[' INT ',' INT ']';
+interval : '[' INT ',' (INT | INF) ']';
 
 //atomic_expr : LETTER ;
 //LETTER : [a-zA-Z] ;
 
 EPS : 'EPS';
+INF : 'INF' | 'oo' | 'inf';
 
 atomic_expr : IDENTIFIER;
 rename_token : atomic_expr ':' atomic_expr;

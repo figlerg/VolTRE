@@ -46,7 +46,8 @@ from volume.tuning import mu, jacobi, lambdas, parameterize_mean_variance
 # ctx = quickparse(join('experiments', 'spec_10_noparse.tre'))
 # ctx = quickparse("experiments/spec_08_disambig.tre")
 # ctx = quickparse("experiments/spec_19_qest_subset.tre")
-ctx = quickparse("experiments/spec_20_ambig.tre")
+# ctx = quickparse("experiments/spec_20_ambig.tre")
+ctx = quickparse("experiments/spec_21_infint.tre")
 
 print(ctx.getText())
 ctx2 = rename(ctx)
@@ -73,7 +74,7 @@ def experiment():
 
     V = slice_volume(ctx, n)
     V.fancy_print()
-    # V.plot()
+    V.plot()
 
     counts = []
 
