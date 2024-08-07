@@ -1,0 +1,2 @@
+# subset example from qest. What were we trying to test there?
+< (a+b)*. a.<<(a+b)*.b>_[1,10].<(a+b)*.a>_[1,3] >_[0,3] >_[0,10]

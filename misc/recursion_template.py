@@ -13,8 +13,12 @@ node_type = type(node)
 
 match node_type:
 
-    case TREParser.AtomicExprContext:
+    case TREParser.EpsExprContext:
         raise NotImplementedError
+
+    case TREParser.AtomicExprContext:
+            node:TREParser.AtomicExprContext
+            raise NotImplementedError
 
     case TREParser.ParenExprContext:
         node: TREParser.ParenExprContext

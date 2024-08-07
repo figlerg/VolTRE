@@ -5,6 +5,24 @@ Playground for volume based sampling method for timed regular expressions.
 
 ## Meetings
 
+### 30.07 - last meeting in grenoble
+  - [ ] maybe use z3 to find counterexample for language inclusion? would be something in DNF, could directly generate a counterexample (this would be fun to try, but can explode since we can have exp many zones)
+  - nicolas added measure theory on sharelatex (+ theory to prove etc)
+  - todo with dejan: 
+    - advance on case studies and add to our paper
+    - think of example: ````a*<<a*>_[1,oo]b>[0,2```` in terms of volume estimate! compute the volumes for different n. make table with different T and n, then compare theoretical and estimated volumes. show effect of rejection (linear slowdown)
+
+### 25.07
+- volume estimation via rejection counts?
+  - [ ] intersection
+  - [x] ambiguous expression: generate with smart rejection + record counts of rejections
+  - [ ] intersection + ambiguity: INTERESTING because of the general case in asarin paper, transation from aut to tre. intersection + smart rejection: need to take care of renamings on both sides & #matches in intersection (for this we need to enumerate the matches in e1' \cap e2' instead of just counting). might be interesting because it enables us to directly sample TREs that we get after translating from TA
+- language inclusion as 1st case study
+  - [ ] how do these theoretical bounds work? is there an explanation for the qest paper stuff?
+  - [ ] as input take epsilon (error bound) and theta (confidence). Do 1000 samples, want 95% sure. tell me what the interval is where we are 99% sure.
+- comparing TRE vs TA
+
+
 ### 23.07
 - Submission: 
   - HSCC
@@ -17,10 +35,10 @@ Playground for volume based sampling method for timed regular expressions.
   - language inclusion
 
 Things i could do right now: 
-- [ ] ambiguity checker
+- ambiguity checker (not really needed)
 - [ ] make a grammar rule for language inclusion and implement probabilistic subset check
 - [x] streamline sample container function
-
+- [x] handle renaming nodes
 
 ## ?
 3 recursions, ambiguity check, etc...
@@ -33,7 +51,7 @@ use time generation with breach? alexandre donze
 ### 12.07.
 new ideas:
 - [x] top level intersection (sampling)
-- [ ] top level renaming (sampling)
+- [x] top level renaming (sampling)
 - [x] need rejection sampling for the sampling of above
   - [x] need matching algo for rejection sampling
 - [x] inductive counting of ways of matching a word

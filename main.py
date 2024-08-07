@@ -41,10 +41,12 @@ from volume.tuning import mu, jacobi, lambdas, parameterize_mean_variance
 # ctx = quickparse(join('experiments', 'TAkiller_Subfamily.STAR_3_gen.tre'))
 # ctx = quickparse(join('experiments', 'TAkiller_Subfamily.STAR_5_gen.tre'))
 # ctx = quickparse(join('experiments', 'spec_07_intersection.tre'))
-ctx = quickparse(join('experiments', 'spec_08_renaming.tre'))
+# ctx = quickparse(join('experiments', 'spec_08_renaming.tre'))
 # ctx = quickparse(join('experiments', 'spec_09_ambig.tre'))
 # ctx = quickparse(join('experiments', 'spec_10_noparse.tre'))
-
+# ctx = quickparse("experiments/spec_08_disambig.tre")
+# ctx = quickparse("experiments/spec_19_qest_subset.tre")
+ctx = quickparse("experiments/spec_20_ambig.tre")
 
 print(ctx.getText())
 ctx2 = rename(ctx)
@@ -61,25 +63,37 @@ def experiment():
     random.seed(42)
     np.random.seed(42)
 
-    n = 10
-    T = 1.7
-    nr_samples = 5
+
+    # print(disambiguate(ctx, return_inverse_map=True))
+
+
+    n = 1
+    # T = 1.7
+    nr_samples = 500
 
     V = slice_volume(ctx, n)
     V.fancy_print()
-    V.plot()
+    # V.plot()
+
+    counts = []
 
     with warnings.catch_warnings():
         warnings.filterwarnings("error", category=UserWarning)
 
         for i in range(nr_samples):
-            w = sample(ctx, n, T=T)
-            print(w)
+            # w, feedback = sample(ctx, n, T=T, feedback=True)
+            w, feedback = sample(ctx, n, feedback=True)
 
-    # for i in range(10):
-    #     # w = sample(ctx, n, T)
-    #     w = sample(ctx, n, T=T)
-    #     print(f"w = {w}")
+            counts.append(feedback.rej)  # the rejections of the smart rej sampling
+
+            # print(w)
+
+    # V_e/V_e' = nr_acc/nr_rej
+    v_est = V.total_volume()* (nr_samples/(sum(counts)+nr_samples))
+    print(f"V(e') =       \t{V.total_volume()}")
+    print(f"Accepted...   \t{nr_samples}")
+    print(f"Rejections... \t{sum(counts)}")
+    print(f"Volume estimate for {ctx.getText()}. n={n} is {v_est}.")
 
 
 

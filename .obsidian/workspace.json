@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/05 Update 2 June.md",
+                "file": "notes/idea_language_inclusion.md",
                 "mode": "source",
                 "source": false
               }
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "notes/05 Update 2 June.md",
+                "file": "notes/idea_language_inclusion.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "notes/05 Update 2 June.md",
+                "file": "notes/idea_language_inclusion.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "notes/05 Update 2 June.md"
+                "file": "notes/idea_language_inclusion.md"
               }
             }
           }
@@ -148,18 +148,20 @@
   },
   "active": "cffc3244dfc35319",
   "lastOpenFiles": [
-    "experiments/run_tuning.py~",
-    "README.md",
     "main.py~",
     "sample/sample.py~",
-    "match/match.py~",
-    "experiments/spec_00_test.tre~",
-    "tests/template.py~",
-    "tests/test_parse.py~",
-    "tests/template.py",
-    "misc/template.py",
-    "misc/__pycache__/test_template.cpython-312-pytest-8.2.2.pyc",
-    "misc/test_template.py",
+    "experiments/spec_19_qest_subset.tre",
+    "README.md~",
+    "venv/Lib/site-packages/pytest-8.3.1.dist-info/WHEEL",
+    "venv/Lib/site-packages/pytest-8.3.1.dist-info/top_level.txt",
+    "venv/Lib/site-packages/pytest-8.3.1.dist-info/REQUESTED",
+    "venv/Lib/site-packages/pytest-8.3.1.dist-info/RECORD",
+    "venv/Lib/site-packages/pytest-8.3.1.dist-info/METADATA",
+    "venv/Lib/site-packages/pytest-8.3.1.dist-info/LICENSE",
+    "venv/Lib/site-packages/pytest-8.3.1.dist-info/INSTALLER",
+    "notes/05 Update 2 June.md",
+    "notes/idea_language_inclusion.md",
+    "README.md",
     "notes/01 Formalising the Volumes.md",
     "notes/04 Volume Theorem + Proof.md",
     "notes/03 Status Update April.md",
@@ -174,7 +176,6 @@
     "notes/Pasted image 20230216145416.png",
     "notes/Pasted image 20230216135441.png",
     "notes/Pasted image 20240320173001.png",
-    "notes/05 Update 2 June.md",
     "notes/Update 2 June.md"
   ]
 }

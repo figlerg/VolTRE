@@ -1,4 +1,5 @@
 import warnings
+from collections import namedtuple
 
 import numpy as np
 from antlr4 import ParserRuleContext
@@ -40,6 +41,10 @@ I want to "sample downwards". So we start at top with a specific input (n,T) and
     - kleene star with input (n,T):
         - like convolution for e.e*
 """
+
+# Define the namedtuple
+Feedback = namedtuple('SampleFeedback', ['rej'])
+
 
 
 class DurationSamplerMode(Enum):
@@ -455,7 +460,8 @@ def sample_k(n, T, concat_vol, e1, e2) -> int:
 
     return k
 
-def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = DurationSamplerMode.VANILLA, lambdas = None, top = True):
+def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = DurationSamplerMode.VANILLA,
+           lambdas = None, top = True, feedback=False):
     """
         Here I implement the rejection sampling for the most general set of input expressions:
         I allow any (even ambiguous) expression, with intersection only at top level.
@@ -506,7 +512,7 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
 
     # print(f"Transformed phi = {node.getText()} to phi' = {phi_dis.getText()} for russian roulette sampling.")
 
-
+    rej = 0
     while True:
         # now we pick a regular sample from the disambiguous version with the same sampling parameters
         w = sample_unambig(node = phi_dis, n = n, T=T, mode = mode, lambdas = lambdas)
@@ -514,14 +520,16 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
         # use the inverse renaming to get a word in the non renamed language
         w.apply_renaming(rename_map=f)
 
-
+        # count the number of ways to read the generated word
         N = match(w,node)
-        # print(w)
-        # print(N)
-        # print([w.duration - d for d in w.dates[:-1]])
-        # print([w.duration - d - w[-1][1] for d in w.dates[:-1]])
-        # print('')
 
         # accept with proba 1/#matches of w in phi
         if random.random() < 1/N:
-            return w
+            out = w
+            break
+        rej += 1
+
+    if feedback:
+        return out, Feedback(rej=rej)
+
+    return out
