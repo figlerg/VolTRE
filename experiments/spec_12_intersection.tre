@@ -1,0 +1,2 @@
+# Nicolas' sick twin: try with n = 7 and T = 1.5, 2, 2.5, 3
+(< a.b >_[0, 1])* .a & a.( < b.a >_[0, 1])*

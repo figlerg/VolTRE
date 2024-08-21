@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 from parse.TREParser import TREParser
 import warnings
 
@@ -78,12 +76,25 @@ def disambiguate(node:TREParser.ExprContext, dis_map = None, return_inverse_map 
             out = f"{disambiguate(e1, dis_map)} & {disambiguate(e2, dis_map)}"
 
         case TREParser.RenameExprContext:
+            node: TREParser.RenameExprContext
             warnings.warn("Sampling for intersection and renaming is experimental and may not terminate.")
-            raise NotImplementedError
+
+            expr = node.expr()
+
+            tokens = [disambiguate(token, dis_map) for token in node.rename_token()]
+
+            out = f"{','.join(tokens)}{disambiguate(expr, dis_map)}"
+
+        case TREParser.Rename_tokenContext:
+            node: TREParser.Rename_tokenContext
+
+            a1, a2 = node.atomic_expr()
+            return f"{disambiguate(a1, dis_map)}:{disambiguate(a2, dis_map)}"
 
         case _:
             raise NotImplementedError("Encountered unknown rule in grammar. "
-                                      "Probably some recursion function needs an update for the new rule.")
+                                      "Probably some recursion function needs an update for the new rule."
+                                      f"Node type: {node_type}")
 
     # we also need the dictionary as an output in some cases
     if return_inverse_map:

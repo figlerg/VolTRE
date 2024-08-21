@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+import tqdm
 from antlr4 import ParserRuleContext
 
 from match.match import match
@@ -189,14 +190,18 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
             if not pick1:
                 e1, e2 = e2, e1
 
-            budget = 100  # TODO should probably be a param
+            budget = 1000  # TODO should probably be a param
 
             counter = 0  # TODO maybe print rejection rate? with this we can estimate the volume of intersection
-            for _ in range(budget):
+
+            iterator = tqdm.tqdm(range(budget),desc='Rejection sampling budget', position=0, ncols=80, leave=False)
+            for _ in iterator:
                 w = sample(e1, n, T, mode=mode, lambdas=lambdas, top=False)
 
+                counter += 1
                 if match(w, e2):
-                    counter += 1
+                    iterator.close()
+                    print(f"Accepted after: \t{counter} rejections")
                     return w
 
             # print(f"ratio is {counter/budget}")

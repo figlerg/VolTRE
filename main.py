@@ -13,6 +13,7 @@ import numpy as np
 
 from match.match import match
 from misc.disambiguate import disambiguate
+from parse.apply_renaming import apply_renaming
 from parse.quickparse import quickparse
 from sample.TimedWord import TimedWord
 from visualize_recursion import generate_syntax_tree, highlight_node
@@ -31,7 +32,7 @@ from volume.tuning import mu, jacobi, lambdas, parameterize_mean_variance
 
 
 # ctx = quickparse(join('experiments', 'spec_00_test.tre'))
-# ctx = quickparse('experiments/spec_08_disambig.tre')
+# ctx = quickparse('experiments/spec_11_disambig.tre')
 # ctx = quickparse(join('experiments', 'spec_00.tre'))
 # ctx = quickparse(join('experiments', 'spec_06.tre'))
 # ctx = quickparse(join('experiments', 'TAkiller.tre'))
@@ -41,8 +42,12 @@ from volume.tuning import mu, jacobi, lambdas, parameterize_mean_variance
 # ctx = quickparse(join('experiments', 'spec_07_intersection.tre'))
 # ctx = quickparse(join('experiments', 'spec_08_renaming.tre'))
 # ctx = quickparse(join('experiments', 'spec_09_ambig.tre'))
-ctx = quickparse(join('experiments', 'spec_10_noparse.tre'))
+# ctx = quickparse(join('experiments', 'spec_10_noparse.tre'))
+ctx = quickparse(join('experiments', 'spec_12_intersection.tre'))
 
+
+
+# print(apply_renaming(ctx))
 
 print(ctx.getText())
 
@@ -52,24 +57,27 @@ print(ctx.getText())
 
 
 def experiment():
-    random.seed(1)
+    random.seed(101)
 
-    n = 10
-    T = 6
+
+
+    n = 7
+    # T = 1.5
+    T = 3.1
+    # T = 2.5
     nr_samples = 5
 
     # V = slice_volume(ctx, n)
     # V.fancy_print()
     # V.plot()
 
+    # for i in range(nr_samples):
+    #     w = sample_ambig(ctx, n, T=T)
+    #     print(w)
+    #
     for i in range(nr_samples):
-        w = sample_ambig(ctx, n, T=T)
-        print(w)
-
-    # for i in range(10):
-    #     # w = sample_ambig(ctx, n, T)
-    #     w = sample(ctx, n, T=T)
-    #     print(f"w = {w}")
+        w = sample(ctx, n, T=T)
+        print(f"w = {w}")
 
 
 

@@ -1,4 +1,3 @@
-import glob
 import os
 import pytest
 from antlr4.error.Errors import ParseCancellationException
