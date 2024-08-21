@@ -1,0 +1,3 @@
+# TODO check if I get here the volume of a.d exactly ONCE! I am ever unsure if my handling of delta is correct in all cases.
+
+a* . b

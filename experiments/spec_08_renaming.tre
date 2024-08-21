@@ -1,6 +1,3 @@
-# testing the rename operator - TODO I don't know how to handle the renaming... probably just parse it, then before doing anything with it I apply the renaming and treat it as an expression without renaming
+# testing the rename operator
 
-{b:c} (<a>_[0,1] + <b>_[0,2])*
-
-# a small mental test - what happens when they are nested?
-{b:c} (<a>_[0,1] + <{b:d} b>_[0,2])*
+{b:c} (<a>_[0,1] + <{d:b} d>_[0,2])*

@@ -1,54 +1,55 @@
 import warnings
 
+from misc.recursion_template import get_interval
 from parse.TREParser import TREParser
-from math import inf
+from misc.has_eps import has_eps
+from parse.quickparse import quickparse
 
 
-
-def generic_function(node):
-
+def first(node)->set:
 
     node_type = type(node)
 
 
     match node_type:
 
-        case TREParser.EpsExprContext:
-            raise NotImplementedError
-
         case TREParser.AtomicExprContext:
-                node:TREParser.AtomicExprContext
-                raise NotImplementedError
+            node: TREParser.AtomicExprContext
+
+            sym = node.getText()
+            out = {sym}
 
         case TREParser.ParenExprContext:
             node: TREParser.ParenExprContext
             expr = node.expr()
 
-            raise NotImplementedError
+            out = first(expr)
 
         case TREParser.UnionExprContext:
             node: TREParser.UnionExprContext
             e1 = node.expr(0)
             e2 = node.expr(1)
 
-            raise NotImplementedError
+            out = first(e1).union(first(e2))
 
         case TREParser.TimedExprContext:
             node: TREParser.TimedExprContext
 
-            a,b = get_interval(node)
+            interval = get_interval(node)
 
             expr: TREParser.ExprContext = node.expr()
 
-            raise NotImplementedError
-
+            out = first(expr)  # TODO can we do better? Time is just ignored
 
         case TREParser.ConcatExprContext:
             node : TREParser.ConcatExprContext
 
             e1, e2 = node.expr(0), node.expr(1)
 
-            raise NotImplementedError
+            if has_eps(e1):
+                out = first(e1).union(first(e2))
+            else:
+                out = first(e1)
 
         case TREParser.KleeneExprContext:
             node : TREParser.KleeneExprContext
@@ -57,7 +58,7 @@ def generic_function(node):
             # epsilon has 0 volume so we can ignore it in sampling
             e1, e2 = node.expr(), node
 
-            raise NotImplementedError
+            out = first(e1)
 
         case TREParser.IntersectionExprContext:
             node: TREParser.IntersectionExprContext
@@ -65,7 +66,7 @@ def generic_function(node):
 
             e1, e2 = node.expr(0), node.expr(1)
 
-            raise NotImplementedError
+            return first(e1).intersection(first(e2))
 
         case TREParser.RenameExprContext:
             node: TREParser.RenameExprContext
@@ -73,18 +74,25 @@ def generic_function(node):
 
             expr = node.expr()
 
-            raise NotImplementedError
+            raise ValueError("You should apply the renaming before running this function.")
 
         case _:
             raise NotImplementedError("Encountered unknown rule in grammar. "
                                       "Probably some recursion function needs an update for the new rule.")
 
 
-def get_interval(node:TREParser.TimedExprContext):
-    a = int(node.interval().INT(0).getText())
-    # we allow [INT, INF] or [INT, oo] intervals. Then INT() has len 1
-    if len(node.interval().INT()) == 2:
-        b = int(node.interval().INT(1).getText())
-    else:
-        b = inf
-    return a, b
+    return out
+
+if __name__ == '__main__':
+    ctx = quickparse('experiments/spec_00.tre')
+    ctx2 = quickparse('experiments/spec_17_first.tre')
+    ctx3 = quickparse('experiments/spec_14_eps.tre')
+
+    print(ctx.getText())
+    print(first(ctx))
+
+    print(ctx2.getText())
+    print(first(ctx2))
+
+    print(ctx3.getText())
+    print(first(ctx3))

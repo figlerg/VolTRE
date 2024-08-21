@@ -1,6 +1,6 @@
 from parse.TREParser import TREParser
 import warnings
-
+from misc.recursion_template import get_interval
 
 def disambiguate(node:TREParser.ExprContext, dis_map = None, return_inverse_map = False):
     """
@@ -46,7 +46,8 @@ def disambiguate(node:TREParser.ExprContext, dis_map = None, return_inverse_map 
         case TREParser.TimedExprContext:
             node: TREParser.TimedExprContext
 
-            a,b = (int(node.interval().INT(0).getText()), int(node.interval().INT(1).getText()))
+            a,b = get_interval(node)
+
             expr: TREParser.ExprContext = node.expr()
 
             out = f"<{disambiguate(expr, dis_map)}>_[{a},{b}]"

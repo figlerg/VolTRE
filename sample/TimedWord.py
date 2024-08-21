@@ -23,7 +23,13 @@ class TimedWord:
 
     def __str__(self):
         if self:
-            return str(tuple(zip(self.symbols, self.delays)))
+            # return str(tuple(zip(self.symbols, self.delays)))
+            pairs = zip(self.delays, self.symbols)
+            # I switch the order here on purpose... Nicolas says I should print delay, sym
+            out = ','.join([f"({float(delay):.3f}, {symbol})" for delay, symbol in pairs])
+            return out
+
+
         else:
             return 'EPS'
 
@@ -120,5 +126,3 @@ if __name__ == '__main__':
     w = TimedWord(symbols, delays)
 
     print(w)
-    print(w.length())
-    print(w.duration())

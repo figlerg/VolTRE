@@ -9,6 +9,7 @@ from volume.VolumePoly import VolumePoly, continuous_convolution
 from parse.SyntaxError import HardSyntaxErrorStrategy
 from parse.TREParser import TREParser
 from visualize_recursion import generate_syntax_tree, highlight_node
+from misc.recursion_template import get_interval
 
 from functools import lru_cache
 
@@ -23,64 +24,80 @@ def slice_volume(node: TREParser.ExprContext, n, vis=None, debug_mode=False, deb
     if not vis and debug_mode:
         vis = generate_syntax_tree(node)
 
-    if isinstance(node, TREParser.AtomicExprContext):
-        if n == 1:
-            ints = [(0, inf), ]
-            polys = [poly(1, T)]  # the only way I found for representing constant functions
-            out = VolumePoly(ints, polys)
-        else:
-            out = VolumePoly()  # 0 poly if we have more or less letters
+    rule = type(node)
 
-    elif isinstance(node, TREParser.ParenExprContext):
-        expr = node.expr()
-        out = slice_volume(expr, n, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
+    match rule:
 
-    elif isinstance(node, TREParser.UnionExprContext):
-        # the plus is overloaded: normal addition of piecewise polynomials
-        out = slice_volume(node.expr(0), n, vis=vis, debug_mode=debug_mode, debug_container=debug_container) + slice_volume(node.expr(1), n, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
+        case TREParser.AtomicExprContext:
+            node:TREParser.AtomicExprContext
+            if n == 1:
+                ints = [(0, inf), ]
+                polys = [poly(1, T)]  # the only way I found for representing constant functions
+                out = VolumePoly(ints, polys)
+            else:
+                out = VolumePoly()  # 0 poly if we have more or less letters
 
-    elif isinstance(node, TREParser.ConcatExprContext):
-        out = hybrid_conv(node.expr(0), node.expr(1),n,vis, debug_mode, debug_container)
+        case TREParser.ParenExprContext:
+            node: TREParser.ParenExprContext
+            expr = node.expr()
+            out = slice_volume(expr, n, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
 
-    elif isinstance(node, TREParser.TimedExprContext):
-        child_volume = slice_volume(node.expr(), n, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
-        restriction_interval = (int(node.interval().INT(0).getText()), int(node.interval().INT(1).getText()))
+        case TREParser.UnionExprContext:
+            node: TREParser.UnionExprContext
+            # the plus is overloaded: normal addition of piecewise polynomials
+            out = slice_volume(node.expr(0), n, vis=vis, debug_mode=debug_mode, debug_container=debug_container) + slice_volume(node.expr(1), n, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
 
-        child_volume = child_volume.time_restriction(restriction_interval)
+        case TREParser.ConcatExprContext:
+            node: TREParser.ConcatExprContext
+            out = hybrid_conv(node.expr(0), node.expr(1),n,vis, debug_mode, debug_container)
 
-        out = child_volume
+        case TREParser.TimedExprContext:
+            node: TREParser.TimedExprContext
+            child_volume = slice_volume(node.expr(), n, vis=vis, debug_mode=debug_mode, debug_container=debug_container)
 
-    elif isinstance(node, TREParser.KleeneExprContext):
-        expr = node.expr()
+            a, b = get_interval(node)
 
-        # this is a bit tricky: we don't want to even enter the loop below for n == 0, it is just delta.
-        if n == 0:
-            out = VolumePoly(delta=1)  # delta distribution
-            n = -1 # makes us skip the loop
+            restriction_interval = (a,b)
 
-        # Otherwise it is the zero poly and gets the other stuff added
-        else:
-            out = hybrid_conv(expr, node,n,vis, debug_mode, debug_container, is_kleene=True)
+            child_volume = child_volume.time_restriction(restriction_interval)
 
-    elif isinstance(node, TREParser.PlusExprContext):
-        raise NotImplementedError('exp+ is not supported yet.')
-        # TODO the below is wrong! In the levels below we can't use this node. We would need a kleene node
-        # expr = node.expr()
-        # if n == 0:
-        #     out = VolumePoly()
-        # else:
-        #     out = hybrid_conv(expr, node, n, vis, debug_mode, debug_container, is_kleene=True)
+            out = child_volume
 
-    elif isinstance(node, TREParser.IntersectionExprContext):
-        raise ValueError(f'Volume computation for intersection operator & is not supported. '
-                                  f'Problematic subexpression: {node.getText()}')
+        case TREParser.KleeneExprContext:
+            node: TREParser.KleeneExprContext
+            expr = node.expr()
 
-    elif isinstance(node, TREParser.RenameExprContext):
-        raise ValueError(f'Volume computation for renaming operator is not supported. '
-                                  f'Problematic subexpression: {node.getText()}')
+            # this is a bit tricky: we don't want to even enter the loop below for n == 0, it is just delta.
+            if n == 0:
+                out = VolumePoly(delta=1)  # delta distribution
+                n = -1 # makes us skip the loop
 
-    else:
-        raise Exception("Bad state.")
+            # Otherwise it is the zero poly and gets the other stuff added
+            else:
+                out = hybrid_conv(expr, node,n,vis, debug_mode, debug_container, is_kleene=True)
+
+        case TREParser.PlusExprContext:
+            node: TREParser.PlusExprContext
+            raise NotImplementedError('exp+ is not supported yet.')
+            # TODO the below is wrong! In the levels below we can't use this node. We would need a kleene node
+            # expr = node.expr()
+            # if n == 0:
+            #     out = VolumePoly()
+            # else:
+            #     out = hybrid_conv(expr, node, n, vis, debug_mode, debug_container, is_kleene=True)
+
+        case TREParser.IntersectionExprContext:
+            node: TREParser.IntersectionExprContext
+            raise ValueError(f'Volume computation for intersection operator & is not supported. '
+                                      f'Problematic subexpression: {node.getText()}')
+
+        case TREParser.RenameExprContext:
+            node: TREParser.RenameExprContext
+            raise ValueError(f'Volume computation for renaming operator is not supported. '
+                                      f'Problematic subexpression: {node.getText()}')
+
+        case _:
+            raise NotImplementedError("Bad rule in volume generation.")
 
     out.exp = node.getText()
     out.n = n
@@ -97,6 +114,17 @@ def slice_volume(node: TREParser.ExprContext, n, vis=None, debug_mode=False, deb
     assert not delta_and_function(out)
 
     return out
+
+## obsolete, functipon "get_interval" in recursion template
+# def parse_interval(node):
+#     a = int(node.interval().INT(0).getText())
+#     # we allow [INT, INF] or [INT, oo] intervals. Then INT() has len 1
+#     if len(node.interval().INT()) == 2:
+#         b = int(node.interval().INT(1).getText())
+#     else:
+#         b = inf
+#     return a, b
+
 
 def hybrid_conv(node1, node2, n, vis=None, debug_mode=False, debug_container = None, is_kleene = False):
     out = VolumePoly()  # the zero poly

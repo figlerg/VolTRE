@@ -1,4 +1,7 @@
+import warnings
+
 import numpy as np
+from scipy.integrate import IntegrationWarning
 from scipy.optimize import root
 
 from parse.quickparse import quickparse
@@ -14,6 +17,7 @@ from volume.slice_volume import slice_volume
 """
 This module is for controlling the properties of the MaxEntSampler.
 """
+
 
 
 # @lru_cache
@@ -64,7 +68,15 @@ def mu(lambdas: np.array, volume: VolumePoly, m=None):
     # here I take exp(...)*p(T) for all segments
     terms = [(build_exp_term(lambdas).as_expr() * p.as_expr()) for p in volume.polys]
 
-    N = normalising_constant(lambdas, volume)
+    # if lambdas[-1] >= 0:
+    #     # in this case the integrals will be undefined
+    #     return [np.inf,] * m
+
+    try:
+        N = normalising_constant(lambdas, volume)
+    except AssertionError:
+        # TODO fix this atrocity, mu is often evaluated for invalid lambdas. I just fill in high values to penalize
+        return np.full((m,), 1000)
 
     # here I just need to integrate from 0 to inf, not create functions for each segment
     out = np.ndarray((m,))
@@ -73,8 +85,15 @@ def mu(lambdas: np.array, volume: VolumePoly, m=None):
 
         cum_sum = 0
         for (a, b), integrand in zip(intervals, terms):
+
+            # The last nonzero lambda is 0 <=> the integral is defined. otherwise it's +inf
+            if b == oo and [lam for lam in lambdas if lam != 0][-1] > 0:
+                cum_sum += oo
+                continue
+
             integrand: Expr = integrand * T ** (i + 1)  # computing the i-th moment, diff gives T^i
 
+            # Perform the integration
             cum_sum += num_int_evalf(integrand, a, b)
 
         out[i] = cum_sum / N
@@ -126,26 +145,37 @@ def lambdas(target_mu: np.array, vol: VolumePoly):
     l = k  # this is probably just one of many solutions? I think fixing more moments would make this less free
 
     x0 = np.random.random(k)  # Example initial guess
+    x0[-1] = - np.random.random()  # TODO this needs to be <0 to make the integrals finite
 
-    res = lambda lambda_vector: residuals(mu(lambda_vector,vol,m=k), target_mu)
+    res = lambda lambda_vector: residuals(mu(lambda_vector, vol, m=k), target_mu)
 
     # J = lambda lambda_vector: jacobi(lambda_vector, vol, l) @ np.diag(res(mu(lambda_vector, v)))
     #
     # result = least_squares(res, x0, jac=J)
 
     J = lambda x: jacobi(x, vol, l)
-    result = root(res, x0, jac = J, tol=1e-14)
-    # result = root(res, x0,jac = J, method='broyden1', options={'fatol':1e-6}, tol=1e-14)
+    # result = root(res, x0, jac=J, tol=1e-14)
+
+    # TODO we get many integration warnings. The integrals are expected to misbehave, for now I ignore them
+    with warnings.catch_warnings():
+        # warnings.filterwarnings("ignore", category=RuntimeWarning)
+        warnings.filterwarnings("ignore", category=IntegrationWarning)
+
+        J = None  # broyden doesn't need it
+        result = root(res, x0,jac = J, method='broyden1', options={'fatol':1e-6}, tol=1e-14)
+
+
     # result = root(res, x0,jac = J, method='lm', options={'ftol':1e-10}, tol=1e-14)
 
     # result2 = root(res, x0)
     # print(result.x - result2.x)
     # print(mu(result2.x,v,k))
 
-
     print(f"Target mu is {target_mu}")
     print(f"inferred lambda is {result.x}")
     print(f"mu(inferred_lambda) = {mu(result.x, volume=vol, m=k)}")
+    assert loss(mu(result.x, vol), target_mu) < 1e-8, (f"Solver failed to generate acceptable loss: "
+                                                       f"final loss is {loss(mu(result.x, vol), target_mu)}")
     print(f"Loss is {loss(mu(result.x, vol), target_mu)}")
 
     return result.x
@@ -162,12 +192,12 @@ def loss(mu_guess, mu_target):
 def parameterize_mean_variance(target_mean, target_variance, vol):
     # formula: variance = mu_2 - mean^2
     mu_1 = target_mean
-    mu_2 = target_variance + target_mean**2
+    mu_2 = target_variance + target_mean ** 2
 
     target_moments = np.asarray([mu_1, mu_2])
 
-    assert mu_2 > 0
-    assert mu_1 > 0
+    assert mu_2 > 0 and mu_1 > 0, ("Invalid mean and variance? Do a sanity check (e.g. use variance = mu_2 - mean^2 "
+                                   "and see whether mu_2 <= 0.)")
 
     return lambdas(target_moments, vol)
 
@@ -184,12 +214,11 @@ if __name__ == '__main__':
 
     optimal_lambda = lambdas(target, v)
 
-    tuned_lambdas = parameterize_mean_variance(4, 1,v)
+    tuned_lambdas = parameterize_mean_variance(4, 1, v)
 
-    samples = [sample(ctx,n,mode=DurationSamplerMode.MAX_ENT,lambdas=tuned_lambdas)]
+    samples = [sample(ctx, n, mode=DurationSamplerMode.MAX_ENT, lambdas=tuned_lambdas)]
 
     durations = np.asarray([w.duration for w in samples])
 
     print(durations.mean())
     print(durations.var())
-

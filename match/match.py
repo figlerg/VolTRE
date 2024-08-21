@@ -1,3 +1,4 @@
+from misc.recursion_template import get_interval
 from parse.TREParser import TREParser
 from parse.quickparse import quickparse
 from sample.TimedWord import TimedWord
@@ -43,7 +44,7 @@ def match(w:TimedWord, phi: TREParser.ExprContext) -> int:
         case TREParser.TimedExprContext:
             phi: TREParser.TimedExprContext
 
-            a,b = (int(phi.interval().INT(0).getText()), int(phi.interval().INT(1).getText()))
+            a,b = get_interval(phi)
             expr: TREParser.ExprContext = phi.expr()
 
             if a <= w.duration <= b:

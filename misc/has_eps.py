@@ -1,59 +1,61 @@
 import warnings
 
+from misc.recursion_template import get_interval
 from parse.TREParser import TREParser
+from parse.quickparse import quickparse
 
 
-def apply_renaming(node:TREParser.ExprContext, renaming:dict=None):
+def has_eps(node) -> bool:
 
     node_type = type(node)
 
+
     match node_type:
 
-        case TREParser.AtomicExprContext:
-            node: TREParser.AtomicExprContext
-            sym = node.getText()
+        case TREParser.EpsExprContext:
+            return True
 
-            if sym in renaming.keys():
-                out = renaming[sym]
-            else:
-                out = sym
+        case TREParser.AtomicExprContext:
+            return False
 
         case TREParser.ParenExprContext:
             node: TREParser.ParenExprContext
             expr = node.expr()
 
-            out = f"({apply_renaming(expr, renaming)})"
+            return has_eps(expr)
 
         case TREParser.UnionExprContext:
             node: TREParser.UnionExprContext
             e1 = node.expr(0)
             e2 = node.expr(1)
 
-            out = f"{apply_renaming(e1, renaming)} + {apply_renaming(e2, renaming)}"
+            return has_eps(e1) or has_eps(e2)
 
         case TREParser.TimedExprContext:
             node: TREParser.TimedExprContext
 
-            a,b = (int(node.interval().INT(0).getText()), int(node.interval().INT(1).getText()))
+            a,b = get_interval(node)
+
             expr: TREParser.ExprContext = node.expr()
 
-            out = f"<{apply_renaming(expr, renaming)}>_[{a},{b}]"
+            return a <= 0 <= b and has_eps(expr)
+
 
         case TREParser.ConcatExprContext:
-            node: TREParser.ConcatExprContext
+            node : TREParser.ConcatExprContext
 
             e1, e2 = node.expr(0), node.expr(1)
 
-            out = f"{apply_renaming(e1, renaming)} . {apply_renaming(e2, renaming)}"
+            return has_eps(e1) and has_eps(e2)
 
         case TREParser.KleeneExprContext:
-            node: TREParser.KleeneExprContext
+            node : TREParser.KleeneExprContext
 
             # e* = epsilon + ee*
             # epsilon has 0 volume so we can ignore it in sampling
-            e0 = node.expr()
+            e1, e2 = node.expr(), node
 
-            out = f"{apply_renaming(e0, renaming)}*"
+            return True
 
         case TREParser.IntersectionExprContext:
             node: TREParser.IntersectionExprContext
@@ -61,7 +63,7 @@ def apply_renaming(node:TREParser.ExprContext, renaming:dict=None):
 
             e1, e2 = node.expr(0), node.expr(1)
 
-            out = f"{apply_renaming(e1, renaming)} & {apply_renaming(e2, renaming)}"
+            return has_eps(e1) and has_eps(e2)
 
         case TREParser.RenameExprContext:
             node: TREParser.RenameExprContext
@@ -69,14 +71,18 @@ def apply_renaming(node:TREParser.ExprContext, renaming:dict=None):
 
             expr = node.expr()
 
-            rename_tokens = node.rename_token()
-            renaming = {ren_token.atomic_expr(0):ren_token.atomic_expr(1) for ren_token in rename_tokens}
-
-            out = apply_renaming(expr, renaming)
+            return has_eps(expr) # doesn't matter if it's renamed
 
         case _:
             raise NotImplementedError("Encountered unknown rule in grammar. "
                                       "Probably some recursion function needs an update for the new rule.")
 
 
-    return out
+if __name__ == '__main__':
+    ctx = quickparse('experiments/spec_12_eps.tre')
+    ctx2 = quickparse('experiments/spec_13_atom.tre')
+    ctx3 = quickparse('experiments/spec_14_eps.tre')
+
+    print(has_eps(ctx))     # True
+    print(has_eps(ctx2))    # False
+    print(has_eps(ctx3))    # True

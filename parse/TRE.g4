@@ -2,7 +2,8 @@ grammar TRE;
 
 file : expr EOF ;
 
-expr : atomic_expr																		#AtomicExpr
+expr : EPS																				#EpsExpr
+	 |atomic_expr																		#AtomicExpr
 	 | '(' expr ')'																		#ParenExpr
      | expr '*'																			#KleeneExpr
      | expr '.' expr																	#ConcatExpr
@@ -13,10 +14,13 @@ expr : atomic_expr																		#AtomicExpr
      | '{' (rename_token ',')* rename_token '}' expr									#RenameExpr
      ;
 
-interval : '[' INT ',' INT ']';
+interval : '[' INT ',' (INT | INF) ']';
 
 //atomic_expr : LETTER ;
 //LETTER : [a-zA-Z] ;
+
+EPS : 'EPS';
+INF : 'INF' | 'oo' | 'inf';
 
 atomic_expr : IDENTIFIER;
 rename_token : atomic_expr ':' atomic_expr;

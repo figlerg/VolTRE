@@ -4,6 +4,7 @@ import random
 import cProfile
 import pstats
 import time
+import warnings
 from math import factorial
 
 import matplotlib.pyplot as plt
@@ -13,13 +14,13 @@ import numpy as np
 
 from match.match import match
 from misc.disambiguate import disambiguate
-from parse.apply_renaming import apply_renaming
+from misc.rename import rename
 from parse.quickparse import quickparse
 from sample.TimedWord import TimedWord
 from visualize_recursion import generate_syntax_tree, highlight_node
 from volume.MaxEntDist import MaxEntDist
 from volume.slice_volume import slice_volume
-from sample.sample import sample, DurationSamplerMode, sample_ambig
+from sample.sample import sample_unambig, DurationSamplerMode, sample
 from volume.tuning import mu, jacobi, lambdas, parameterize_mean_variance
 
 
@@ -32,7 +33,7 @@ from volume.tuning import mu, jacobi, lambdas, parameterize_mean_variance
 
 
 # ctx = quickparse(join('experiments', 'spec_00_test.tre'))
-# ctx = quickparse('experiments/spec_11_disambig.tre')
+# ctx = quickparse('experiments/spec_08_disambig.tre')
 # ctx = quickparse(join('experiments', 'spec_00.tre'))
 # ctx = quickparse(join('experiments', 'spec_06.tre'))
 # ctx = quickparse(join('experiments', 'TAkiller.tre'))
@@ -43,13 +44,16 @@ from volume.tuning import mu, jacobi, lambdas, parameterize_mean_variance
 # ctx = quickparse(join('experiments', 'spec_08_renaming.tre'))
 # ctx = quickparse(join('experiments', 'spec_09_ambig.tre'))
 # ctx = quickparse(join('experiments', 'spec_10_noparse.tre'))
-ctx = quickparse(join('experiments', 'spec_12_intersection.tre'))
-
-
-
-# print(apply_renaming(ctx))
+# ctx = quickparse("experiments/spec_08_disambig.tre")
+# ctx = quickparse("experiments/spec_19_qest_subset.tre")
+# ctx = quickparse("experiments/spec_20_ambig.tre")
+ctx = quickparse("experiments/spec_21_infint.tre")
 
 print(ctx.getText())
+ctx2 = rename(ctx)
+if ctx.getText() != ctx2.getText():
+    ctx = ctx2
+    print(f"Applied renaming and got:\n{ctx.getText()}")
 
 # visualizes the tree
 # G = generate_syntax_tree(ctx)
@@ -57,27 +61,40 @@ print(ctx.getText())
 
 
 def experiment():
-    random.seed(101)
+    random.seed(42)
+    np.random.seed(42)
 
 
+    # print(disambiguate(ctx, return_inverse_map=True))
 
-    n = 7
-    # T = 1.5
-    T = 3.1
-    # T = 2.5
-    nr_samples = 5
 
-    # V = slice_volume(ctx, n)
-    # V.fancy_print()
-    # V.plot()
+    n = 1
+    # T = 1.7
+    nr_samples = 500
 
-    # for i in range(nr_samples):
-    #     w = sample_ambig(ctx, n, T=T)
-    #     print(w)
-    #
-    for i in range(nr_samples):
-        w = sample(ctx, n, T=T)
-        print(f"w = {w}")
+    V = slice_volume(ctx, n)
+    V.fancy_print()
+    V.plot()
+
+    counts = []
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", category=UserWarning)
+
+        for i in range(nr_samples):
+            # w, feedback = sample(ctx, n, T=T, feedback=True)
+            w, feedback = sample(ctx, n=n, feedback=True, mode=DurationSamplerMode.MAX_ENT, lambdas=[-1,])
+
+            counts.append(feedback.rej)  # the rejections of the smart rej sampling
+
+            # print(w)
+
+    # V_e/V_e' = nr_acc/nr_rej
+    v_est = V.total_volume()* (nr_samples/(sum(counts)+nr_samples))
+    print(f"V(e') =       \t{V.total_volume()}")
+    print(f"Accepted...   \t{nr_samples}")
+    print(f"Rejections... \t{sum(counts)}")
+    print(f"Volume estimate for {ctx.getText()}. n={n} is {v_est}.")
 
 
 

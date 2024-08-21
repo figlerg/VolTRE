@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 from parse.quickparse import quickparse
 from sample.TimedWord import TimedWord
 from volume.slice_volume import slice_volume
-from sample.sample import sample
+from sample.sample import sample_unambig
 
 seed = random.seed(42)
 
@@ -36,7 +36,7 @@ print(f'Successfully generated volume function in {t2 - t1}s.')
 pts = []
 
 for i in range(nr_exp):
-    s: TimedWord = sample(ctx, n)
+    s: TimedWord = sample_unambig(ctx, n)
 
     pt = []
     for symbol, delay in s:

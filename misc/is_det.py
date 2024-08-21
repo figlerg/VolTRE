@@ -1,12 +1,14 @@
 import warnings
 
+from misc.first import first
+from misc.has_eps import has_eps
+from misc.recursion_template import get_interval
 from parse.TREParser import TREParser
-from math import inf
 
 
+# NOT NEEDED? JUST ALWAYS RENAME?
 
-def generic_function(node):
-
+def is_det(node)->bool:
 
     node_type = type(node)
 
@@ -17,30 +19,32 @@ def generic_function(node):
             raise NotImplementedError
 
         case TREParser.AtomicExprContext:
-                node:TREParser.AtomicExprContext
-                raise NotImplementedError
+            node:TREParser.AtomicExprContext
+            return True
+
 
         case TREParser.ParenExprContext:
             node: TREParser.ParenExprContext
             expr = node.expr()
 
-            raise NotImplementedError
+            return is_det(expr)
 
         case TREParser.UnionExprContext:
             node: TREParser.UnionExprContext
             e1 = node.expr(0)
             e2 = node.expr(1)
 
-            raise NotImplementedError
+            return (not bool(first(e1).intersection(first(e2)))) and is_det(e1) and is_det(e2)
+
 
         case TREParser.TimedExprContext:
             node: TREParser.TimedExprContext
 
-            a,b = get_interval(node)
+            interval = get_interval(node)
 
             expr: TREParser.ExprContext = node.expr()
 
-            raise NotImplementedError
+            return is_det(expr)
 
 
         case TREParser.ConcatExprContext:
@@ -48,16 +52,19 @@ def generic_function(node):
 
             e1, e2 = node.expr(0), node.expr(1)
 
-            raise NotImplementedError
+            if has_eps(e1):
+                return (not bool(first(e1).intersection(first(e2)))) and is_det(e1) and is_det(e2)
+            else:
+                return is_det(e1) and is_det(e2)
 
         case TREParser.KleeneExprContext:
             node : TREParser.KleeneExprContext
 
             # e* = epsilon + ee*
             # epsilon has 0 volume so we can ignore it in sampling
-            e1, e2 = node.expr(), node
+            e0, e0_star = node.expr(), node
 
-            raise NotImplementedError
+
 
         case TREParser.IntersectionExprContext:
             node: TREParser.IntersectionExprContext
@@ -78,13 +85,3 @@ def generic_function(node):
         case _:
             raise NotImplementedError("Encountered unknown rule in grammar. "
                                       "Probably some recursion function needs an update for the new rule.")
-
-
-def get_interval(node:TREParser.TimedExprContext):
-    a = int(node.interval().INT(0).getText())
-    # we allow [INT, INF] or [INT, oo] intervals. Then INT() has len 1
-    if len(node.interval().INT()) == 2:
-        b = int(node.interval().INT(1).getText())
-    else:
-        b = inf
-    return a, b

@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 from parse.quickparse import quickparse
 from sample.TimedWord import TimedWord
 from volume.slice_volume import slice_volume
-from sample.sample import sample
+from sample.sample import sample_unambig
 
 seed = random.seed(42)
 
@@ -39,7 +39,7 @@ pts = []
 words = []
 
 for i in range(nr_exp):
-    s: TimedWord = sample(ctx, n)
+    s: TimedWord = sample_unambig(ctx, n)
     words.append(s)
 
 

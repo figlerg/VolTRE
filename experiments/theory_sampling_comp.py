@@ -10,7 +10,7 @@ from sample.TimedWord import TimedWord
 from visualize_recursion import generate_syntax_tree, highlight_node
 from volume.MaxEntDist import MaxEntDist
 from volume.slice_volume import slice_volume
-from sample.sample import sample, DurationSamplerMode
+from sample.sample import sample_unambig, DurationSamplerMode
 from volume.tuning import mu
 
 # ctx = quickparse(join('experiments', 'spec_00.tre'))
@@ -43,7 +43,7 @@ def experiment():
     dur_2s = 0
     dur_3s = 0
     for _ in range(nr):
-        w = sample(ctx,n,mode=DurationSamplerMode.MAX_ENT,lambdas=lambdas)
+        w = sample_unambig(ctx, n, mode=DurationSamplerMode.MAX_ENT, lambdas=lambdas)
         # print(f"Sampled {str(w), w.duration} in {time.time() - t}s.")
         # t = time.time()
         dur_s += w.duration
