@@ -19,6 +19,10 @@ def disambiguate(node:TREParser.ExprContext, dis_map = None, return_inverse_map 
 
     match node_type:
 
+        case TREParser.EpsExprContext:
+            node: TREParser.EpsExprContext
+            return node.getText()
+
         case TREParser.AtomicExprContext:
             node: TREParser.AtomicExprContext
             sym = node.getText()
@@ -88,9 +92,9 @@ def disambiguate(node:TREParser.ExprContext, dis_map = None, return_inverse_map 
 
         case TREParser.Rename_tokenContext:
             node: TREParser.Rename_tokenContext
-
-            a1, a2 = node.atomic_expr()
-            return f"{disambiguate(a1, dis_map)}:{disambiguate(a2, dis_map)}"
+            raise ValueError("disambiguate() called on unresolved renaming node. This usage is not intended. "
+                             "Fix by apply_renaming first.")
+            # TODO this could also be done directly here, but not sure if that isn't more confusing.
 
         case _:
             raise NotImplementedError("Encountered unknown rule in grammar. "

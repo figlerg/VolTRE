@@ -7,7 +7,9 @@ from parse.quickparse import quickparse
 from tests.file_helper import all_tre_files
 from sample.sample import sample
 
-tests = all_tre_files(ignore_files = [os.path.join('..', 'experiments', 'spec_10_noparse.tre')])
+tests = all_tre_files(ignore_files = [os.path.join('..', 'experiments', 'spec_10_noparse.tre'),
+                                      os.path.join('..', 'experiments', 'spec_08_renaming.tre'),
+                                      ])
 
 
 @pytest.mark.parametrize("file_path, expected_to_fail", tests)

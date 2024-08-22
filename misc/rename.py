@@ -106,7 +106,7 @@ def get_renaming_dict(node):
     assert isinstance(node, TREParser.RenameExprContext)
 
 
-    return {tok.atomic_expr(0).getText():tok.atomic_expr(1).getText() for tok in node.rename_token()}
+    return {tok.IDENTIFIER(0).getText():tok.IDENTIFIER(1).getText() for tok in node.rename_token()}
 
 
 if __name__ == '__main__':

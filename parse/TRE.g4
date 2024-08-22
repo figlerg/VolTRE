@@ -3,7 +3,7 @@ grammar TRE;
 file : expr EOF ;
 
 expr : EPS																				#EpsExpr
-	 |atomic_expr																		#AtomicExpr
+	 | IDENTIFIER																		#AtomicExpr
 	 | '(' expr ')'																		#ParenExpr
      | expr '*'																			#KleeneExpr
      | expr '.' expr																	#ConcatExpr
@@ -16,14 +16,12 @@ expr : EPS																				#EpsExpr
 
 interval : '[' INT ',' (INT | INF) ']';
 
-//atomic_expr : LETTER ;
 //LETTER : [a-zA-Z] ;
 
 EPS : 'EPS';
 INF : 'INF' | 'oo' | 'inf';
 
-atomic_expr : IDENTIFIER;
-rename_token : atomic_expr ':' atomic_expr;
+rename_token : IDENTIFIER ':' IDENTIFIER;
 
 IDENTIFIER : [a-zA-Z_][a-zA-Z0-9_]* ;
 
