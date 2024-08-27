@@ -5,6 +5,7 @@ from antlr4 import FileStream, CommonTokenStream
 from sympy import Piecewise, poly
 from sympy.abc import T, t
 
+from misc.exceptions import UserError
 from volume.VolumePoly import VolumePoly, continuous_convolution
 from parse.SyntaxError import HardSyntaxErrorStrategy
 from parse.TREParser import TREParser
@@ -15,6 +16,9 @@ from functools import lru_cache
 
 @lru_cache
 def slice_volume(node: TREParser.ExprContext, n, vis=None, debug_mode=False, debug_container = None) -> VolumePoly:
+
+    if n < 0:
+        raise UserError("Volume cannot be generated for negative n.")
 
     node_text = node.getText()  # just for debugging
 

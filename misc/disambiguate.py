@@ -1,3 +1,4 @@
+from misc.exceptions import UserError
 from parse.TREParser import TREParser
 import warnings
 from misc.recursion_template import get_interval
@@ -78,7 +79,13 @@ def disambiguate(node:TREParser.ExprContext, dis_map = None, return_inverse_map 
 
             e1, e2 = node.expr(0), node.expr(1)
 
-            out = f"{disambiguate(e1, dis_map)} & {disambiguate(e2, dis_map)}"
+            # TODO: here we need to be careful: all variables which are equal left and right of the intersection,
+            #  must stay equal! I am not sure how to do this.
+            #  (This only concerns ambiguous expressions with intersection.)
+            #  I think in theses cases we must disambiguate both children, sample in one child, undo the renaming and
+            #  then check the 2nd child before the renaming.
+            # out = f"{disambiguate(e1, dis_map)} & {disambiguate(e2, dis_map)}"
+            raise UserError("Intersection cannot be disambiguated. The sample() function .")
 
         case TREParser.RenameExprContext:
             node: TREParser.RenameExprContext

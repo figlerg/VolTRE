@@ -7,9 +7,12 @@ class TimedWord:
     Just a little container for the timed words, with some utility functions.
     """
 
-    def __init__(self, symbols : list, delays : list):
-        assert len(symbols) == len(delays), ("Tried to instantiate an invalid timed word. "
-                                             "Symbols and delays need to have same length.")
+    def __init__(self, symbols: list = None, delays : list = None):
+        # I allow empty arguments for the empty word. Otherwise, I check that the lists match
+        if not (symbols == None == delays):
+            assert len(symbols) == len(delays), ("Tried to instantiate an invalid timed word. "
+                                                 "Symbols and delays need to have same length.")
+
         self.symbols = symbols
         self.delays = delays
 
@@ -49,11 +52,15 @@ class TimedWord:
 
     @property
     def length(self):
+        if not self:
+            return 0
         assert len(self.symbols) == len(self.delays), "Invalid timed word."
         return len(self.symbols)
 
     @property
     def duration(self):
+        if not self:
+            return 0
         assert len(self.symbols) == len(self.delays), "Invalid timed word."
         return sum(self.delays)
 

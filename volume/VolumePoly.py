@@ -12,6 +12,7 @@ from sympy import poly
 from sympy.polys import Poly
 from sympy.abc import T, t, x  # I will treat T as the slice duration, and t as the variable in convolutions.
 
+from misc.exceptions import EmptyLanguageError, UserError
 # this is my code
 from misc.helpers import intersect, length, interval_convolution, determine_convolution_case, ConvolutionCase
 
@@ -485,8 +486,12 @@ class VolumePoly:
     @cached_property
     def pdf(self):
         total = self.total_volume()
-        assert total != inf, "In vanilla mode the tool can only sample T on a finite volume."
-        assert total, "Problem generating pdf. Is the language empty?"
+
+        if total == inf:
+            raise UserError("Invalid duration PDF: In vanilla mode the tool can only sample T on a finite volume.")
+        if not total:
+            raise EmptyLanguageError("Problem generating duration PDF. Is the language empty?")
+
         normalisation_factor = 1 / total
         out: VolumePoly = self * normalisation_factor
 

@@ -5,6 +5,31 @@ Playground for volume based sampling method for timed regular expressions.
 
 ## Meetings
 
+### 27.08.2024
+Need case studies. possibilities:
+- [ ] language inclusion (work in progress)
+- [ ] statistical model checking?
+- [ ] cps testing / falsification testing (I didn't find any models which take timed words as input?)
+  - adaptive testing with timed automata (dejan)
+  - transforming timed to a signal (interpolation or step function). sell it by finding motivation of how to sample the value?
+- [ ] automata learning (can we try this ourselves?)
+- [ ] benchmark for tools (e.g. dogans tool)
+- [x] TAkiller
+- [ ] in thesis of akshej, maybe there are more input specifications as TRE?
+- [ ] case studies related to arch workshop?
+- [ ] dogan ulus thesis. one case study: distributed system interface
+- [ ] DSI3 specs:
+  Dejan:
+    Yes, we can generate DSI3 signals from the TRE spec. Just note that there are also real-valued thresholds (hence specs are really SRE), but we could maybe fix those and only focus on generating signals with different durations.
+    
+    In principle, we could also say that any timing diagram spec from digital design can be represented by a TRE and that we can generate examples from timing diagrams.
+    
+    BR,
+    Dejan 
+
+
+Only ~1month to implement case studies.
+
 ### 30.07 - last meeting in grenoble
   - [ ] maybe use z3 to find counterexample for language inclusion? would be something in DNF, could directly generate a counterexample (this would be fun to try, but can explode since we can have exp many zones)
   - nicolas added measure theory on sharelatex (+ theory to prove etc)

@@ -12,7 +12,6 @@ from os.path import join, curdir
 
 import numpy as np
 
-from match.intersection_match import intersection_match
 from match.match import match
 from misc.disambiguate import disambiguate
 from misc.rename import rename
@@ -51,10 +50,10 @@ ctx = quickparse(join('experiments', 'spec_07_intersection.tre'))
 # ctx = quickparse("experiments/spec_21_infint.tre")
 
 print(ctx.getText())
-# ctx2 = rename(ctx)
-# if ctx.getText() != ctx2.getText():
-#     ctx = ctx2
-#     print(f"Applied renaming and got:\n{ctx.getText()}")
+ctx2 = rename(ctx)
+if ctx.getText() != ctx2.getText():
+    ctx = ctx2
+    print(f"Applied renaming and got:\n{ctx.getText()}")
 
 # visualizes the tree
 # G = generate_syntax_tree(ctx)
@@ -71,8 +70,33 @@ def experiment():
 
     n = 1
     # T = 1.7
-    w = sample(ctx, n, T=0.5)
-    print(intersection_match(w,phi=ctx))
+    nr_samples = 500
+
+    V = slice_volume(ctx, n)
+    V.fancy_print()
+    V.plot()
+
+    counts = []
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", category=UserWarning)
+
+        for i in range(nr_samples):
+            # w, feedback = sample(ctx, n, T=T, feedback=True)
+            w, feedback = sample(ctx, n=n, feedback=True, mode=DurationSamplerMode.MAX_ENT, lambdas=[-1,])
+
+            counts.append(feedback.rej)  # the rejections of the smart rej sampling
+
+            # print(w)
+
+    # V_e/V_e' = nr_acc/nr_rej
+    v_est = V.total_volume()* (nr_samples/(sum(counts)+nr_samples))
+    print(f"V(e') =       \t{V.total_volume()}")
+    print(f"Accepted...   \t{nr_samples}")
+    print(f"Rejections... \t{sum(counts)}")
+    print(f"Volume estimate for {ctx.getText()}. n={n} is {v_est}.")
+
+
 
 pr = cProfile.Profile()
 pr.enable()

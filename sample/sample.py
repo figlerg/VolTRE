@@ -7,6 +7,8 @@ from antlr4 import ParserRuleContext
 
 from match.match import match
 from misc.disambiguate import disambiguate
+from misc.exceptions import UserError
+from misc.has_eps import has_eps
 from misc.helpers import BudgetExhaustedException
 from misc.recursion_template import get_interval
 from parse.TREParser import TREParser
@@ -23,7 +25,7 @@ from volume.VolumePoly import VolumePoly
 from volume.slice_volume import slice_volume
 from math import inf
 
-from volume.tuning import lambdas, parameterize_mean_variance
+# from volume.tuning import lambdas, parameterize_mean_variance
 
 """
 So at this point we can compute V_n^e(T) and V_n(e). Now we can begin to sample.
@@ -56,7 +58,7 @@ class DurationSamplerMode(Enum):
     def __str__(self):
         return self.name
 def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = DurationSamplerMode.VANILLA,
-           lambdas = None, top = True, feedback=False):
+           lambdas = None, top = True, feedback=False, budget = 500):
     """
         Here I implement the rejection sampling for the most general set of input expressions:
         I allow any (even ambiguous) expression, with intersection only at top level.
@@ -67,69 +69,82 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
             w' in phi' => f(w') in phi.
         """
 
-    ## TODO these checks are not really needed in this function, since in any case we do them in all of the calls of unambig
+    """
+    Explaining some dev choices I made here:
+    We need to pay special attention to the combination of top level intersection with the disambiguation method:
+        If we naively disambiguate everything, then the variables in the 2nd intersection child will be disjunct from
+        the first child. Inside of sample_unambig, we don't currently have the reverse mapping to check membership -
+        so the easiest would be to provide this for the sample_unambig - except for rejection sampling
+        we need to have the uniformity in each iteration. So in fact we CAN'T do the rejection steps inside
+        of the sample_unambig. Thus, we need to do it inside of here (and I also pulled out the smart_sampling as its 
+        own function since we need it twice).
+    """
 
-    # if mode == DurationSamplerMode.VANILLA and lambdas:
-    #     warnings.warn("Vanilla mode shouldn't be used together with a lambdas input. Lambdas are being ignored.")
-    # if mode == DurationSamplerMode.MAX_ENT and T:
-    #     warnings.warn("Invalid usage of the sampling function: For fixed T, max_ent and vanilla are equivalent.")
-    # if mode == DurationSamplerMode.MAX_ENT and not isinstance(lambdas, np.ndarray) and not lambdas:
-    #     raise ValueError("Need an input for lambdas in MaxEnt mode.")  # isinstance because otherwise np complains
-    # if isinstance(node, TREParser.IntersectionExprContext) and (not top or T is None):
-    #     raise ValueError("Invalid usage: Intersection can only be used at the top level with a given T.")
-    #
-    # # This only concerns the top level call:
-    # # If no fixed T is provided, we sample either according to volumes, or use MaxEnt distribution.
-    # # Recursive calls fix a T.
-    # if T is None:
-    #     match mode:
-    #
-    #         case DurationSamplerMode.VANILLA:
-    #             vol = slice_volume(node, n)
-    #             pdf = vol.pdf
-    #
-    #             T = pdf.inverse_sampling()
-    #
-    #         case DurationSamplerMode.MAX_ENT:
-    #             # TODO could try to do a vectorized sampling here? Maybe we would get a speedup
-    #             #  (tried with MaxEntDist.n_inverse_sampling but haven't tested it here yet)
-    #             vol = slice_volume(node, n)
-    #             weighted_vol = MaxEntDist(vol, lambdas)
-    #
-    #             T = weighted_vol.inverse_sampling()
+    ## TODO the input checks are not really needed in this function, since in any case we do them in all of the calls of unambig
 
     # create string of phi' from phi. also get f during this process
     # TODO actually I only need to do this once, so I should extract this somewhere.
     #  I don't do it yet, because it complicates calling this function. I will probably do a sample_n wrapper function
     #  somewhere, where I can create f once and reuse it.
-    dis_str, f = disambiguate(node, return_inverse_map=True)
 
-    # parse the string again to get the syntax tree of phi'
-    phi_dis = quickparse(dis_str, string=True)
+    intersection_mode = isinstance(node, TREParser.IntersectionExprContext)
+    if intersection_mode:
+        assert top, "Intersection only allowed at the top level."
+        node:TREParser.IntersectionExprContext
+
+        original_child1 = node.expr(0)
+        original_child2 = node.expr(1)
+        dis_str, f = disambiguate(original_child1, return_inverse_map=True)  # just pick the 1st one TODO smallest better
+        child1_dis = quickparse(dis_str, string=True)  # parse the string again to get the syntax tree of phi'
+
+        for _ in range(budget):
+            w,rej = smart_sampling(child1_dis, n, T, mode, lambdas, original_child1, f)
+            # w.apply_renaming(f) # we need to go back to the original variables
+
+            if match(w,original_child2):
+                if feedback:
+                    return w, rej
+                return w
+
+        # this has no guarantee to ever finish (depending on intersection volumes)
+        raise BudgetExhaustedException(f"Rejection budget {budget} exhausted - "
+                                       f"maybe the intersection is empty or small."
+                                       f"Try changing the budget parameter.")
+
+    # THE NORMAL FUNCTION WITHOUT INTERSECTION:
+
+    dis_str, f = disambiguate(node, return_inverse_map=True)
+    phi_dis = quickparse(dis_str, string=True)  # parse the string again to get the syntax tree of phi'
 
     # print(f"Transformed phi = {node.getText()} to phi' = {phi_dis.getText()} for russian roulette sampling.")
 
+    w,rej = smart_sampling(phi_dis, n, T, mode, lambdas,node, f)
+
+    if feedback:
+        return w, rej
+    return w
+
+def smart_sampling(phi_dis:TREParser.ExprContext, n, T,mode, lambdas, origin_node, f):
     rej = 0
     while True:
         # now we pick a regular sample from the disambiguous version with the same sampling parameters
-        w = sample_unambig(node = phi_dis, n = n, mode = mode, lambdas = lambdas, top=top)
+        w = sample_unambig(node=phi_dis, n=n, T=T, mode=mode, lambdas=lambdas, top=True)
 
-        # use the inverse renaming to get a word in the non renamed language
-        w.apply_renaming(rename_map=f)
+        # no renaming necessary if empty word
+        if w:
+            # use the inverse renaming to get a word in the non renamed language
+            w.apply_renaming(rename_map=f)
 
         # count the number of ways to read the generated word WITH ORIGINAL EXPRESSION
-        N = match(w,node)
+        N = match(w, origin_node)
 
         # accept with proba 1/#matches of w in phi
-        if random.random() < 1/N:
+        if random.random() < 1 / N:
             out = w
             break
         rej += 1
 
-    if feedback:
-        return out, Feedback(rej=rej)
-
-    return out
+    return out, Feedback(rej=rej)
 
 def sample_unambig(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = DurationSamplerMode.VANILLA,
                    lambdas = None, top = True):
@@ -144,29 +159,38 @@ def sample_unambig(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerM
     if mode == DurationSamplerMode.MAX_ENT and T:
         warnings.warn("Invalid usage of the sampling function: For fixed T, max_ent and vanilla are equivalent.")
     if mode == DurationSamplerMode.MAX_ENT and not isinstance(lambdas, np.ndarray) and not lambdas:
-        raise ValueError("Need an input for lambdas in MaxEnt mode.")  # isinstance because otherwise np complains
+        raise UserError("Need an input for lambdas in MaxEnt mode.")  # isinstance because otherwise np complains
     if isinstance(node, TREParser.IntersectionExprContext) and (not top or T is None):
-        raise ValueError("Invalid usage: Intersection can only be used at the top level with a given T.")
+        raise UserError("Invalid usage: Intersection can only be used at the top level with a fixed T."
+                         "In this case we do not have a volume function for the whole expression, so we can't sample T."
+                         "The top level is necessary out of the same reason "
+                         "(each volume function depends on its children).")
 
     # This only concerns the top level call:
     # If no fixed T is provided, we sample either according to volumes, or use MaxEnt distribution.
     # Recursive calls fix a T.
+
     if T is None:
-        match mode:
+        # the only possible word for n = 0 is EPS -> we can directly take T=0
+        if n == 0 and has_eps(node):
 
-            case DurationSamplerMode.VANILLA:
-                vol = slice_volume(node, n)
-                pdf = vol.pdf
+            return TimedWord()
+        else:
+            match mode:
 
-                T = pdf.inverse_sampling()
+                case DurationSamplerMode.VANILLA:
+                    vol = slice_volume(node, n)
+                    pdf = vol.pdf
 
-            case DurationSamplerMode.MAX_ENT:
-                # TODO could try to do a vectorized sampling here? Maybe we would get a speedup
-                #  (tried with MaxEntDist.n_inverse_sampling but haven't tested it here yet)
-                vol = slice_volume(node, n)
-                weighted_vol = MaxEntDist(vol, lambdas)
+                    T = pdf.inverse_sampling()
 
-                T = weighted_vol.inverse_sampling()
+                case DurationSamplerMode.MAX_ENT:
+                    # TODO could try to do a vectorized sampling here? Maybe we would get a speedup
+                    #  (tried with MaxEntDist.n_inverse_sampling but haven't tested it here yet)
+                    vol = slice_volume(node, n)
+                    weighted_vol = MaxEntDist(vol, lambdas)
+
+                    T = weighted_vol.inverse_sampling()
 
 
 
@@ -248,6 +272,10 @@ def sample_unambig(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerM
             Simply sample in one of them and do rejection sampling with membership in the other Language.
             """
 
+            raise NotImplementedError("This can't work as it is right now. Need to pull this case out to general sampling function, or the renamings mess with the inclusion checking necessary for intersection sampling.")
+
+            # TODO the below code shall move to the general sampling function
+
             e1, e2 = node.expr(0), node.expr(1)
             vol1, vol2 = slice_volume(e1, n), slice_volume(e2,n)
 
@@ -257,11 +285,11 @@ def sample_unambig(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerM
             if not pick1:
                 e1, e2 = e2, e1
 
-            budget = 100  # TODO should probably be a param
+            budget = 300  # TODO should probably be a param
 
             counter = 0  # TODO maybe print rejection rate? with this we can estimate the volume of intersection
             for _ in range(budget):
-                w = sample_unambig(e1, n, T, mode=mode, lambdas=lambdas, top=False)
+                w = sample_unambig(node=e1, n=n, T=T, mode=mode, lambdas=lambdas, top=False)
 
                 if match(w, e2):
                     counter += 1
@@ -525,7 +553,9 @@ def sample_k(n, T, concat_vol, e1, e2) -> int:
         # This function desribes the volumes of words w1w2 where l(w1) = k and l(w2) = n-k.
         V_k = v1 ** v2
 
-        assert concat_vol(T) > 0, "Division by zero during concatenation sampling. Is the language empty for this T?"
+        assert concat_vol(T) > 0, (f"Division by zero during concatenation sampling. Is the language empty for this T?"
+                                   f"\n volume = {concat_vol}"
+                                   f"\n T = {T}")
 
         # Dividing the part for k by the overall volume (both for input T) gives the right proba to choose k.
         p_k = V_k(T) / concat_vol(T)

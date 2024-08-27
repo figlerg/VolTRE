@@ -13,7 +13,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/idea_language_inclusion.md",
+                "file": "README.md",
                 "mode": "source",
                 "source": false
               }
@@ -85,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "notes/idea_language_inclusion.md",
+                "file": "README.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "notes/idea_language_inclusion.md",
+                "file": "README.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "notes/idea_language_inclusion.md"
+                "file": "README.md"
               }
             }
           }
@@ -148,19 +148,20 @@
   },
   "active": "cffc3244dfc35319",
   "lastOpenFiles": [
-    "main.py~",
-    "sample/sample.py~",
-    "experiments/spec_19_qest_subset.tre",
+    "tests/pytest.ini~",
     "README.md~",
-    "venv/Lib/site-packages/pytest-8.3.1.dist-info/WHEEL",
-    "venv/Lib/site-packages/pytest-8.3.1.dist-info/top_level.txt",
-    "venv/Lib/site-packages/pytest-8.3.1.dist-info/REQUESTED",
-    "venv/Lib/site-packages/pytest-8.3.1.dist-info/RECORD",
-    "venv/Lib/site-packages/pytest-8.3.1.dist-info/METADATA",
-    "venv/Lib/site-packages/pytest-8.3.1.dist-info/LICENSE",
-    "venv/Lib/site-packages/pytest-8.3.1.dist-info/INSTALLER",
-    "notes/05 Update 2 June.md",
+    "img.png",
+    "tests/test_sample_vanilla.py~",
+    "tests/test_disambiguate.py~",
+    "tests/__pycache__/test_volume.cpython-312-pytest-8.3.2.pyc",
+    "tests/__pycache__/test_sample_maxent.cpython-312-pytest-8.3.2.pyc",
+    "tests/__pycache__/test_sample_ambig.cpython-312-pytest-8.3.2.pyc",
+    "tests/__pycache__/test_parse.cpython-312-pytest-8.3.2.pyc",
+    "tests/__pycache__/test_match.cpython-312-pytest-8.3.2.pyc",
+    "tests/__pycache__/test_disambiguate.cpython-312-pytest-8.3.2.pyc",
+    "tests/__pycache__/test_TAkiller.cpython-312-pytest-8.3.2.pyc",
     "notes/idea_language_inclusion.md",
+    "notes/05 Update 2 June.md",
     "README.md",
     "notes/01 Formalising the Volumes.md",
     "notes/04 Volume Theorem + Proof.md",
@@ -175,7 +176,6 @@
     "notes/Pasted image 20230216150726.png",
     "notes/Pasted image 20230216145416.png",
     "notes/Pasted image 20230216135441.png",
-    "notes/Pasted image 20240320173001.png",
     "notes/Update 2 June.md"
   ]
 }

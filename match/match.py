@@ -91,8 +91,12 @@ def match(w:TimedWord, phi: TREParser.ExprContext) -> int:
                     N+=N_sub
 
         case TREParser.IntersectionExprContext:
-            warnings.warn("Sampling for intersection and renaming is experimental and may not terminate.")
-            raise NotImplementedError
+            phi:TREParser.IntersectionExprContext
+            warnings.warn("Ihe match() function for intersection is experimental at this point."
+                          "Also, it does not count the syntax trees, but just checks that the word is at least "
+                          "in both child languages.")
+
+            return match(w, phi.expr(0)) and match(w,phi.expr(1))
 
         case TREParser.RenameExprContext:
             warnings.warn("Sampling for intersection and renaming is experimental and may not terminate.")
