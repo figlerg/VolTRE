@@ -26,6 +26,14 @@ from sample.sample import sample_unambig, DurationSamplerMode, sample
 from volume.tuning import mu, jacobi, lambdas, parameterize_mean_variance
 
 
+# Use the PDF backend which doesn't require LaTeX installed
+plt.rcParams.update({
+    "pgf.texsystem": "pdflatex",  # Use pdflatex (commonly available)
+    "font.family": "serif",       # Use serif fonts (like LaTeX)
+    "text.usetex": True,          # Enable LaTeX rendering
+    "pgf.rcfonts": False,         # Disable font setup for consistency
+})
+
 # TODO this will be the actual way to run it.
 # parser = argparse.ArgumentParser(description="Parse a TRE file and generate samples.")
 # parser.add_argument('path', type=str, help='Path to the TRE file.')
@@ -51,14 +59,19 @@ from volume.tuning import mu, jacobi, lambdas, parameterize_mean_variance
 # ctx = quickparse("experiments/spec_21_infint.tre")
 # ctx = quickparse(join('experiments', 'spec_21_no_subset_A.tre'))
 
+
+random.seed(42)
+np.random.seed(42)
+
 # PAPER
-ctx = quickparse(join('experiments','TACAS_paper', 'spec_01_hypercube.tre'))
+ctx = quickparse(join('spec_01_hypercube.tre'))
 
 print(ctx.getText())
 ctx_tmp = rename(ctx)
 if ctx.getText() != ctx_tmp.getText():
     ctx = ctx_tmp
     print(f"Applied renaming and got:\n{ctx.getText()}")
+
 
 # visualizes the tree
 # G = generate_syntax_tree(ctx)
@@ -67,42 +80,44 @@ if ctx.getText() != ctx_tmp.getText():
 # ctx2 = quickparse(join('experiments', 'spec_21_no_subset_B.tre'))
 
 
-
 def experiment():
     random.seed(42)
     np.random.seed(42)
 
-
     # print(disambiguate(ctx, return_inverse_map=True))
 
     n = 3
-    # T = 1.7
+    nr_samples = 2000
 
-    delays = []
+    print(f"Slice Volume:")
+    V = slice_volume(ctx,n)
+    V.fancy_print()
 
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
+    ax.view_init(elev=26, azim=-44)
 
-    for _ in range(50):
-        w = sample(ctx, n, T = 0.5)
-        # delays += list(w.delays)
+    cs = ['violet', 'green', 'blue', 'orange', 'yellow']
 
-    # plt.eventplot(delays)
+    for T in [0.5, 1, 1.5, 2, 2.5]:
+        xs, ys, zs = [], [], []
+        for _ in range(nr_samples):
+            w = sample(ctx, n, T=T)
+            triple = w.delays  # Assuming w.delays returns a triple (x, y, z)
+            xs.append(triple[0])
+            ys.append(triple[1])
+            zs.append(triple[2])
+
+        ax.scatter(xs, ys, zs, c=cs[int(T*2-1)], s=1)  # Scatter with xs, ys, zs for 3D points
+
     # plt.show()
-
-    # print(w.wordgen_format())
-
-    # print(intersection_match(w,phi=ctx))
-
-    # print(is_subset(ctx, ctx2,n,0.01,0.05))
-
+    plt.savefig("01_hypercube.pdf")  # Use .pgf if you prefer
 
 pr = cProfile.Profile()
 pr.enable()
 experiment()
 pr.disable()
-pr.dump_stats("main.prof")
-
+pr.dump_stats("01_hypercube.prof")
 
 # # Profile the function - THIS CAN'T BE USED WITH SNAKEVIZ
 # cProfile.run('experiment()', 'main.prof')

@@ -324,9 +324,11 @@ class VolumePoly:
 
         return VolumePoly(intervals, polys, delta)
 
+    @property
+    def size(self):
+        return max([p.degree() for p in self.polys]) * len(self.intervals)
 
-
-    def plot(self, no_show=False):
+    def plot(self, no_show=False, plt_title = ''):
 
         num_points = 100
 
@@ -404,8 +406,11 @@ class VolumePoly:
 
         plt.xlabel('T')
         plt.ylabel(r'$V^e_{n}(T)$       ', rotation=0)
-        if self.exp and self.n:
-            plt.title(f'Slice Volume:\ne = {self.exp}, n = {self.n}.')
+        if not plt_title:
+            if self.exp and self.n:
+                plt.title(f'Slice Volume:\ne = {self.exp}, n = {self.n}.')
+        else:
+            plt.title(plt_title)
         # plt.legend()
         plt.grid(False)  # Remove background lattice
         plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
@@ -520,7 +525,7 @@ class VolumePoly:
                 volumes. Since these points are a null-set, it doesn't matter when integrating over it.
                 """
 
-                warnings.warn(warning, UserWarning)
+                # warnings.warn(warning, UserWarning) # TODO think about these cases
 
         return out
 

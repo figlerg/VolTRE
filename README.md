@@ -5,9 +5,15 @@ Playground for volume based sampling method for timed regular expressions.
 
 ## Meetings
 
+### 10.09.2024
+TODOs till next time
+- Dejan: refinement case studies
+- Felix: TAkiller experiment, copypaste from one of the sharelatex, look into the new DES case study
+- 
+
 ### 27.08.2024
 Need case studies. possibilities:
-- [ ] language inclusion (work in progress)
+- [x] language inclusion (work in progress)
 - [ ] statistical model checking?
 - [ ] cps testing / falsification testing (I didn't find any models which take timed words as input?)
   - adaptive testing with timed automata (dejan)

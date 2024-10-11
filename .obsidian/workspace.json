@@ -11,15 +11,62 @@
             "id": "cffc3244dfc35319",
             "type": "leaf",
             "state": {
+              "type": "image",
+              "state": {
+                "file": "notes/Pasted image 20230216150900.png"
+              }
+            }
+          },
+          {
+            "id": "a72213a4c784f356",
+            "type": "leaf",
+            "state": {
               "type": "markdown",
               "state": {
-                "file": "README.md",
+                "file": "notes/06 Case Studies.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "96ae61cbc4c2ab7c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "notes/07 Resilience Testing.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "cfd2907506a77d02",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "08 Sanity Checks for Formalization of a Spec.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "0d5bf43e7b87af62",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "notes/08 Distribution of Work.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
-        ]
+        ],
+        "currentTab": 4
       }
     ],
     "direction": "vertical"
@@ -85,7 +132,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "README.md",
+                "file": "notes/Pasted image 20230216150900.png",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +149,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "README.md",
+                "file": "notes/Pasted image 20230216150900.png",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +172,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "README.md"
+                "file": "notes/Pasted image 20230216150900.png"
               }
             }
           }
@@ -146,36 +193,40 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "cffc3244dfc35319",
+  "active": "f07371fea7858a48",
   "lastOpenFiles": [
-    "tests/pytest.ini~",
-    "README.md~",
+    "08 Sanity Checks for Formalization of a Spec.md",
+    "notes/08 Distribution of Work.md",
+    "notes/07 Resilience Testing.md",
+    "notes/Pasted image 20240909172330.png",
+    "notes/06 Case Studies.md",
+    "Pasted image 20240909172330.png",
+    "notes/Pasted image 20230216145416.png",
+    "notes/Pasted image 20230216135441.png",
+    "notes/Pasted image 20230216154550.png",
+    "notes/Pasted image 20240320173001.png",
+    "oskar explanations.md",
+    "notes/Pasted image 20230216150900.png",
+    "README.md",
+    "language_inclusion/subset.py~",
+    "main.py~",
+    "language_inclusion/__pycache__/subset.cpython-312.pyc",
+    "language_inclusion/__pycache__",
+    "experiments/spec_21_no_subset_B.tre~",
+    "experiments/spec_21_no_subset_A.tre~",
+    "experiments/spec_21_no_subset_B.tre",
+    "experiments/spec_21_no_subset_A.tre",
+    "experiments/spec_21_no_subset.tre",
+    "language_inclusion/subset.py",
     "img.png",
-    "tests/test_sample_vanilla.py~",
-    "tests/test_disambiguate.py~",
-    "tests/__pycache__/test_volume.cpython-312-pytest-8.3.2.pyc",
-    "tests/__pycache__/test_sample_maxent.cpython-312-pytest-8.3.2.pyc",
-    "tests/__pycache__/test_sample_ambig.cpython-312-pytest-8.3.2.pyc",
-    "tests/__pycache__/test_parse.cpython-312-pytest-8.3.2.pyc",
-    "tests/__pycache__/test_match.cpython-312-pytest-8.3.2.pyc",
-    "tests/__pycache__/test_disambiguate.cpython-312-pytest-8.3.2.pyc",
-    "tests/__pycache__/test_TAkiller.cpython-312-pytest-8.3.2.pyc",
     "notes/idea_language_inclusion.md",
     "notes/05 Update 2 June.md",
-    "README.md",
     "notes/01 Formalising the Volumes.md",
     "notes/04 Volume Theorem + Proof.md",
     "notes/03 Status Update April.md",
     "notes/02 Maximum Entropy and Uniformness.md",
-    "notes/Pasted image 20230216154550.png",
     "notes/Pasted image 20230216154354.png",
     "notes/Pasted image 20230216153245.png",
-    "notes/Pasted image 20230216152944.png",
-    "notes/Pasted image 20230216151013.png",
-    "notes/Pasted image 20230216150900.png",
-    "notes/Pasted image 20230216150726.png",
-    "notes/Pasted image 20230216145416.png",
-    "notes/Pasted image 20230216135441.png",
     "notes/Update 2 June.md"
   ]
 }

@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import re
 
 
 class TimedWord:
@@ -111,6 +112,26 @@ class TimedWord:
         for i, s in enumerate(self.symbols):
             self.symbols[i] = rename_map[s]
 
+    def wordgen_format(self, mode='timeword'):
+        match mode:
+            case 'timeword':
+                return ' '.join([f'@{repr(b)} [{a}]' for a,b in self])
+            case _:
+                raise NotImplementedError
+
+def parse_wordgen(in_str:str):
+
+    # Define a regular expression pattern to match a float followed by a string in brackets
+    pattern = r'(\d*\.\d+|\d+)\s*\[([^\]]+)\]'
+
+    # Use the findall method to extract all matches
+    matches = re.findall(pattern, in_str)
+
+    # Separate the floats and strings into two lists
+    delays = [float(num) for num, text in matches]
+    symbols = [text for num, text in matches]
+
+    return TimedWord(symbols, delays)
 
 # helper to infer the permutation
 def infer_permutation(a, b):
@@ -130,6 +151,10 @@ if __name__ == '__main__':
     symbols = ['a', 'a', 'c']
     delays = [1,0.5,7]
 
-    w = TimedWord(symbols, delays)
+    wordgen_output = "1.457780[a] 0.458268[b] 0.057092[a]"
 
-    print(w)
+    w = parse_wordgen(wordgen_output)
+
+    print("Wordgen output was:", wordgen_output)
+    print("Parsed wordgen output as:", w)
+    print("Translating to wordgen input again:", w.wordgen_format())

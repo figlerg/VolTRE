@@ -1,0 +1,8 @@
+#phi_1 = (a + g)*.((r.(a + r + g)*.g)(a + g)*)*
+#phi_1 = (S\r)*.((r.S*.g)(S\r)*)* with S being the alphabet
+
+<(a + g)*.(<r.(a)*.g>_[1,2].(a + g)*)*>_[0,100]
+#phi_2 = (S\r)*.(<r.(S\{r,g})*.g>_[1,2](S\r)*)* with S being the alphabet
+
+
+# S = a + r + g

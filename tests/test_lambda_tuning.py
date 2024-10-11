@@ -18,7 +18,7 @@ from misc.exceptions import UserError, EmptyLanguageError
 
 tests = list()
 
-warnings.warn("TODO: Improve these tests. Right now I am just using very simple lambdas.")
+warnings.warn("TODO: Improve these tests.")
 
 
 # standard example

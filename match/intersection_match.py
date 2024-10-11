@@ -8,17 +8,9 @@ import warnings
 
 from itertools import product
 
-# TODO this is harder than expected? What are the sets that I combine?
-
-# IDEA: The match witnesses are subtrees: Each subtree must have len(w) leafs exactly.
-#   NO! We can get multiple letters from *, so it isn't necessarily a subtree?
-
-# IDEA2: The match witnesses are itself trees.
-#   However, they are not like the syntax trees anymore.
-#   Instead, they record exactly how many phi_0 we get out of any kleene node, and only ever get one of the union node children.
-#   Each node has an integer for how many letters it consumes.
-# e.g.
-
+# NOTE: I THINK THIS IDEA IS BAD
+#  It makes no sense to compare the syntax trees of intersection children.
+#  I think we might just use match everywhere?
 
 # TODO ask dejan/nicolas if this makes sense. I remember the witnesses to be "runs" in other automata paper?
 class WitnessNode:
@@ -54,6 +46,8 @@ The question is whether this approach (and my assumptions) is sound, and what th
 
 
 def intersection_match(w:TimedWord, phi: TREParser.ExprContext) -> Set[WitnessNode]:
+
+    raise Exception("This is just an experimental function. I don't think it is usable.")
 
     node_type = type(phi)
     print(node_type)

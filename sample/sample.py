@@ -47,7 +47,7 @@ I want to "sample downwards". So we start at top with a specific input (n,T) and
 """
 
 # Define the namedtuple
-Feedback = namedtuple('SampleFeedback', ['rej'])
+Feedback = namedtuple('SampleFeedback', ['smart_rej', 'intersect_rej'])
 
 
 
@@ -97,13 +97,18 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
         dis_str, f = disambiguate(original_child1, return_inverse_map=True)  # just pick the 1st one TODO smallest better
         child1_dis = quickparse(dis_str, string=True)  # parse the string again to get the syntax tree of phi'
 
-        for _ in range(budget):
+        for i in range(budget):
+            if not i %100 and i >0:
+                print("Did 100 rejections.")
+
             w,rej = smart_sampling(child1_dis, n, T, mode, lambdas, original_child1, f)
             # w.apply_renaming(f) # we need to go back to the original variables
 
+
             if match(w,original_child2):
                 if feedback:
-                    return w, rej
+                    fb = rej._replace(intersect_rej=i)  # I keep the rejections of intersection in a different field
+                    return w, fb
                 return w
 
         # this has no guarantee to ever finish (depending on intersection volumes)
@@ -144,7 +149,7 @@ def smart_sampling(phi_dis:TREParser.ExprContext, n, T,mode, lambdas, origin_nod
             break
         rej += 1
 
-    return out, Feedback(rej=rej)
+    return out, Feedback(smart_rej=rej, intersect_rej=None)
 
 def sample_unambig(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = DurationSamplerMode.VANILLA,
                    lambdas = None, top = True):
