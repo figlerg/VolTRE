@@ -52,7 +52,7 @@ from volume.tuning import mu, jacobi, lambdas, parameterize_mean_variance
 # ctx = quickparse(join('experiments', 'spec_21_no_subset_A.tre'))
 
 # PAPER
-ctx = quickparse(join('experiments','TACAS_paper', 'spec_01_hypercube.tre'))
+ctx = quickparse(join('experiments','paper_experiments', 'spec_01_hypercube.tre'))
 
 print(ctx.getText())
 ctx_tmp = rename(ctx)

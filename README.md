@@ -9,3 +9,7 @@ This repository provides the implementation of **VolTRE**, a tool for volumetry 
 - **Exact Duration Control**: Allows sampling with an exact duration, an improvement over prior methods that only controlled expected durations.
 
 More details will be announced.
+
+A selection of experiments can be found in [this folder](./experiments/paper_experiments).
+
+If you want to try our tool, see the [Tutorial JuPyter Notebook](tutorial.ipynb).
