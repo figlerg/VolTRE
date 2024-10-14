@@ -1,15 +1,14 @@
 from math import inf
 
-import matplotlib.pyplot as plt
 from antlr4 import FileStream, CommonTokenStream
-from sympy import Piecewise, poly
-from sympy.abc import T, t
+from sympy import poly
+from sympy.abc import T
 
 from misc.exceptions import UserError
-from volume.VolumePoly import VolumePoly, continuous_convolution
+from volume.VolumePoly import VolumePoly
 from parse.SyntaxError import HardSyntaxErrorStrategy
 from parse.TREParser import TREParser
-from visualize_recursion import generate_syntax_tree, highlight_node
+from misc.visualize_recursion import generate_syntax_tree, highlight_node
 from misc.recursion_template import get_interval
 
 from functools import lru_cache

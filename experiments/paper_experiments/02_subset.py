@@ -1,30 +1,14 @@
 # for now try to generate the multiset of intervals automatically
-import argparse
 import random
 import cProfile
-import pstats
-import time
-import warnings
-from math import factorial
 
 import matplotlib.pyplot as plt
-from os.path import join, curdir
+from os.path import join
 
 import numpy as np
 
 from probabilistic.subset import is_subset
-from match.intersection_match import intersection_match
-from match.match import match
-from misc.disambiguate import disambiguate
-from misc.rename import rename
 from parse.quickparse import quickparse
-from sample.TimedWord import TimedWord
-from visualize_recursion import generate_syntax_tree, highlight_node
-from volume.MaxEntDist import MaxEntDist
-from volume.slice_volume import slice_volume
-from sample.sample import sample_unambig, DurationSamplerMode, sample
-from volume.tuning import mu, jacobi, lambdas, parameterize_mean_variance
-
 
 # Use the PDF backend which doesn't require LaTeX installed
 plt.rcParams.update({

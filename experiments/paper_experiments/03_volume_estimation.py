@@ -1,29 +1,16 @@
 # for now try to generate the multiset of intervals automatically
-import argparse
 import random
 import cProfile
-import pstats
-import time
-import warnings
-from math import factorial, sqrt
 
-import matplotlib.pyplot as plt
-from os.path import join, curdir
+from os.path import join
 
 import numpy as np
 
-from match.match import match
 from misc.disambiguate import disambiguate
 from misc.rename import rename
 from parse.quickparse import quickparse
 from probabilistic.volume_estimate import volume_estimate
-from sample.TimedWord import TimedWord
-from visualize_recursion import generate_syntax_tree, highlight_node
-from volume.MaxEntDist import MaxEntDist
 from volume.slice_volume import slice_volume
-from sample.sample import sample_unambig, DurationSamplerMode, sample
-from volume.tuning import mu, jacobi, lambdas, parameterize_mean_variance
-
 
 ctx = quickparse(join('..', 'spec_09_ambig.tre'))
 
