@@ -136,3 +136,10 @@ class BudgetExhaustedException(Exception):
     def __init__(self, message="Budget exhausted without finding a solution."):
         self.message = message
         super().__init__(self.message)
+
+class InverseSamplingException(Exception):
+    """Exception raised when a budget is exhausted and no solution has been found."""
+    def __init__(self, message="Inverse sampling failed."):
+        self.message = message
+        super().__init__(self.message)
+

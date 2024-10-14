@@ -14,8 +14,8 @@ from sympy.abc import T, t, x  # I will treat T as the slice duration, and t as 
 
 from misc.exceptions import EmptyLanguageError, UserError
 # this is my code
-from misc.helpers import intersect, length, interval_convolution, determine_convolution_case, ConvolutionCase
-
+from misc.helpers import intersect, length, interval_convolution, determine_convolution_case, ConvolutionCase, \
+    InverseSamplingException
 
 
 class VolumePoly:
@@ -625,8 +625,11 @@ class VolumePoly:
                         # cdf.plot()
                         # plt.show()
                         return sol
-
-        raise Exception("Inverse sampling failed.")
+        # print(self)
+        # print(u)
+        # self.plot()
+        # self.integral().plot()
+        raise InverseSamplingException()
 
     @lru_cache
     def is_cont_piece(self) -> bool:
