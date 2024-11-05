@@ -64,7 +64,10 @@ class VolumePoly:
         """
         print('')
         for i, inter in enumerate(self.intervals):
-            print(inter, self.polys[i].as_expr())
+            try:
+                print(inter, self.polys[i].as_expr())
+            except AttributeError:
+                print(inter, self.polys[i])
         print('')
 
     def __repr__(self):
@@ -851,3 +854,6 @@ if __name__ == '__main__':
         print(vol1(-1))
     except AssertionError:
         print("Successfully caught invalid input.")
+
+
+

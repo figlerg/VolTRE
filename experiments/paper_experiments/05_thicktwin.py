@@ -63,7 +63,7 @@ def experiment():
     # Ts = []
 
     ns = np.asarray(range(1,23,2))
-    Ts = 0.66*(ns+1)/2
+    Ts = 0.5*(ns+1)/2
 
     print(Ts)
 

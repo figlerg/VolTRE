@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+from math import sqrt
 
 # Use the PDF backend which doesn't require LaTeX installed
 # plt.rcParams.update({
@@ -41,23 +42,26 @@ thicktwin_df = pd.read_csv('05_thicktwin.csv',delimiter=' ')
 y2_b = thicktwin_df['execution time']
 
 # Create a figure with two subplots arranged horizontally
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3))
+# fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3))
+textwidth = 4.8
+goldencut = textwidth/(1+sqrt(5)/2)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(textwidth, 1.9))  # Adjusted size to match \textwidth
 
 # Plot for subplot A
 ax1.plot(x_1, y2_a, label='TRE Sampler')
 ax1.plot(x_1, y1_a, label='TA Sampler')
-ax1.set_title('Bad-for-TA Family of Languages')  # Subtitle for the first plot
-ax1.set_xlabel('n')
+ax1.set_title('Bad-for-TA Family of Languages', fontsize=11)  # Subtitle for the first plot
+# ax1.set_xlabel('n')
 ax1.set_ylabel('time (s)')
-ax1.legend()
+ax1.legend(loc='upper left')
 
 # Plot for subplot B
 ax2.plot(x_2, y2_b, label='TRE Sampler')
 ax2.plot(x_2, y1_b, label='TA Sampler')
-ax2.set_title(r'Language of $e_{ex3}$')  # Subtitle for the second plot
-ax2.set_xlabel('n')
+ax2.set_title(r'Language of $e_{ex3}$', fontsize=11)  # Subtitle for the second plot
+# ax2.set_xlabel('n')
 ax2.set_ylabel('time (s)')
-ax2.legend()
+ax2.legend(loc='upper left')
 
 # Adjust layout to make sure titles and labels fit well
 plt.tight_layout()
