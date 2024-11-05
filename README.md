@@ -4,7 +4,7 @@ This repository provides the implementation of **VolTRE**, a tool for volumetry 
 
 ## Paper: _Slice Sampling for Timed Regular Languages_
 
-This repository is associated with the paper **"Slice Sampling for Timed Regular Languages"**. 
+This repository is associated with the upcoming paper **"Slice Sampling for Timed Regular Languages"**. 
 
 ### Authors
 
