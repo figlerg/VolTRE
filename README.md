@@ -28,7 +28,7 @@ A selection of experiments can be found in [this folder](./experiments/paper_exp
 ## Quickstart
 
 ### Installation
-Follow these steps to create a virtual environment:
+Follow these steps to create a virtual environment and install the tool:
 - Install Python 3
 - Install Git
 - Install pip
@@ -39,6 +39,7 @@ Follow these steps to create a virtual environment:
   - For Windows Powershell: ````venv\Scripts\activate.ps1````
   - For Windows cmd: ````venv\Scripts\activate.bat````
   - For macOS/Linux: ````source venv/bin/activate````
+- Install the required modules: ````pip install -r requirements.txt````
 - Install the module using setup.py ````pip install -e .````
 
 
@@ -49,14 +50,17 @@ git clone https://github.com/figlerg/VolTRE
 cd VolTRE
 py -m venv venv
 venv\Scripts\activate.ps1
-py -m pip install -e .
+pip install -r requirements.txt
+python -m pip install -e .
 
 ````
 
 To check whether the installation works, run the example below.
 
 ### Minimal Example
-Test your installation by running the [minimal example](./minimal_example.py) in the top level _VolTRE_ folder.
+Test your installation by running the [minimal example](./minimal_example.py) in the top level _VolTRE_ folder (with the activated venv). You should see the graph of a volume function, and upon closing it some samples in the terminal.
+
+````python minimal_example.py````
 
 This is the code in the example, with comment explanations:
 ````python
