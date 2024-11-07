@@ -28,7 +28,7 @@ A selection of experiments can be found in [this folder](./experiments/paper_exp
 ## Quickstart
 
 ### Installation
-Follow these steps to create a virtual environment:
+Follow these steps to create a virtual environment and install the tool:
 - Install Python 3
 - Install Git
 - Install pip
@@ -39,6 +39,7 @@ Follow these steps to create a virtual environment:
   - For Windows Powershell: ````venv\Scripts\activate.ps1````
   - For Windows cmd: ````venv\Scripts\activate.bat````
   - For macOS/Linux: ````source venv/bin/activate````
+- Install the required modules: ````pip install -r requirements.txt````
 - Install the module using setup.py ````pip install -e .````
 
 
