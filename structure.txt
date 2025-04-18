@@ -1,0 +1,215 @@
+.gitignore
+.ipynb_checkpoints
+    tutorial-checkpoint.ipynb
+.obsidian
+    app.json
+    appearance.json
+    core-plugins-migration.json
+    core-plugins.json
+    workspace.json
+LICENSE
+README.md
+VolTRE.svg
+experiments
+    TAkiller.tre
+    TAkiller_15_gen.tre
+    TAkiller_Subfamily.STAR_3_gen.tre
+    TAkiller_Subfamily.STAR_5_gen.tre
+    generate_TAkiller.py
+    main.prof
+    paper_experiments
+        01_hypercube.pdf
+        01_hypercube.prof
+        01_hypercube.py
+        02_subset.prof
+        02_subset.py
+        02subset.prof
+        03_volume.prof
+        03_volume_estimation.py
+        04_TAkiller.csv
+        04_TAkiller.pdf
+        04_TAkiller.prof
+        04_TAkiller.py
+        04b_TAkiller_10.py
+        05_thicktwin.csv
+        05_thicktwin.py
+        05thicktwin.prof
+        06_TRE_TA_comp.pdf
+        06_TRE_TA_comp.py
+        nTtest.py
+        spec_01_hypercube.tre
+        spec_02_subset_A.tre
+        spec_02_subset_B.tre
+        spec_05_thicktwin.tre
+    region_histogram.py
+    run_tuning.py
+    run_volume_tests.py
+    scatter_vis.py
+    spec_00.tre
+    spec_00_test.tre
+    spec_01.tre
+    spec_02.tre
+    spec_03.tre
+    spec_04.tre
+    spec_05.tre
+    spec_06.tre
+    spec_07_intersection.tre
+    spec_08_renaming.tre
+    spec_09_ambig.tre
+    spec_10_noparse.tre
+    spec_11_disambig.tre
+    spec_11_unbounded.tre
+    spec_12_eps.tre
+    spec_12_intersection.tre
+    spec_13_atom.tre
+    spec_14_eps.tre
+    spec_15_epsvol.tre
+    spec_16_first.tre
+    spec_17_first.tre
+    spec_18_comparehist.tre
+    spec_19_qest_subset.tre
+    spec_20_ambig.tre
+    spec_21_infint.tre
+    spec_21_no_subset_A.tre
+    spec_21_no_subset_B.tre
+    spec_22_normal_traffic.tre
+    test_out
+        region_histogram.txt
+        scatter_vis.png
+        vol_00.png
+        vol_01.png
+        vol_02.png
+        vol_03.png
+        vol_04.png
+    theory_sampling_comp.py
+    thesis_experiments
+        00_template.py
+        01_simplify_vis.pdf
+        01_simplify_vis.prof
+        01_simplify_vis.py
+        02_conv_vis.py
+        plot_config.py
+    working_example.tre
+    working_example_vol.png
+    working_example_vol.txt
+getstructure.py
+main.prof
+main.py
+match
+    __init__.py
+    intersection_match.py
+    match.py
+minimal_example.py
+misc
+    __init__.py
+    disambiguate.py
+    exceptions.py
+    first.py
+    has_eps.py
+    helpers.py
+    is_det.py
+    recursion_template.py
+    rename.py
+    visualize_recursion.py
+notes
+    01 Formalising the Volumes.md
+    02 Maximum Entropy and Uniformness.md
+    03 Status Update April.md
+    04 Volume Theorem + Proof.md
+    05 Update 2 June.md
+    05 Update 2 June.pdf
+    06 Case Studies.md
+    07 Resilience Testing.md
+    08 Distribution of Work.md
+    08 Sanity Checks for Formalization of a Spec.md
+    Pasted image 20230216135441.png
+    Pasted image 20230216145416.png
+    Pasted image 20230216150726.png
+    Pasted image 20230216150900.png
+    Pasted image 20230216151013.png
+    Pasted image 20230216152944.png
+    Pasted image 20230216153245.png
+    Pasted image 20230216154354.png
+    Pasted image 20230216154550.png
+    Pasted image 20240320172403.png
+    Pasted image 20240320173001.png
+    Pasted image 20240909172330.png
+    idea_language_inclusion.md
+    meeting_notes.md
+parse
+    SyntaxError.py
+    TRE.g4
+    TRE.interp
+    TRE.tokens
+    TRELexer.interp
+    TRELexer.py
+    TRELexer.tokens
+    TREParser.py
+    quickparse.py
+    test_spec.txt
+probabilistic
+    subset.py
+    volume_estimate.py
+requirements.txt
+sample
+    TimedWord.py
+    sample.py
+setup.py
+structure.txt
+tests
+    .pytest_cache
+        .gitignore
+        CACHEDIR.TAG
+        README.md
+        v
+            cache
+    file_helper.py
+    logs
+    pytest.ini
+    test_TAkiller.py
+    test_disambiguate.py
+    test_lambda_tuning.py
+    test_match.py
+    test_parse.py
+    test_sample_ambig.py
+    test_sample_maxent.py
+    test_sample_vanilla.py
+    test_volume.py
+tutorial.ipynb
+vis_experiments
+    TAkiller15_n20.png
+    TAkiller_substar5_n15.png
+    Volumes
+        n_1.png
+        n_6.png
+    bad_testcases
+        TAkiller_incontinuity.png
+        noncont_cdf_maxent.png
+        now_this_is_new.png
+        slow_c_fail.png
+        weird_conv
+            functions.txt
+            v1.png
+            v1_v2_conv.png
+            v2.png
+    comp_factorizations.png
+    exp_n6.png
+    good_news
+        fixed_convolution.png
+        inverse_sampling_maxent.png
+    n_3_no_cache.gif
+    n_3_no_cache_slow.gif
+    n_6_bug.png
+    no_bug.png
+    no_bug_MaxEntCDF.png
+    prints_factorizations1_5.txt
+    prints_factorizations2_4.txt
+    small_TAkiller_n4.png
+    time_cached.png
+volume
+    FreePiecewise.py
+    MaxEntDist.py
+    VolumePoly.py
+    slice_volume.py
+    tuning.py
+volume.svg

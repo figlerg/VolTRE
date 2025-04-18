@@ -1,0 +1,15 @@
+# This is some work with alessio on the generation of "normal" traffic. We could probably do this more ad-hoc but it is
+#  a nice toy example for this tool.
+
+<s.(l+r).e>_[30,100]
+
+# assume that we have 100s of sim and each word describes the specification of an atomic, simple maneuver on the road.
+#- s... spawns the vehicle on any of the inner lanes
+#- l... lane change to the left
+#- r... lane change to the right
+#- e... vehicle reaches the end of the lane and despawns
+
+# We sample words of length 3 and variable duration. This means each car will have exactly one lane change and should
+#   complete its trajectory in a time T \in [30,100] seconds.
+
+# OR something like (l1+r1).(l1+r1).(l1+r1).(l1+r1).

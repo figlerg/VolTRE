@@ -14,8 +14,8 @@ from sample.sample import sample
 # TODO make the cmd params a bit nicer, add descriptions
 parser = argparse.ArgumentParser(description="Parse a TRE file and generate samples. UNDER CONSTRUCTION")
 parser.add_argument('-path', nargs='?', type=str, help='Path to the TRE file.',default=os.path.join('experiments','spec_00.tre'))
-parser.add_argument('n', nargs='?', type=int, default=2, help='Length of words.')
-parser.add_argument('T', nargs='?', type=float, default=0.5, help='Duration of words.')
+parser.add_argument('-n', nargs='?', type=int, default=2, help='Length of words.')
+parser.add_argument('-T', nargs='?', type=float, default=None, help='Duration of words.')
 
 args = parser.parse_args()
 
