@@ -57,7 +57,42 @@ python -m pip install -e .
 
 To check whether the installation works, run the example below.
 
-### Minimal Example
+### 🔧 CLI Examples
+
+**Minimal sampling:**
+```bash
+python main.py -p experiments/spec_00.tre -n 5 -T 0.5 --nr_samples 20
+```
+- Samples 20 timed words
+- Each word has 5 events and total duration 0.5
+- Default mode = `vanilla`
+- No profiling, no seed
+
+**With profiling and fixed seed:**
+```bash
+python main.py -p experiments/spec_00.tre -n 8 --budget 1000 --nr_samples 30 --verbose --seed 123
+```
+- Enables profiling and fixed randomness
+- Useful for reproducibility and performance measurement
+- Profiling data saved to `main.prof`
+
+**Only visualize the slice volume (no sampling):**
+```bash
+python main.py -p experiments/spec_00.tre -n 6 --visualize
+```
+- Computes and plots the slice volume
+- If `--verbose` is used, prints the piecewise volume function
+- ⚠️ Assumes no ambiguity or top-level intersection — warning shown if needed
+
+**Print only the total volume (no sampling):**
+```bash
+python main.py -p experiments/spec_00.tre -n 6 --total_volume
+```
+- Computes and prints the total volume (area) of the slice
+- Can be combined with `--verbose` for extra details
+
+
+### Minimal Example - Programmatic
 Test your installation by running the [minimal example](./minimal_example.py) in the top level _VolTRE_ folder (with the activated venv). You should see the graph of a volume function, and upon closing it some samples in the terminal.
 
 ````python minimal_example.py````

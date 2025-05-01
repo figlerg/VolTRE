@@ -1,61 +1,113 @@
-# for now try to generate the multiset of intervals automatically
 import argparse
-import os.path
-import pstats
+import os
 import random
 import cProfile
-import matplotlib.pyplot as plt
-from os.path import join
+import pstats
 import numpy as np
+import matplotlib.pyplot as plt
+import warnings
 from misc.rename import rename
 from parse.quickparse import quickparse
 from sample.sample import sample
+from sample.sample import DurationSamplerMode
+from volume.slice_volume import slice_volume  # Assumes this is where it's defined
 
-# TODO make the cmd params a bit nicer, add descriptions
-parser = argparse.ArgumentParser(description="Parse a TRE file and generate samples. UNDER CONSTRUCTION")
-parser.add_argument('-path', nargs='?', type=str, help='Path to the TRE file.',default=os.path.join('experiments','spec_00.tre'))
-parser.add_argument('-n', nargs='?', type=int, default=2, help='Length of words.')
-parser.add_argument('-T', nargs='?', type=float, default=None, help='Duration of words.')
-
+# ========================
+# Command-line Arguments
+# ========================
+parser = argparse.ArgumentParser(description="Parse a TRE file and generate samples.")
+parser.add_argument('-p', '--path', type=str, required=True, help='Path to the .tre file.')
+parser.add_argument('-n', '--length', type=int, required=True, help='Fixed length (number of events) of sampled words.')
+parser.add_argument('-T', '--duration', type=float, default=None, help='Fixed total duration (optional).')
+parser.add_argument('--mode', type=str, choices=['vanilla', 'max_entropy'], default='vanilla', help='Sampling mode. Default is vanilla.')
+parser.add_argument('--budget', type=int, default=500, help='Budget for rejection sampling (default: 500).')
+parser.add_argument('--nr_samples', type=int, default=None, help='Number of samples to generate.')
+parser.add_argument('--verbose', action='store_true', help='Enable verbose mode with profiling.')
+parser.add_argument('--seed', type=int, default=None, help='Random seed (optional).')
+parser.add_argument('-v', '--visualize', action='store_true', help='Visualize the slice volume function.')
+parser.add_argument('--total_volume', action='store_true', help='Print the total volume of the slice.')
 args = parser.parse_args()
 
-path = args.path
-n = args.n
-T = args.T
+# ========================
+# Setup and Parsing
+# ========================
+if args.seed is not None:
+    random.seed(args.seed)
+    np.random.seed(args.seed)
 
 ctx = quickparse(args.path)
+print("Parsed Expression:")
 print(ctx.getText())
 
-
-# apply renamings
+# Apply renamings if necessary
 ctx_tmp = rename(ctx)
 if ctx.getText() != ctx_tmp.getText():
     ctx = ctx_tmp
-    print(f"Applied renaming and got:\n{ctx.getText()}")
+    print("Applied renaming. New Expression:")
+    print(ctx.getText())
 
-# visualize the tree
-# G = generate_syntax_tree(ctx)
-# highlight_node(G, str(ctx), comment='')
-
+# ========================
+# Experiment Logic
+# ========================
 
 def experiment():
-    random.seed(42)
-    np.random.seed(42)
+    mode = DurationSamplerMode.VANILLA if args.mode == 'vanilla' else DurationSamplerMode.MAX_ENT
 
-    # TODO nr_samples as input param
-    for _ in range(50):
-        w = sample(ctx, n=n, T=T)
+    if args.verbose:
+        print("Computing slice volume...")
+    try:
+        vol = slice_volume(ctx, args.length)
+        if args.visualize:
+            vol.plot()
+        if args.total_volume:
+            total_vol = vol.total_volume()
+            print(f"Total volume: {total_vol}")
+        if args.verbose:
+            print("Slice volume computation completed.")
+            vol.fancy_print()
+            print("This volume assumes the expression is unambiguous and has no top-level intersection. Intersection errors will be caught, but ambiguity cannot be detected here. If the expression is ambiguous, the computed volume may be incorrect. Check the sampling rejection feedback: zero rejections imply unambiguous expression.")
+            print("Sampling will work anyways, as it uses our smart rejection sampling in case of ambiguity.")
+    except Exception as e:
+        vol = None
+        if args.verbose:
+            print(f"Slice volume computation failed or not applicable: {e}")
+
+    if args.nr_samples is None:
+        if args.visualize or args.total_volume:
+            return  # Only visualization or volume requested
+        else:
+            raise ValueError("--nr_samples must be specified unless using --visualize or --total_volume only.")
+
+    if args.verbose:
+        print("Starting sampling...")
+
+    for _ in range(args.nr_samples):
+        w = sample(ctx, n=args.length, T=args.duration, mode=mode, budget=args.budget)
         print(w)
 
     plt.show()
 
+# ========================
+# Profiling Setup
+# ========================
+pr = cProfile.Profile()  # just to shut up my linter
 
-pr = cProfile.Profile()
-pr.enable()
+if args.verbose:
+    print("Profiling enabled...")
+    pr.enable()
+
 experiment()
-pr.disable()
-pr.dump_stats("main.prof")
 
-# Print the profiling results
-p = pstats.Stats('main.prof')
-p.strip_dirs().sort_stats('cumulative').print_stats(10)
+if args.verbose:
+    pr.disable()
+    profile_file = "main.prof"
+    pr.dump_stats(profile_file)
+    print(f"Profiling data saved to {profile_file}")
+    p = pstats.Stats(profile_file)
+    p.strip_dirs().sort_stats('cumulative').print_stats(10)
+
+# ========================
+# Internal Flags
+# ========================
+# top=True is handled inside sample(), hidden from CLI
+# TODO: Add --feedback option to CLI in the future

@@ -52,10 +52,32 @@ def experiment():
         if bp:
             ax.plot(x_diag, y_diag1, 'm-', linewidth=1)
 
+        from matplotlib.colors import to_rgb, to_hex
+
+        def darken(color, factor=0.4):
+            r, g, b = to_rgb(color)
+            return to_hex((r * factor, g * factor, b * factor))
+
         testlen = lp/2
         x_test1 = np.linspace(a,a+testlen, 10)
         y_test1 = -1*x_test1 + beta - testlen
-        ax.plot(x_test1, y_test1, 'm-', linewidth=1,c=c1)
+        ax.plot(x_test1, y_test1, ':', linewidth=1,c=darken(c1))
+
+        x_test2 = np.linspace(a+lp,a+lp +lp, 10)
+        y_test2 = -1*x_test2 + beta + lp
+        ax.plot(x_test2, y_test2, ':', linewidth=1,c=darken(c2))
+
+        x_test3 = np.linspace(b-lp+lp/2,b, 10)
+        y_test3 = -1*x_test3 + gamma + lp/2
+        ax.plot(x_test3, y_test3, ':', linewidth=1,c=darken(c3))
+
+        # Choose a consistent y-value for all annotations (below the rectangle)
+        label_y = ap - 0.3  # adjust this to your layout
+
+        # Annotations below the rectangle, horizontally spaced
+        ax.text(a + lp * 0.4, label_y, "$T \\in [\\alpha, \\beta]$", color=darken(c1), fontsize=9, ha='center')
+        ax.text(a + lp * 2, label_y, "$T \\in [\\beta, \\gamma]$", color=darken(c2), fontsize=9, ha='center')
+        ax.text(b - lp * 0.4, bp+0.2, "$T \\in [\\gamma, \\delta]$", color=darken(c3), fontsize=9, ha='center')
 
         # Highlight polygons for case i
         highlight_points = np.array(((a, ap), (a, bp), (a + lp, ap)))
