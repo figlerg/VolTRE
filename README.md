@@ -14,7 +14,7 @@ This repository provides the implementation of **VolTRE**, a tool for volumetry 
 This repository was developed and maintained by **Felix Gigler**.
 
 
-## Master's Thesis: Uniform Sampling of Timed Regular Expressions
+## Master's Thesis: _Uniform Sampling of Timed Regular Expressions_
 This repository accompanies the Diplomarbeit (Master's thesis) *"Uniform Sampling of Timed Regular Expressions"*, submitted as part of the Logic and Computation program at TU Wien. The work was carried out under the supervision of Dejan Nickovic (main supervisor), with additional guidance and support from Nicolas Basset, Thao Dang, and Ezio Bartocci.
 
 
