@@ -5,11 +5,11 @@ This repository provides the implementation of **VolTRE**, a tool for volumetry 
 ## Contributors
 
 - **Felix Gigler** (TU Wien, Vienna, Austria; AIT Austrian Institute of Technology, Vienna, Austria)
-- Benoît Barbot (Univ Paris Est Creteil, LACL, F-94010 Creteil, France)
 - Dejan Nickovic (AIT Austrian Institute of Technology, Vienna, Austria)
 - Nicolas Basset (Univ. Grenoble Alpes, CNRS, Grenoble INP, VERIMAG, 38000 Grenoble, France)
 - Thao Dang (Univ. Grenoble Alpes, CNRS, Grenoble INP, VERIMAG, 38000 Grenoble, France)
 - Ezio Bartocci (TU Wien, Vienna, Austria)
+- Benoît Barbot (Univ Paris Est Creteil, LACL, F-94010 Creteil, France)
 
 This repository was developed and maintained by **Felix Gigler**.
 
