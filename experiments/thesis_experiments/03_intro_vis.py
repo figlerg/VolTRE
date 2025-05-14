@@ -14,17 +14,19 @@ from plot_config import *
 figname = "03_intro_vis"
 
 def experiment():
+
+    bottom_add = 0.2  # needed so that t_1 is not cut off
     # Ensure square aspect ratio with enough horizontal space for two plots
-    fig, axs = plt.subplots(1, 3, figsize=(fig_width_in, 1/3 * fig_width_in), sharex=True, sharey=True)
+    fig, axs = plt.subplots(1, 3, figsize=(fig_width_in, 1/3 * fig_width_in+bottom_add), sharex=True, sharey=True)
 
     # titles = [
     #     "$\\langle a \\cdot a \\rangle_{[0,1]}$",
     #     "$\\langle b \\cdot (a \\cup b) \\rangle_{[0,2]}$"
     # ]
     titles = [
-        "$aa$% in $\\langle a \\cdot a \\rangle_{[0,1]}$",
-        "$ba$% in $\\langle b \\cdot (a \\cup b) \\rangle_{[0,2]}$",
-        "$bb$% in $\\langle b \\cdot (a \\cup b) \\rangle_{[0,2]}$"
+        "$aa$",
+        "$ba$",
+        "$bb$"
     ]
 
     # fig.suptitle("Area of delays in subexpresions of $e_t$", fontsize=14, y=1.05)
@@ -46,16 +48,22 @@ def experiment():
 
         ax.plot(x, y, color=c1)
 
+
         # new inscribed line for a slice
         y_inscribe = -x + 0.5
-        ax.plot(x, y_inscribe, linestyle='--', color=c4, linewidth=1)
-        ax.text(0.001, 0.01, "$t_1 + t_2 = \\frac{1}{2}$", fontsize=10, color=c4, rotation=-48, ha='left', va='bottom')
+        ax.plot(x, y_inscribe, linestyle='--', color='gray', linewidth=1)
+        ax.text(0.0005, 0.01, "$t_1 + t_2 = \\frac{1}{2}$", fontsize=9, color='gray', rotation=-46, ha='left', va='bottom')
+        # ax.text(-0.04, -0.04, "$t_1 + t_2 = 1/2$", fontsize=9, color='gray', rotation=-48, ha='left', va='bottom')
 
+        # for t in [0.75]:
+        #     y_inscribe = -x + t
+        #     ax.plot(x, y_inscribe, linestyle='--', color='lightgray', linewidth=1)
 
         ax.fill_between(x, 0, y, where=(y > 0), interpolate=True, color=c1, alpha=0.2)
 
     # plt.tight_layout()
     # plt.tight_layout(rect=[0, 0.05, 1, 0.95])
+    plt.subplots_adjust(bottom=bottom_add)
     plt.savefig(f"{figname}.pdf")
 
 pr = cProfile.Profile()
