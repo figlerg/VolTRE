@@ -23,6 +23,7 @@ def quickparse(parse_input, string=False) -> TREParser.ExprContext:
     else:
         input_stream = InputStream(parse_input)
 
+    input_stream.name = parse_input
     lexer = TRELexer(input_stream)
     stream = CommonTokenStream(lexer)
     parser = TREParser(stream)
