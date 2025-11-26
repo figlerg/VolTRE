@@ -1,0 +1,3 @@
+# alessio's example. did not work with free duration
+
+(<keepLane>_[25,50]+<changeLaneOnce>_[25,50])*
