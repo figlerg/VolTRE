@@ -6,6 +6,7 @@ import tqdm
 from antlr4 import ParserRuleContext
 
 from match.match import match
+from misc.cached_getText import _get_text
 from misc.disambiguate import disambiguate
 from misc.exceptions import UserError
 from misc.has_eps import has_eps
@@ -245,7 +246,7 @@ def sample_unambig(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerM
 
             # TODO unsure whether this means we can run into problems for examples with nonempty volumes...
             #  can the children get illegal delays?
-            assert interval[0] <= T <= interval[1], (f"Bad sampling call: The expression {sub.getText()} cannot"
+            assert interval[0] <= T <= interval[1], (f"Bad sampling call: The expression {_get_text(sub)} cannot"
                                                      f" be sampled with T = {T}")
 
             return sample_unambig(sub, n, T, top=False)
@@ -373,9 +374,9 @@ def old_sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode 
     match node_type:
 
         case TREParser.AtomicExprContext:
-            assert n == 1, f"Problem during parsing: Cannot sample letter {node.getText()} with {n} letters."
+            assert n == 1, f"Problem during parsing: Cannot sample letter {_get_text(node)} with {n} letters."
 
-            return TimedWord([node.getText(),], [T,])
+            return TimedWord([_get_text(node),], [T,])
 
 
         case TREParser.ParenExprContext:
@@ -413,7 +414,7 @@ def old_sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode 
 
             # TODO unsure whether this means we can run into problems for examples with nonempty volumes...
             #  can the children get illegal delays?
-            assert interval[0] <= T <= interval[1], (f"Bad sampling call: The expression {sub.getText()} cannot"
+            assert interval[0] <= T <= interval[1], (f"Bad sampling call: The expression {_get_text(sub)} cannot"
                                                      f" be sampled with T = {T}")
 
             return sample_unambig(sub, n, T, top=False)

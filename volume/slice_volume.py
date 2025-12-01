@@ -4,6 +4,7 @@ from antlr4 import FileStream, CommonTokenStream
 from sympy import poly
 from sympy.abc import T
 
+from misc.cached_getText import _get_text
 from misc.exceptions import UserError
 from volume.VolumePoly import VolumePoly
 from parse.SyntaxError import HardSyntaxErrorStrategy
@@ -102,7 +103,8 @@ def slice_volume(node: TREParser.ExprContext, n, vis=None, debug_mode=False, deb
         case _:
             raise NotImplementedError("Bad rule in volume generation.")
 
-    out.exp = node.getText()
+    # out.exp = node.getText()
+    out.exp = _get_text(node) # cached now
     out.n = n
 
     if debug_mode:
