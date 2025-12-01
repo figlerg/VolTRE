@@ -119,6 +119,19 @@ class TimedWord:
             case _:
                 raise NotImplementedError
 
+    def ascii_format_thao(self):
+        """
+        ASCII format for Thao:
+        each line contains: <date> <symbol>
+        where date is the cumulative sum of delays.
+        """
+        if not self:
+            return ""
+
+        lines = [f"{float(t)} {s}" for t, s in zip(self.dates, self.symbols)]
+        return "\n".join(lines)
+
+
 def parse_wordgen(in_str:str):
 
     # Define a regular expression pattern to match a float followed by a string in brackets

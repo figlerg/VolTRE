@@ -331,7 +331,7 @@ class VolumePoly:
     def size(self):
         return max([p.degree() for p in self.polys]) * len(self.intervals)
 
-    def plot(self, no_show=False, plt_title = ''):
+    def plot(self, no_show=False, plt_title = '', include_zero=True):
 
         num_points = 100
 
@@ -403,9 +403,12 @@ class VolumePoly:
                 ax.set_xticks(new_ticks)
                 ax.set_xticklabels(new_labels)
 
-        # Ensure that (0, 0) is included in the plot
-        plt.xlim(left=min(0, plt.xlim()[0]), right=max(0, plt.xlim()[1]))
-        plt.ylim(bottom=min(0, plt.ylim()[0]), top=max(0, plt.ylim()[1]))
+
+        if include_zero:
+            # Ensure that (0, 0) is included in the plot
+            plt.xlim(left=min(0, plt.xlim()[0]), right=max(0, plt.xlim()[1]))
+            plt.ylim(bottom=min(0, plt.ylim()[0]), top=max(0, plt.ylim()[1]))
+
 
         plt.xlabel('T')
         plt.ylabel(r'$V^e_{n}(T)$       ', rotation=0)
@@ -416,8 +419,12 @@ class VolumePoly:
             plt.title(plt_title)
         # plt.legend()
         plt.grid(False)  # Remove background lattice
-        plt.gca().xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-        plt.gca().yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+        ax = plt.gca()
+        ax.grid(False)
+        ax.set_ylabel(ax.get_ylabel(), labelpad=14)
+        ax.tick_params(axis='y', pad=1)
+        ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+        ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 
         if not no_show:
             plt.show()

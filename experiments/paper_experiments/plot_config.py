@@ -33,5 +33,5 @@ np.random.seed(42)
 fig_width_pt = 418.25368  # LaTeX textwidth in points
 inches_per_pt = 1.0 / 72.27  # Convert points to inches
 fig_width_in = fig_width_pt * inches_per_pt  # Width in inches
-# fig_height_in = fig_width_in * (2 / 3)  # 2:1 aspect ratio for 2x1 layout
+fig_height_in = fig_width_in * (2 / 3)  # 2:1 aspect ratio for 2x1 layout
 # figsize = (fig_width_in, fig_height_in)  # Exportable figure size

@@ -11,11 +11,13 @@ from sympy.abc import T
 # get all settings and constants
 from plot_config import *
 
-figname = "03_intro_vis"
+figname = "07_delta_sigma"
 
 
 def experiment():
     fig, axs = plt.subplots(1, 1, figsize=(fig_width_in, fig_height_in))  # 2x1 grid layout
+
+
 
     plt.savefig(f"{figname}.pdf")  # Use .pgf if you prefer
 
