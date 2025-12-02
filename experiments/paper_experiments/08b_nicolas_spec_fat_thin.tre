@@ -1,0 +1,24 @@
+#Hi Felix,
+#with Thao we have a new way of generating signals.
+#Can you provide 100 samples of size n=20 and duration T=42 for the following
+#Denote by
+#s=<a>_[1,2] and f=<b>_[3,4]
+#the expression is
+#f* . (< s . ( f . f* ) >_\geq 5)*
+#The idea is two have two kind of peaks slim and fat.
+#The formula says between two slims there should be at least one fat and at least 5 time unit. This can also be an example that we could use earlier in the paper...
+#
+#We can augment the density of s by reducing the T.
+#
+#Best,
+#Nicolas
+
+#Hi Felix,
+#after a discussion with Nicolas, we plan to focus only on fat-thin signals for comparison purposes. Could you generate samples for the expression you used but without the restriction [5, \infty]
+#Another expression of interest (if we have time) is (f+s)* (without time restriction)
+#
+#Best,
+#Thao
+
+
+(<b>_[3,4]*) . (<a>_[1,2] . ( <b>_[3,4] . (<b>_[3,4]*) ))*
