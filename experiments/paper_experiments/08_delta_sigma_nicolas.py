@@ -33,7 +33,7 @@ We can augment the density of s by reducing the T.
 Best,
 Nicolas
 
-THE ACTUAL HARDCODED SPEC: (<b>_[3,4]*) . (< <a>_[1,2] . ( <b>_[3,4] . (<b>_[3,4]*) ) >_[0,5])*
+THE ACTUAL HARDCODED SPEC: (<b>_[3,4]*) . (< <a>_[1,2] . ( <b>_[3,4] . (<b>_[3,4]*) ) >_[5,\infty])*
 """
 
 random.seed(42)
@@ -42,48 +42,54 @@ np.random.seed(42)
 figname = "08_delta_sigma_nicolas"
 
 spec = "08_nicolas_spec.tre"
-n = 20
-T = 45.5
+n = 15
+folder = spec + f'_{n}'
+T = 43
+# T = 27
 nr_samples = 100
 
 
-os.makedirs(figname, exist_ok=True)
+os.makedirs(folder, exist_ok=True)
 
 def experiment():
     fig, axs = plt.subplots(1, 1, figsize=(fig_width_in, fig_height_in*0.5))  # 2x1 grid layout
-
     ctx = quickparse(spec)
 
-    ## OPTION A: recreate it
-    # v:VolumePoly = slice_volume(ctx,n)
-    # print("Computed volumes.")
-    #
-    # with open(join(figname, f'volume_{n}.pkl'), 'wb') as f:
-    #     pickle.dump(v, f)
+    case = 'compute'
+    match case:
+        case 'compute':
+            v:VolumePoly = slice_volume(ctx,n)
+            print("Computed volumes.")
 
-    ## OPTION B: unpickle it (for quickly improving the plot, mostly)
-    path = join(figname, f'volume_{n}.pkl')
-    with open(path, "rb") as f:
-        v = pickle.load(f)
+            with open(join(folder, f'volume_{n}.pkl'), 'wb') as f:
+                pickle.dump(v, f)
+        case 'load':
+            path = join(folder, f'volume_{n}.pkl')
+            with open(path, "rb") as f:
+                v = pickle.load(f)
+            print('Loaded volume.')
 
-    title = r"$({\langle b\rangle _{[3,4]}}^*) \cdot (\langle  \langle a\rangle _{[1,2]} \cdot ( \langle b\rangle _{[3,4]} . (\langle b\rangle _{[3,4]}^*) ) \rangle _{[0,5]})^*$"
+    title = r"$({\langle b\rangle _{[3,4]}}^*) \cdot (\langle  \langle a\rangle _{[1,2]} \cdot ( \langle b\rangle _{[3,4]} . (\langle b\rangle _{[3,4]}^*) ) \rangle _{[5,\infty]})^*$"
     v.plot(no_show=True,plt_title=title, include_zero=False)
 
     ax = plt.gca()
     ax.grid(False, which='both')
     # plt.show()
 
-    plt.savefig(f"{figname}.pdf")
+    plt.savefig(f"{figname}_n_{n}.pdf")
 
     # plt.ylabel("")
     # plt.subplots_adjust(bottom=0.2)
 
     for i in range(nr_samples):
-        w = sample(ctx, n=n, T=T)
-        w_name_pickle = "{:03d}.pkl".format(i)
-        with open(join(figname,w_name_pickle), 'wb') as f:
-            pickle.dump(w,f)
-        print(w)
+        try:
+            w = sample(ctx, n=n, T=T)
+            w_name_pickle = "{:03d}.pkl".format(i)
+            with open(join(folder,w_name_pickle), 'wb') as f:
+                pickle.dump(w,f)
+            print(w)
+        except Exception as e:
+            print(f'Skipped because of exception: {e}.')
 
 
 
@@ -91,8 +97,8 @@ pr = cProfile.Profile()
 pr.enable()
 experiment()
 pr.disable()
-pr.dump_stats(f"{figname}.prof")
+pr.dump_stats(f"{figname}_n_{n}.prof")
 
 # # Print the profiling results
-p = pstats.Stats(f'{figname}.prof')
+p = pstats.Stats(f'{figname}_n_{n}.prof')
 p.strip_dirs().sort_stats('cumulative').print_stats(10)

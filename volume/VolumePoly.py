@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sympy.core.numbers
 from matplotlib import ticker
+import mpmath as mp
 
 from sympy import poly
 from sympy.polys import Poly
@@ -369,7 +370,7 @@ class VolumePoly:
             color = cmap(
                 i % cmap.N)  # Looping over colors in case the number of functions exceeds the number of colors in the colormap
 
-            plt.plot(x, y, label=f"$V_n^e$ on [{start}, {end}]", color=color)
+            plt.plot(x, y, label=f"$V_{self.n}^e$ on [{start}, {end}]", color=color)
 
             # Plot interval boundaries
             plt.axvline(x=start, linestyle='--', color='grey', alpha=0.5)  # Start of interval
@@ -617,29 +618,39 @@ class VolumePoly:
 
         for (a, b), p in cdf.pairs:
 
+            # print(f'cdf part: {p} on [{a},{b}].'
+            #       f'\n p(a) = {p(a)},\t u = {u},\t p(b) = {p(b)}.')
+
             # this is the only case we need to consider, immediately return
             if p(a) <= u <= p(b):
                 # solutions = sympy.solve(p - u, T)  # would fail for large n
 
                 # solutions = sympy.polys.polytools.real_roots(p - u)  # weird output format and errors
 
-                solutions = sympy.polys.polytools.nroots(p - u, n=10, maxsteps=50, cleanup=True)
+                # OLD GLOBAL ROOT-FINDER:
+                # solutions = sympy.polys.polytools.nroots(p - u, n=10, maxsteps=50, cleanup=True)
+                # solutions = [float(sol) for sol in solutions if sol.is_real]
+                # assert solutions, "There must be a solution here. Bug?"
+                # for sol in solutions:
+                #     if a <= sol <= b:
+                #         return sol
 
-                # ignore complex solutions, cast to float
-                solutions = [float(sol) for sol in solutions if sol.is_real]
+                # NEW: bracketed bisection via mpmath.findroot
+                # T = sympy.symbols('T')
+                f_expr = p.as_expr() - u
+                f_num = sympy.lambdify(T, f_expr, 'mpmath')
 
-                for sol in solutions:
-                    if a <= sol <= b:
-                        ## the solutions appear to be good
-                        # plt.plot(sol, u, 'ro')
-                        # cdf.plot()
-                        # plt.show()
-                        return sol
-        # print(self)
-        # print(u)
-        # self.plot()
-        # self.integral().plot()
+                fa, fb = f_num(a), f_num(b)
+                if fa * fb >= 0:
+                    raise InverseSamplingException(
+                        f"Sign check failed: f(a)={fa}, f(b)={fb} on interval [{a},{b}]"
+                    )
+
+                root = mp.findroot(f_num, (a, b), solver='bisect')
+                return float(root)
+
         raise InverseSamplingException()
+
 
     @lru_cache
     def is_cont_piece(self) -> bool:
