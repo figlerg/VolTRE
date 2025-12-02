@@ -17,11 +17,24 @@ from volume.slice_volume import slice_volume
 import pickle
 import os
 
-spec = "../spec_24_delta_sigma.tre"
 n = 24
-# figname = f"07_delta_sigma_{n}_star"
-figname = f"07_delta_sigma_{n}_split"
-# figname = f"07_delta_sigma_{n}_four"
+case = 'split'
+
+# all of these are equivalent, but they are parsed differently
+# experimentally the split works best
+match case:
+    case 'star':
+        figname = f"07_delta_sigma_{n}_star"
+        spec = "07a_delta_sigma_star.tre"
+    case 'split':
+        figname = f"07_delta_sigma_{n}_split"
+        spec = "07b_delta_sigma_split.tre"
+    case 'four':
+        figname = f"07_delta_sigma_{n}_four"
+        spec = "07c_delta_sigma_four.tre"
+
+
+
 nr_samples = 150
 T=None
 

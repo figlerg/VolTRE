@@ -1,7 +1,7 @@
 # a spec for the delta sigma case study for the FM26 submission
 
 ### figname = f"07_delta_sigma_{n}_star"
-#(< u1 . < u2 .  < u3 . d3 >_[2,4] . d2>_[5,6] . d1 >_[8,10] ) *
+(< u1 . < u2 .  < u3 . d3 >_[2,4] . d2>_[5,6] . d1 >_[8,10] ) *
 
 ### figname = f"07_delta_sigma_{n}_split"
 (
