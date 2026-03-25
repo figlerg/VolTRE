@@ -4,10 +4,10 @@ services:
     image: voltre-claude-sandbox
     working_dir: /workspace
     volumes:
-      # Repo root (eine Ebene höher) ins /workspace
+      # Repo root ins /workspace
       - ..:/workspace
-      # Credentials vom Host direkt mounten (kein Login im Container nötig)
-      - ${USERPROFILE}/.claude:/home/claude/.claude
-      - ${USERPROFILE}/.claude.json:/home/claude/.claude.json
+      # Credentials vom Host (read-only, Entrypoint kopiert sie)
+      - ${USERPROFILE}/.claude:/host-claude:ro
+      - ${USERPROFILE}/.claude.json:/host-claude.json:ro
     stdin_open: true
     tty: true
