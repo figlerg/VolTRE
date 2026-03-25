@@ -108,6 +108,32 @@ class TimedWord:
 
         return tuple(index)
 
+    @classmethod
+    def from_wordgen_file(cls, path: str) -> list:
+        """
+        Load timed words from a file produced by Benoît's tool wordgen.
+
+        Standard wordgen output format — one timed word per line, tokens separated by spaces:
+            0.763440[g] 1.187253[g] 0.248995[r] ...
+
+        :param path: Path to the sample file.
+        :return: List of TimedWord objects.
+        """
+        import re
+        words = []
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                tokens = re.findall(r'([0-9]+\.[0-9]+)\[([^\]]+)\]', line)
+                if not tokens:
+                    continue
+                delays  = [float(d) for d, _ in tokens]
+                symbols = [s for _, s in tokens]
+                words.append(cls(symbols, delays))
+        return words
+
     def apply_renaming(self, rename_map:dict):
         for i, s in enumerate(self.symbols):
             self.symbols[i] = rename_map[s]
