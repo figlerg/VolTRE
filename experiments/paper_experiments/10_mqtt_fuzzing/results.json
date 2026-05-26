@@ -1,0 +1,418 @@
+{
+  "standard": [
+    {
+      "n": 6,
+      "word": "(0.286, CONNECT),(0.942, PUBLISH),(5.660, PINGREQ),(1.543, PUBREL),(6.194, PINGREQ),(5.273, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 5,
+      "word": "(3.795, CONNECT),(7.479, PUBLISH),(8.054, PUBREL),(1.221, PINGREQ),(1.208, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 5,
+      "word": "(13.466, CONNECT),(2.161, PUBLISH),(1.247, PINGREQ),(7.777, PUBREL),(2.264, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 4,
+      "word": "(6.388, CONNECT),(11.592, PUBLISH),(8.722, PUBREL),(1.428, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 6,
+      "word": "(9.558, CONNECT),(4.403, PUBLISH),(2.749, PINGREQ),(7.655, PUBREL),(1.795, PINGREQ),(3.460, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 5,
+      "word": "(1.809, CONNECT),(10.855, PUBLISH),(0.744, PINGREQ),(10.654, PUBREL),(0.612, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 6,
+      "word": "(2.414, CONNECT),(0.634, PUBLISH),(6.155, PUBLISH),(12.453, PUBREL),(0.013, PINGREQ),(5.374, DISCONNECT)",
+      "dup": true,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 6,
+      "word": "(5.129, CONNECT),(12.347, PUBLISH),(0.014, PINGREQ),(4.286, PINGREQ),(0.976, PUBREL),(0.323, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 6,
+      "word": "(3.587, CONNECT),(3.176, PUBLISH),(1.770, PUBLISH),(3.691, PINGREQ),(9.702, PUBREL),(7.544, DISCONNECT)",
+      "dup": true,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 5,
+      "word": "(11.319, CONNECT),(5.838, PUBLISH),(0.192, PUBREL),(1.658, PINGREQ),(3.130, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 6,
+      "word": "(5.182, CONNECT),(6.646, PUBLISH),(0.058, PUBLISH),(0.420, PINGREQ),(7.782, PUBREL),(9.126, DISCONNECT)",
+      "dup": true,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 4,
+      "word": "(0.948, CONNECT),(1.005, PUBLISH),(1.445, PUBREL),(5.338, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 6,
+      "word": "(3.538, CONNECT),(4.037, PUBLISH),(4.455, PINGREQ),(2.161, PUBLISH),(10.390, PUBREL),(5.032, DISCONNECT)",
+      "dup": true,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 4,
+      "word": "(6.982, CONNECT),(1.124, PUBLISH),(8.112, PUBREL),(4.967, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 4,
+      "word": "(2.780, CONNECT),(0.435, PUBLISH),(3.398, PUBREL),(20.346, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 4,
+      "word": "(5.466, CONNECT),(4.369, PUBLISH),(5.287, PUBREL),(8.415, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 4,
+      "word": "(3.958, CONNECT),(0.347, PUBLISH),(3.382, PUBREL),(12.117, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 4,
+      "word": "(2.024, CONNECT),(6.196, PUBLISH),(8.729, PUBREL),(12.752, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 6,
+      "word": "(1.348, CONNECT),(1.600, PUBLISH),(5.201, PINGREQ),(3.856, PUBREL),(4.603, PINGREQ),(2.233, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 6,
+      "word": "(8.043, CONNECT),(3.389, PUBLISH),(7.826, PINGREQ),(0.985, PUBREL),(0.350, PINGREQ),(9.385, DISCONNECT)",
+      "dup": false,
+      "violations": [],
+      "ok": true
+    }
+  ],
+  "aggressive": [
+    {
+      "n": 4,
+      "word": "(3.452, CONNECT),(3.263, PUBLISH),(14.925, PUBREL),(0.301, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 7,
+      "word": "(6.524, CONNECT),(0.145, PUBLISH),(0.631, PUBREL),(0.860, CONNECT),(2.242, PUBREL),(5.901, PUBLISH),(9.203, DISCONNECT)",
+      "dup": false,
+      "mid_conn": true,
+      "violations": [
+        "Mid-session CONNECT: broker did not disconnect (MQTT-3.1.0-2 violation)",
+        "Expected PUBCOMP but got timeout"
+      ],
+      "ok": false
+    },
+    {
+      "n": 6,
+      "word": "(1.342, CONNECT),(7.811, PUBLISH),(5.425, DISCONNECT),(1.429, PINGREQ),(7.870, PUBREL),(0.789, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 6,
+      "word": "(1.673, CONNECT),(0.658, PUBLISH),(5.913, PINGREQ),(2.882, PUBREL),(3.863, PUBREL),(5.162, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [
+        "Expected PUBCOMP but got timeout"
+      ],
+      "ok": false
+    },
+    {
+      "n": 4,
+      "word": "(2.841, CONNECT),(12.290, PUBLISH),(3.359, PUBREL),(1.206, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 7,
+      "word": "(3.938, CONNECT),(3.853, PUBLISH),(0.708, CONNECT),(1.341, CONNECT),(0.375, PUBREL),(6.094, PUBLISH),(12.669, DISCONNECT)",
+      "dup": false,
+      "mid_conn": true,
+      "violations": [
+        "Mid-session CONNECT: broker did not disconnect (MQTT-3.1.0-2 violation)",
+        "Mid-session CONNECT: broker did not disconnect (MQTT-3.1.0-2 violation)"
+      ],
+      "ok": false
+    },
+    {
+      "n": 5,
+      "word": "(1.232, CONNECT),(7.432, PUBLISH),(2.103, PUBREL),(1.354, CONNECT),(15.597, DISCONNECT)",
+      "dup": false,
+      "mid_conn": true,
+      "violations": [
+        "Mid-session CONNECT: broker did not disconnect (MQTT-3.1.0-2 violation)"
+      ],
+      "ok": false
+    },
+    {
+      "n": 6,
+      "word": "(7.986, CONNECT),(1.810, PUBLISH),(4.226, PUBLISH),(2.658, PUBLISH),(4.540, PUBREL),(6.954, DISCONNECT)",
+      "dup": true,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 5,
+      "word": "(6.277, CONNECT),(7.898, PUBLISH),(6.271, PINGREQ),(6.908, PUBREL),(2.549, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 6,
+      "word": "(9.200, CONNECT),(1.907, PUBLISH),(5.994, PINGREQ),(1.583, PUBREL),(0.850, PUBLISH),(0.042, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 5,
+      "word": "(12.128, CONNECT),(2.427, PUBLISH),(1.311, PUBREL),(6.125, PUBLISH),(0.547, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 7,
+      "word": "(8.374, CONNECT),(3.209, PUBLISH),(0.833, CONNECT),(8.669, PINGREQ),(2.666, PUBREL),(0.255, CONNECT),(3.217, DISCONNECT)",
+      "dup": false,
+      "mid_conn": true,
+      "violations": [
+        "Mid-session CONNECT: broker did not disconnect (MQTT-3.1.0-2 violation)",
+        "Expected PINGRESP but got timeout"
+      ],
+      "ok": false
+    },
+    {
+      "n": 4,
+      "word": "(15.439, CONNECT),(4.492, PUBLISH),(0.755, PUBREL),(3.385, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 4,
+      "word": "(5.095, CONNECT),(7.712, PUBLISH),(1.525, PUBREL),(2.514, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 5,
+      "word": "(3.778, CONNECT),(14.746, PUBLISH),(4.215, PUBREL),(2.735, DISCONNECT),(1.643, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 4,
+      "word": "(1.896, CONNECT),(16.176, PUBLISH),(1.333, PUBREL),(6.101, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 6,
+      "word": "(8.703, CONNECT),(0.819, PUBLISH),(4.740, PINGREQ),(10.254, PUBREL),(3.785, PUBLISH),(1.511, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 4,
+      "word": "(1.476, CONNECT),(0.933, PUBLISH),(13.469, PUBREL),(7.316, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 7,
+      "word": "(9.874, CONNECT),(3.212, PUBLISH),(0.416, PUBREL),(0.168, CONNECT),(6.812, CONNECT),(0.574, CONNECT),(2.890, DISCONNECT)",
+      "dup": false,
+      "mid_conn": true,
+      "violations": [
+        "Mid-session CONNECT: broker did not disconnect (MQTT-3.1.0-2 violation)",
+        "Mid-session CONNECT: broker did not disconnect (MQTT-3.1.0-2 violation)"
+      ],
+      "ok": false
+    },
+    {
+      "n": 7,
+      "word": "(1.071, CONNECT),(7.141, PUBLISH),(9.039, PUBLISH),(0.089, PUBREL),(3.073, PUBLISH),(0.773, PUBLISH),(2.751, DISCONNECT)",
+      "dup": true,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 6,
+      "word": "(0.641, CONNECT),(6.297, PUBLISH),(6.984, DISCONNECT),(15.113, PUBREL),(0.429, CONNECT),(0.530, DISCONNECT)",
+      "dup": false,
+      "mid_conn": true,
+      "violations": [
+        "PUBREL attempted on closed connection (DISCONNECT occurred earlier)"
+      ],
+      "ok": false
+    },
+    {
+      "n": 7,
+      "word": "(0.222, CONNECT),(0.756, PUBLISH),(6.930, PUBLISH),(1.878, PINGREQ),(7.940, PUBREL),(8.356, DISCONNECT),(3.518, DISCONNECT)",
+      "dup": true,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 6,
+      "word": "(8.114, CONNECT),(9.689, PUBLISH),(1.232, DISCONNECT),(6.292, PINGREQ),(1.125, PUBREL),(0.844, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 5,
+      "word": "(1.148, CONNECT),(0.307, PUBLISH),(2.008, PUBREL),(1.575, PINGREQ),(9.013, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 7,
+      "word": "(1.653, CONNECT),(2.512, PUBLISH),(6.150, PUBREL),(0.639, DISCONNECT),(1.658, PUBREL),(5.978, PINGREQ),(3.353, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [
+        "PUBREL attempted on closed connection (DISCONNECT occurred earlier)"
+      ],
+      "ok": false
+    },
+    {
+      "n": 7,
+      "word": "(2.127, CONNECT),(5.583, PUBLISH),(7.750, PUBREL),(4.591, CONNECT),(3.256, PUBLISH),(1.782, PUBLISH),(1.058, DISCONNECT)",
+      "dup": false,
+      "mid_conn": true,
+      "violations": [
+        "Mid-session CONNECT: broker did not disconnect (MQTT-3.1.0-2 violation)",
+        "Expected PUBREC but got timeout"
+      ],
+      "ok": false
+    },
+    {
+      "n": 6,
+      "word": "(4.735, CONNECT),(1.771, PUBLISH),(3.650, CONNECT),(6.234, PINGREQ),(1.487, PUBREL),(7.178, DISCONNECT)",
+      "dup": false,
+      "mid_conn": true,
+      "violations": [
+        "Mid-session CONNECT: broker did not disconnect (MQTT-3.1.0-2 violation)",
+        "Expected PINGRESP but got timeout"
+      ],
+      "ok": false
+    },
+    {
+      "n": 5,
+      "word": "(11.481, CONNECT),(0.359, PUBLISH),(5.705, CONNECT),(11.907, PUBREL),(0.242, DISCONNECT)",
+      "dup": false,
+      "mid_conn": true,
+      "violations": [
+        "Mid-session CONNECT: broker did not disconnect (MQTT-3.1.0-2 violation)",
+        "Expected PUBCOMP but got timeout"
+      ],
+      "ok": false
+    },
+    {
+      "n": 4,
+      "word": "(3.267, CONNECT),(6.013, PUBLISH),(7.724, PUBREL),(8.328, DISCONNECT)",
+      "dup": false,
+      "mid_conn": false,
+      "violations": [],
+      "ok": true
+    },
+    {
+      "n": 7,
+      "word": "(4.829, CONNECT),(6.912, PUBLISH),(1.514, CONNECT),(1.598, CONNECT),(0.407, PUBREL),(2.526, PUBLISH),(3.056, DISCONNECT)",
+      "dup": false,
+      "mid_conn": true,
+      "violations": [
+        "Mid-session CONNECT: broker did not disconnect (MQTT-3.1.0-2 violation)",
+        "Mid-session CONNECT: broker did not disconnect (MQTT-3.1.0-2 violation)"
+      ],
+      "ok": false
+    }
+  ]
+}

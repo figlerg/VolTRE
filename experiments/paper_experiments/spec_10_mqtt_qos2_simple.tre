@@ -1,0 +1,4 @@
+# Simplest QoS-2 flow: no optional interleaving.
+# Client events only (CONNECT, PUBLISH, PUBREL, DISCONNECT).
+# n = 4 mandatory.
+CONNECT.PUBLISH.PUBREL.DISCONNECT

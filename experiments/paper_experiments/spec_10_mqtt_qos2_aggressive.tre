@@ -1,0 +1,5 @@
+# Aggressive variant: any client event may appear in either gap,
+# including CONNECT (session restart mid-flow) and DISCONNECT (early teardown).
+# Total session bounded to 30 s.
+
+<CONNECT.PUBLISH.<(CONNECT+PUBLISH+PUBREL+PINGREQ+DISCONNECT)*>_[0,10].PUBREL.<(CONNECT+PUBLISH+PUBREL+PINGREQ+DISCONNECT)*>_[0,10].DISCONNECT>_[0,30]

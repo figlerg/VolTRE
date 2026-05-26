@@ -487,13 +487,23 @@ class VolumePoly:
         :return: Overall volume V_n(e)
         """
 
+        from sympy import limit as sym_limit, oo as sym_oo
+
         out = 0
 
         for interval, p in self.pairs:
             a, b = interval
 
-            antiderivative = p.integrate(T)
-            segment_vol = antiderivative(b) - antiderivative(a)  # this often knows how to deal with inf, it seems.
+            antideriv_poly = p.integrate(T)
+            # Evaluating a multi-term Poly at sympy.oo via __call__ yields nan
+            # because intermediate "oo - oo" terms are indeterminate.  Use
+            # limit() on the expression form instead.
+            if b == inf:
+                val_b = sym_limit(antideriv_poly.as_expr(), T, sym_oo)
+            else:
+                val_b = antideriv_poly(b)
+            val_a = antideriv_poly(a)
+            segment_vol = val_b - val_a
 
             out += segment_vol
 
