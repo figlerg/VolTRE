@@ -1,16 +1,16 @@
-# QoS-2 flow with optional interleaved events.
+# MQTT QoS-2 session model with keepalive — used in 10_mqtt_fuzzing.ipynb
 #
-# Between PUBLISH and PUBREL the client may send:
-#   - additional PUBLISH messages (same msgid, DUP=1 or new id) -- triggers CVE-2023-28366 style patterns
-#   - PINGREQ keepalives
-# After PUBREL the client may send PINGREQ keepalives only.
+# Parameters (from MQTT 3.1.1):
+#   K = 10 s  — keepalive window; broker disconnects after 1.5·K s of silence
+#   Δ = 15 s  — retransmission timeout; client may resend PUBLISH if no PUBREC in Δ s
+#   T = 60 s  — session budget
 #
-# Total session bounded to 30 s.  Inner Kleene-star gaps bounded to 10 s each.
-# Client events only: CONNECT, PUBLISH, PUBREL, PINGREQ, DISCONNECT.
-# Broker responses (CONNACK, PUBREC, PUBCOMP, PINGRESP) are checked in the harness.
+# Alphabet: CONNECT, PUBLISH, PUBREL, PINGREQ, DISCONNECT  (client-side only)
+# Broker responses (CONNACK, PUBREC, PUBCOMP, PINGRESP) are checked in harness.py.
 #
-# n >= 4 (mandatory: CONNECT, PUBLISH, PUBREL, DISCONNECT)
-# n = 5  -> one extra event between PUBLISH and PUBREL (PUBLISH or PINGREQ)
-# n >= 6 -> multiple extras possible
+# n ≥ 4  (mandatory: CONNECT, PUBLISH, PUBREL, DISCONNECT)
+# n = 5  → one extra event (PINGREQ anywhere, or one PUBLISH retransmission)
+# n = 6  → two extras — can include up to 2 extra PUBLISHes
+# n ≥ 7  → higher mix; traces with 3+ PUBLISHes trigger CVE-2023-28366 in Mosquitto ≤ 2.0.15
 
-<CONNECT.PUBLISH.<(PUBLISH+PINGREQ)*>_[0,10].PUBREL.<PINGREQ*>_[0,10].DISCONNECT>_[0,30]
+<CONNECT.<PINGREQ*>_[0,10].PUBLISH.<(PUBLISH+PINGREQ)*>_[0,15].PUBREL.<PINGREQ*>_[0,10].DISCONNECT>_[0,60]
