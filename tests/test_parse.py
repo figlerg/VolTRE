@@ -5,7 +5,8 @@ from antlr4.error.Errors import ParseCancellationException
 from parse.quickparse import quickparse
 from tests.file_helper import all_tre_files
 
-tests = all_tre_files(fail_files = [os.path.join('..', 'experiments', 'spec_10_noparse.tre')])
+_E = os.path.join(os.path.dirname(__file__), '..', 'experiments')
+tests = all_tre_files(fail_files = [os.path.join(_E, 'spec_10_noparse.tre')])
 
 
 @pytest.mark.parametrize("file_path, expected_to_fail", tests)

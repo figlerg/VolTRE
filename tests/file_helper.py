@@ -10,7 +10,7 @@ def all_tre_files(fail_files = None, ignore_files = None):
     if not ignore_files:
         ignore_files = []
 
-    search_pattern = os.path.join('..', 'experiments', '*.tre')
+    search_pattern = os.path.join(os.path.dirname(__file__), '..', 'experiments', '*.tre')
     files = glob.glob(search_pattern)
 
     # List of tuples with file paths and whether they are expected to fail

@@ -7,10 +7,11 @@ from parse.quickparse import quickparse
 from tests.file_helper import all_tre_files
 from sample.sample import sample
 
-tests = all_tre_files(ignore_files = [os.path.join('..', 'experiments', 'spec_10_noparse.tre'),
-                                      os.path.join('..', 'experiments', 'spec_08_renaming.tre'),
-                                      os.path.join('..', 'experiments', 'spec_07_intersection.tre'),
-                                      os.path.join('..', 'experiments', 'spec_12_intersection.tre'),
+_E = os.path.join(os.path.dirname(__file__), '..', 'experiments')
+tests = all_tre_files(ignore_files = [os.path.join(_E, 'spec_10_noparse.tre'),
+                                      os.path.join(_E, 'spec_08_renaming.tre'),
+                                      os.path.join(_E, 'spec_07_intersection.tre'),
+                                      os.path.join(_E, 'spec_12_intersection.tre'),
                                       ])
 
 
