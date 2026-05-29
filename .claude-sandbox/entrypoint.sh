@@ -6,12 +6,18 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-# Credentials vom Host in beschreibbaren Ort kopieren
-cp -r /host-claude /home/claude/.claude
-cp /host-claude.json /home/claude/.claude.json
-chown -R claude:claude /home/claude/.claude
-chown claude:claude /home/claude/.claude.json
-echo "✅  Credentials kopiert"
+# On first run: copy full .claude config from host to initialize the volume
+if [ ! -f /home/claude/.claude/.initialized ]; then
+    cp -r /host-claude/. /home/claude/.claude/
+    touch /home/claude/.claude/.initialized
+    chown -R claude:claude /home/claude/.claude
+    echo "✅  First run: credentials + config copied from host"
+else
+    # On subsequent runs: only refresh the auth token, leave memory intact
+    cp /host-claude.json /home/claude/.claude.json 2>/dev/null || true
+    chown claude:claude /home/claude/.claude.json 2>/dev/null || true
+    echo "✅  Auth token refreshed (state preserved from last session)"
+fi
 
 # Hook kopieren
 if [ -d "/workspace/.git/hooks" ]; then
@@ -28,6 +34,13 @@ if [ $# -gt 0 ]; then
     exec su -s /bin/sh claude -c "$*"
 fi
 
-echo "🚀  Starting Claude Code as user 'claude'..."
-echo "   (Nach /exit landest du in der Container-Shell)"
-su -s /bin/sh claude -c "claude --dangerously-skip-permissions; exec /bin/sh"
+# No args: keep the container alive as a long-running service so VSCode can stay
+# attached and Claude sessions are launched on demand via `docker exec`.
+# Quitting a Claude session no longer kills the container.
+echo "🟢  Sandbox is up and will stay running."
+echo "   Launch Claude with start.ps1, or:"
+echo "   docker exec -it voltre-sandbox su -s /bin/sh claude -c 'claude --continue'"
+# Keep the EXIT/INT/TERM trap active (so the host's pre-push hook is cleaned up
+# on `docker stop`) by waiting on a background sleep instead of exec'ing it.
+tail -f /dev/null &
+wait $!

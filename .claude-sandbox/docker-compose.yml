@@ -2,12 +2,21 @@ services:
   claude:
     build: .
     image: voltre-claude-sandbox
+    container_name: voltre-sandbox
     working_dir: /workspace
+    # Keep the sandbox alive across Docker Desktop / machine restarts so VSCode
+    # stays attached. Stop it explicitly with `docker stop voltre-sandbox`.
+    restart: unless-stopped
     volumes:
       # Repo root ins /workspace
       - ..:/workspace
       # Credentials vom Host (read-only, Entrypoint kopiert sie)
       - ${USERPROFILE}/.claude:/host-claude:ro
       - ${USERPROFILE}/.claude.json:/host-claude.json:ro
+      # Persistent Claude state (memory, settings) across sessions
+      - claude-home:/home/claude/.claude
     stdin_open: true
     tty: true
+
+volumes:
+  claude-home:
