@@ -99,6 +99,9 @@ def slice_volume(node: TREParser.ExprContext, n, vis=None, debug_mode=False, deb
             node: TREParser.RenameExprContext
             raise ValueError(f'Volume computation for renaming operator is not supported. '
                                       f'Problematic subexpression: {node.getText()}')
+        
+        case TREParser.EpsExprContext:
+            out = VolumePoly(delta=1) if n == 0 else VolumePoly()
 
         case _:
             raise NotImplementedError("Bad rule in volume generation.")
