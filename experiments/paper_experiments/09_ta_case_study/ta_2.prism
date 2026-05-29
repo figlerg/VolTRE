@@ -1,0 +1,10 @@
+pta
+module m
+	state:[0..1] init 0;
+	x:clock;
+	[r] (state=0) -> (state'=1)&(x'=0);
+	[g] (state=1) -> (state'=0);
+	[g] (state=1) -> (state'=1);
+	[g] (state=0) -> (state'=0);
+endmodule
+label "accepting" = state=0 ;

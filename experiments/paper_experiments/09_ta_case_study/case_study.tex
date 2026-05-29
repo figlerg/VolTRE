@@ -1,0 +1,76 @@
+\begin{example}[Conformance testing of an implementation against a TRE]
+  \label{ex:ta-conformance}
+  We illustrate the sample-and-match approach in a cross-formalism setting: checking
+  whether a TA~$\mathcal{A}$ implements the TRE specification~$\varphi_1$ from
+  Example~\ref{ex:arbiter}.
+  
+  The candidate TA is a two-state arbiter over~$\{r,g\}$, sampled at slice~$n=10$,
+  $T=10$.
+  State~$s_0$ is idle and an~$r$ (request) moves to~$s_1$ with clock reset $x{:=}0$. Upon a grant~$g$ the automaton returns to~$s_0$ or loops in~$s_1$.
+  We study two versions that differ only in accepting condition:
+  
+  \begin{center}
+    \begin{tabular}{c@{\qquad}c}
+    \begin{tikzpicture}[shorten >=1pt, node distance=2cm, auto,
+        every state/.style={minimum size=0.75cm},
+        font=\small]
+      \node[state, initial, accepting] (s0) {$s_0$};
+      \node[state, accepting, right of=s0] (s1) {$s_1$};
+      \node[left=2pt of s0, anchor=east, font=\small\itshape] {$\mathcal{A}_1$};
+      \path[->]
+        (s0) edge[loop above] node {$g$} ()
+        (s0) edge[bend left=22] node {$r,\;x{:=}0$} (s1)
+        (s1) edge[loop above] node {$g$} ()
+        (s1) edge[bend left=22] node {$g$} (s0);
+    \end{tikzpicture}
+    &
+    \begin{tikzpicture}[shorten >=1pt, node distance=2cm, auto,
+        every state/.style={minimum size=0.75cm},
+        font=\small]
+      \node[state, initial, accepting] (t0) {$s_0$};
+      \node[state, right of=t0] (t1) {$s_1$};
+      \node[left=2pt of t0, anchor=east, font=\small\itshape] {$\mathcal{A}_2$};
+      \path[->]
+        (t0) edge[loop above] node {$g$} ()
+        (t0) edge[bend left=22] node {$r,\;x{:=}0$} (t1)
+        (t1) edge[loop above] node {$g$} ()
+        (t1) edge[bend left=22] node {$g$} (t0);
+    \end{tikzpicture}
+    \end{tabular}
+    \end{center}
+  
+  $\mathcal{A}_1$ marks \emph{both} states as accepting, so a run terminating
+  in~$s_1$ — with an unanswered request — is incorrectly accepted.
+  $\mathcal{A}_2$ accepts only in~$s_0$.
+  
+  The procedure samples words from the TA and checks each against~$\varphi_1$,
+  stopping as soon as one of two conditions is met:
+  a counterexample is found (refuting inclusion), or the Clopper-Pearson bound
+  on~$p_{\not\subseteq}$ drops below a target threshold (supporting inclusion).
+  
+  The very first word sampled from~$\mathcal{A}_1$ is a counterexample:
+  \[
+    (1.53,r),\,(0.42,g),\,(1.27,r),\,(0.92,g),\,(0.31,g),\,(0.34,g),\,(0.32,g),\,(1.70,g),\,(0.15,g),\,(3.04,r).
+  \]
+  This word terminates in~$s_1$ and is accepted by~$\mathcal{A}_1$,
+  but violates~$\varphi_1$ since the final~$r$ has no subsequent~$g$.
+  Hence $L(\mathcal{A}_1)\not\subseteq L(\varphi_1)$.
+  
+  Running \textsf{wordgen} on~$\mathcal{A}_2$, zero counterexamples are found.
+  The Clopper-Pearson bound (95\,\% confidence) tightens as more samples accumulate:
+  
+  \begin{center}
+  \begin{tabular}{rr}
+  $N$ (all pass) & $p_{\not\subseteq} <$ \\\hline
+  29  & 0.10 \\
+  59  & 0.05 \\
+  99  & 0.03 \\
+  \end{tabular}
+  \end{center}
+  
+  This demonstrates that 
+  % VolTRE can serve as a \emph{conformance monitor}: it exposes design bugs via concrete counterexamples and, once the bug is fixed, provides a quantitative statistical guarantee of language inclusion.
+  uniform sampling can be used in a systems design setting: given a specification and an implementation, one can probabilistically verify whether the specification is accurately implemented. 
+  \end{example}
+  
+  

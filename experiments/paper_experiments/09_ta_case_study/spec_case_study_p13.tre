@@ -1,0 +1,17 @@
+# Case-study TRE specs — parametric request/grant arbiter
+# phi_k: every r gets a g response within [0,k] time,
+#         only idle events (a) allowed between r and g.
+# Outer [0,100] bound makes volume finite and T auto-sampleable.
+#
+# Existing specs for reference:
+#   phi_1 (unbounded r->g):  spec_02_subset_A.tre
+#   phi_2 (r->g in [1,2]):   spec_02_subset_B.tre
+
+### phi_k5: response within [0,5]
+<(a + g)*. (<r . (a)*. g>_[0,5]. (a + g)*)* >_[0,100]
+
+### phi_k10: response within [0,10]
+# <(a + g)*. (<r . (a)*. g>_[0,10]. (a + g)*)* >_[0,100]
+
+### phi_k15: response within [0,15]
+# <(a + g)*. (<r . (a)*. g>_[0,15]. (a + g)*)* >_[0,100]
