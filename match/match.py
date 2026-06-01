@@ -98,6 +98,9 @@ def match(w:TimedWord, phi: TREParser.ExprContext) -> int:
 
             return match(w, phi.expr(0)) and match(w,phi.expr(1))
 
+        case TREParser.EpsExprContext:
+            N = 1 if w.length == 0 else 0
+
         case TREParser.RenameExprContext:
             warnings.warn("Sampling for intersection and renaming is experimental and may not terminate.")
             raise NotImplementedError
