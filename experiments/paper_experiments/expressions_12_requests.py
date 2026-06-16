@@ -234,16 +234,16 @@ def plot_timing_breakdown(ax, k_values, results, title, x_label_fn=None):
     max_total = max(t_totals) if t_totals else 1
 
     bottom = np.zeros(len(k_values))
-    ax.bar(x, t_vols, color=COLORS["volume"], label="volume", width=0.6)
+    ax.bar(x, t_vols, color=COLORS["volume"], label="volume computation (init.)", width=0.6)
     bottom += np.array(t_vols)
-    ax.bar(x, t_nets, color=COLORS["sample"], label="sample", bottom=bottom, width=0.6)
+    ax.bar(x, t_nets, color=COLORS["sample"], label="time per sample", bottom=bottom, width=0.6)
     bottom += np.array(t_nets)
     if has_smart:
-        ax.bar(x, t_srejs, color=COLORS["smart_rej"], label="smart rej.",
+        ax.bar(x, t_srejs, color=COLORS["smart_rej"], label="ambiguity rejection time (per sample)",
                bottom=bottom, width=0.6)
         bottom += np.array(t_srejs)
     if has_intersect:
-        ax.bar(x, t_irejs, color=COLORS["intersect_rej"], label="intersect rej.",
+        ax.bar(x, t_irejs, color=COLORS["intersect_rej"], label="intersection rejection time (per sample)",
                bottom=bottom, width=0.6)
 
     for i, t in enumerate(t_totals):
@@ -253,28 +253,61 @@ def plot_timing_breakdown(ax, k_values, results, title, x_label_fn=None):
     ax.set_xticks(x)
     labels = [x_label_fn(k) for k in k_values] if x_label_fn else [f"k={k}" for k in k_values]
     ax.set_xticklabels(labels)
-    ax.set_ylim(0, max_total * 1.35)
-    ax.set_ylabel("Time (s) per sample")
+    ax.set_ylim(0, max_total * 1.55)
+    ax.set_ylabel("time (s)")
     if title:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=8, pad=6)
     ax.grid(axis="y", linestyle="--", alpha=0.3)
 
     h, lab = ax.get_legend_handles_labels()
-    ax.legend(h, lab, loc="upper center", bbox_to_anchor=(0.5, 1.18),
-              ncol=len(lab), frameon=True, handlelength=1.0, columnspacing=0.9, fontsize=7)
+    ax.legend(h, lab, loc="upper left", ncol=1, frameon=True,
+              handlelength=0.8, fontsize=7, borderpad=0.3, labelspacing=0.2)
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 #
+# Experiment: e_{4,k} timing — how sampling cost scales with the number of
+# request types k.
+#
+# Expression structure (arithmetic deadlines T_i = i, outer deadline k+1):
+#
+#   e_{4,k} = (<nested timed cycle with k request levels>)^*
+#
+# Two candidate definitions are compared (pick one for the paper):
+#
+#   MODE 2 — mandatory requests (dprime5):
+#     Every cycle must contain all k requests in strict nesting order.
+#     The innermost core allows arbitrary junk before the grant (a*.g).
+#       (<r_k . <... r_1 . <a*.g>_{<=1} ...>_{<=k}>_{<=k+1})*
+#
+#   MODE 5 — optional requests, grant at any level (dprime3):
+#     At each nesting level the cycle may end with a bare grant, making
+#     all intermediate requests optional.
+#       (<g + r_k . <... g + r_1 . <g>_{<=1} ...>_{<=k}>_{<=k+1})*
+#
+# Both are plotted under the name e_{4,k} with their recursive formula
+# shown in the title, so you can compare and choose one for the paper.
+#
+# Parameters: k in {1,...,6},  n = 10 symbols,  10 samples per k,  T_i = i.
+# Each stacked bar shows:
+#   orange  — volume computation (one-time slice_volume call, cold cache)
+#   green   — time per sample (cache warm, pure sampling cost)
+#   yellow  — ambiguity rejection time per sample (if any)
+#   purple  — intersection rejection time per sample (if any)
+#
+# Run:    python expressions_12_requests.py   (set MODE = 2, 5, or 6)
+# Output: 12_page13_casestudy/results/
+#
 #  MODE 1 — quick sanity: k=3, n=10, 3 samples; prints timing + words, saves volume PDF
-#  MODE 2 — k-scaling for dprime5: stacked timing breakdown across k values
 #  MODE 3 — k-scaling for dprime4dummy (slow!): same plot, stops early if budget exceeded
+#  MODE 4 — probe: two reps per k + reverse pass to diagnose t_vol behaviour
+#  MODE 6 — (n,k) grid sweep: heatmap of per-sample time; set SANITY=True first
 
 if __name__ == "__main__":
     np.random.seed(42)
     random.seed(42)
 
-    MODE = 2   # ← change this
+    MODE = 6   # ← change this
 
     RESULTS = os.path.join(os.path.dirname(__file__), "12_page13_casestudy", "results")
     os.makedirs(RESULTS, exist_ok=True)
@@ -311,9 +344,14 @@ if __name__ == "__main__":
         print(f"=== k-scaling: dprime5  (n={N}, {N_SAMPLES} samples/k) ===")
         results = run_timing(build_e_dprime5, K_VALUES, N, N_SAMPLES)
 
+        title = (
+            r"$e_{4,k}=(\langle r_k\cdot\langle\cdots r_1"
+            r"\cdot\langle a^*g\rangle_{\leq 1}\cdots\rangle_{\leq k}\rangle_{\leq k{+}1})^*$"
+            "\n"
+            f"$k$-scaling,  $n={N}$,  $T_i=i$,  {N_SAMPLES} samples per $k$"
+        )
         fig, ax = plt.subplots(figsize=(5, 3.5))
-        plot_timing_breakdown(ax, K_VALUES, results, "")
-        fig.suptitle(f"dprime5 — scaling in k  (n={N}, {N_SAMPLES} samples/k)", fontsize=10)
+        plot_timing_breakdown(ax, K_VALUES, results, title)
         plt.tight_layout(pad=0.8)
 
         out_path = os.path.join(RESULTS, f"timing_dprime5_k_sweep_n{N}.pdf")
@@ -358,6 +396,9 @@ if __name__ == "__main__":
         plt.close()
         print(f"\nSaved: {out_path}")
 
+
+
+
     # ── Mode 4: probe why t_vol shrinks with k ────────────────────────────────
     # Two competing hypotheses:
     #   (A) Python warmup — the first slice_volume call in a process is slow
@@ -397,3 +438,210 @@ if __name__ == "__main__":
             V = slice_volume(phi, N)
             print(f"  k={k}  t_vol={t_vol:.3f}s  t_sample/call={t_sper:.3f}s  s_rej={avg_sr:.2f}  "
                   f"total_volume={float(V.total_volume()):.3e}")
+
+
+    # ── Mode 5: k-scaling, dprime3 ───────────────────────────────────────────
+    elif MODE == 5:
+        K_VALUES  = [1, 2, 3, 4, 5, 6]
+        N         = 10
+        N_SAMPLES = 10
+
+        print(f"=== k-scaling: dprime3  (n={N}, {N_SAMPLES} samples/k) ===")
+        results = run_timing(build_e_dprime3, K_VALUES, N, N_SAMPLES)
+
+        title = (
+            r"$e_{4,k}=(\langle g+r_k\cdot\langle\cdots g+r_1"
+            r"\cdot\langle g\rangle_{\leq 1}\cdots\rangle_{\leq k}\rangle_{\leq k{+}1})^*$"
+            "\n"
+            f"$k$-scaling,  $n={N}$,  $T_i=i$,  {N_SAMPLES} samples per $k$"
+        )
+        fig, ax = plt.subplots(figsize=(5, 3.5))
+        plot_timing_breakdown(ax, K_VALUES, results, title)
+        plt.tight_layout(pad=0.8)
+
+        out_path = os.path.join(RESULTS, f"timing_dprime3_k_sweep_n{N}.pdf")
+        plt.savefig(out_path, bbox_inches="tight")
+        plt.close()
+        print(f"\nSaved: {out_path}")
+    # ── Mode 6: (n,k) grid sweep — VolTRE timing heatmap ─────────────────────
+    #
+    # Outputs (12_page13_casestudy/results/):
+    #   nk_grid_voltre.csv          — n, k, init_time, per_sample_time, status
+    #   nk_grid_heatmap_voltre.pdf  — per-sample-time heatmap; T.O. cells grey
+    #
+    # TA comparison: place a CSV with columns (n, k, per_sample_time, status) at
+    #   12_page13_casestudy/results/nk_grid_ta.csv
+    # and re-run to get side-by-side panels.
+    #
+    # Set SANITY = True (default) for a quick 3×3 corner check first.
+    elif MODE == 6:
+        import signal
+        import csv
+        import matplotlib.colors as mcolors
+
+        # ── Tunable parameters ───────────────────────────────────────────────
+        SANITY           = False   # ← set False for full grid
+        SAMPLE_TIMEOUT_S = 200    # ← per-sample (and per-init) wall-clock limit (s)
+        N_SAMPLES        = 10     # ← samples averaged per cell
+
+        # Grid ranges — shrink if numbers get excessive
+        N_GRID = list(range(1, 4  if SANITY else 11))   # word lengths
+        K_GRID = list(range(1, 4  if SANITY else 11))   # request-type counts
+        # ─────────────────────────────────────────────────────────────────────
+
+        FIG_W  = 5.787   # matches plot_config fig_width_in
+
+        class _Timeout(Exception):
+            pass
+
+        def _alarm(signum, frame):
+            raise _Timeout()
+
+        def fmt_t(t):
+            if t is None:
+                return "   —  "
+            if t < 0.01:
+                return f"{t:.4f}s"
+            if t < 10:
+                return f"{t:.3f}s"
+            return f"{t:.1f}s"
+
+        def cell_label(t):
+            if t is None:
+                return "T.O."
+            if t < 0.01:
+                return f"{t:.3f}"
+            if t < 10:
+                return f"{t:.2f}"
+            return f"{t:.0f}s"
+
+        def time_cell(phi, n):
+            signal.signal(signal.SIGALRM, _alarm)
+            # ── init: volume computation ──────────────────────────────────
+            signal.alarm(int(SAMPLE_TIMEOUT_S))
+            try:
+                slice_volume.cache_clear()
+                continuous_convolution.cache_clear()
+                clear_sympy_cache()
+                t0 = time.perf_counter()
+                slice_volume(phi, n)
+                t_vol = time.perf_counter() - t0
+            except _Timeout:
+                return None, None, "timeout:init"
+            except Exception as e:
+                return None, None, f"error:init:{type(e).__name__}"
+            finally:
+                signal.alarm(0)
+            # ── sampling: one timeout per sample() call ───────────────────
+            t_acc = 0.0
+            for _ in range(N_SAMPLES):
+                signal.alarm(int(SAMPLE_TIMEOUT_S))
+                try:
+                    t0 = time.perf_counter()
+                    sample(phi, n)
+                    t_acc += time.perf_counter() - t0
+                except _Timeout:
+                    return t_vol, None, "timeout:sample"
+                except Exception as e:
+                    return t_vol, None, f"error:sample:{type(e).__name__}"
+                finally:
+                    signal.alarm(0)
+            return t_vol, t_acc / N_SAMPLES, "ok"
+
+        tag = "SANITY (3x3)" if SANITY else f"FULL ({len(N_GRID)}x{len(K_GRID)})"
+        print(f"=== MODE 6 — (n,k) grid  [{tag}] ===")
+        print(f"    n={N_GRID}  k={K_GRID}  "
+              f"{N_SAMPLES} samples/cell  timeout={SAMPLE_TIMEOUT_S}s/operation")
+        print(f"    expression: e_{{4,k}} = build_e_dprime3\n")
+
+        rows = []
+        for k in K_GRID:
+            phi, expr = build_e_dprime3(DEADLINES_DEMO[:k])
+            short = expr if len(expr) <= 72 else expr[:69] + "..."
+            print(f"k={k}  {short}")
+            for n in N_GRID:
+                t_vol, t_sper, status = time_cell(phi, n)
+                rows.append({
+                    "n": n, "k": k,
+                    "init_time":       f"{t_vol:.6f}"  if t_vol  is not None else "",
+                    "per_sample_time": f"{t_sper:.6f}" if t_sper is not None else "",
+                    "status": status,
+                })
+                print(f"  n={n:2d}  init={fmt_t(t_vol)}  sample={fmt_t(t_sper)}  [{status}]")
+            print()
+
+        prefix = "sanity" if SANITY else "nk_grid"
+        out_csv = os.path.join(RESULTS, f"{prefix}_voltre.csv")
+        with open(out_csv, "w", newline="") as f:
+            w = csv.DictWriter(
+                f, fieldnames=["n", "k", "init_time", "per_sample_time", "status"])
+            w.writeheader()
+            w.writerows(rows)
+        print(f"CSV: {out_csv}")
+
+        # ── heatmap ──────────────────────────────────────────────────────────
+        mat_sper = np.full((len(K_GRID), len(N_GRID)), np.nan)
+        mat_vol  = np.full((len(K_GRID), len(N_GRID)), np.nan)
+        for r in rows:
+            ni = int(r["n"]) - N_GRID[0]
+            ki = int(r["k"]) - K_GRID[0]
+            if r["status"] == "ok":
+                mat_sper[ki, ni] = float(r["per_sample_time"])
+                mat_vol[ki, ni]  = float(r["init_time"])
+
+        cmap = plt.cm.YlOrRd.copy()
+        cmap.set_bad("#555555")
+
+        valid = mat_sper[~np.isnan(mat_sper)]
+        if len(valid) > 1 and valid.max() > valid.min() * 10:
+            norm = mcolors.LogNorm(
+                vmin=max(valid.min(), 1e-5), vmax=valid.max())
+        else:
+            norm = mcolors.Normalize(
+                vmin=valid.min() if len(valid) else 0,
+                vmax=valid.max() if len(valid) else 1)
+
+        fig, axes = plt.subplots(1, 2, figsize=(FIG_W, FIG_W * 0.52))
+
+        for ax, mat, col_label, subplot_title in [
+            (axes[0], mat_vol,  "init time (s)",       "volume init"),
+            (axes[1], mat_sper, "per-sample time (s)", "per-sample"),
+        ]:
+            valid_m = mat[~np.isnan(mat)]
+            if len(valid_m) > 1 and valid_m.max() > valid_m.min() * 10:
+                n_m = mcolors.LogNorm(
+                    vmin=max(valid_m.min(), 1e-5), vmax=valid_m.max())
+            else:
+                n_m = mcolors.Normalize(
+                    vmin=valid_m.min() if len(valid_m) else 0,
+                    vmax=valid_m.max() if len(valid_m) else 1)
+
+            im = ax.imshow(mat, aspect="auto", norm=n_m,
+                           cmap=cmap, origin="lower")
+            plt.colorbar(im, ax=ax, label=col_label,
+                         fraction=0.046, pad=0.04)
+
+            for ki in range(len(K_GRID)):
+                for ni in range(len(N_GRID)):
+                    val = mat[ki, ni]
+                    lbl = cell_label(val) if not np.isnan(val) else "T.O."
+                    fc  = "white" if np.isnan(val) else "black"
+                    ax.text(ni, ki, lbl, ha="center", va="center",
+                            fontsize=5, color=fc)
+
+            ax.set_xticks(range(len(N_GRID)))
+            ax.set_xticklabels(N_GRID, fontsize=6)
+            ax.set_yticks(range(len(K_GRID)))
+            ax.set_yticklabels(K_GRID, fontsize=6)
+            ax.set_xlabel("$n$", fontsize=7)
+            ax.set_ylabel("$k$", fontsize=7)
+            ax.set_title(
+                f"$e_{{4,k}}$ — VolTRE {subplot_title}", fontsize=7, pad=4)
+
+        plt.tight_layout(pad=0.6)
+        out_fig = os.path.join(RESULTS, f"{prefix}_heatmap_voltre.pdf")
+        plt.savefig(out_fig, bbox_inches="tight")
+        plt.close()
+        print(f"Heatmap: {out_fig}")
+        if SANITY:
+            print("\n[Sanity passed? Set SANITY=False and re-run for full 10x10 grid.]")
