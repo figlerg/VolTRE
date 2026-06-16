@@ -95,6 +95,12 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
 
     ## TODO the input checks are not really needed in this function, since in any case we do them in all of the calls of unambig
 
+    # create string of phi' from phi. also get f during this process.
+    # We only need to do this once per unique node, so we cache it in _phi_dis.
+    # Previously this was done inline (disambiguate + quickparse on every call), which
+    # produced a fresh phi' object each time and caused lru_cache on slice_volume to miss
+    # on every sample() call — paying the volume computation cost K times instead of once.
+
     intersection_mode = isinstance(node, TREParser.IntersectionExprContext)
     if intersection_mode:
         assert top, "Intersection only allowed at the top level."
