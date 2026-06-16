@@ -19,6 +19,8 @@ from enum import Enum, auto
 
 from sympy.abc import x,y,z
 
+from functools import lru_cache
+
 from parse.quickparse import quickparse
 from sample.TimedWord import TimedWord
 from volume.MaxEntDist import MaxEntDist
@@ -58,6 +60,16 @@ class DurationSamplerMode(Enum):
 
     def __str__(self):
         return self.name
+
+
+@lru_cache(maxsize=None)
+def _phi_dis(node):
+    """Cached disambiguate + quickparse. Returns the same phi' object for the same node,
+    so lru_cache on slice_volume gets hits across repeated sample() calls."""
+    dis_str, f = disambiguate(node, return_inverse_map=True)
+    return quickparse(dis_str, string=True), f
+
+
 def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = DurationSamplerMode.VANILLA,
            lambdas = None, top = True, feedback=False, budget = 500):
     """
@@ -83,11 +95,6 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
 
     ## TODO the input checks are not really needed in this function, since in any case we do them in all of the calls of unambig
 
-    # create string of phi' from phi. also get f during this process
-    # TODO actually I only need to do this once, so I should extract this somewhere.
-    #  I don't do it yet, because it complicates calling this function. I will probably do a sample_n wrapper function
-    #  somewhere, where I can create f once and reuse it.
-
     intersection_mode = isinstance(node, TREParser.IntersectionExprContext)
     if intersection_mode:
         assert top, "Intersection only allowed at the top level."
@@ -95,8 +102,7 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
 
         original_child1 = node.expr(0)
         original_child2 = node.expr(1)
-        dis_str, f = disambiguate(original_child1, return_inverse_map=True)  # just pick the 1st one TODO smallest better
-        child1_dis = quickparse(dis_str, string=True)  # parse the string again to get the syntax tree of phi'
+        child1_dis, f = _phi_dis(original_child1)  # cached: same object every call
 
         for i in range(budget):
             if not i %100 and i >0:
@@ -119,8 +125,7 @@ def sample(node: TREParser.ExprContext, n, T=None, mode:DurationSamplerMode = Du
 
     # THE NORMAL FUNCTION WITHOUT INTERSECTION:
 
-    dis_str, f = disambiguate(node, return_inverse_map=True)
-    phi_dis = quickparse(dis_str, string=True)  # parse the string again to get the syntax tree of phi'
+    phi_dis, f = _phi_dis(node)  # cached: same object every call
 
     # print(f"Transformed phi = {node.getText()} to phi' = {phi_dis.getText()} for russian roulette sampling.")
 
