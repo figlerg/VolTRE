@@ -145,6 +145,30 @@ class TimedWord:
             case _:
                 raise NotImplementedError
 
+    def to_csv(self, path: str):
+        import csv
+        with open(path, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["delay", "symbol"])
+            for sym, delay in self:
+                writer.writerow([delay, sym])
+
+    @classmethod
+    def list_to_csv(cls, words: list, path: str):
+        import csv
+        n = words[0].length if words else 0
+        header = []
+        for i in range(1, n + 1):
+            header += [f"symbol{i}", f"delay{i}"]
+        with open(path, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            for w in words:
+                row = []
+                for sym, delay in w:
+                    row += [sym, delay]
+                writer.writerow(row)
+
     def ascii_format_thao(self):
         """
         ASCII format for Thao:
