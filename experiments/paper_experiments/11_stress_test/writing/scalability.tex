@@ -1,0 +1,55 @@
+% Drop-in for Section VI-A (Scalability).
+% Usage: \input{scalability} inside \section{Applications and experiments},
+%   e.g. before or after \input{deltasigma}.
+% Before compiling in the main paper: copy
+%   experiments/paper_experiments/11_stress_test/results/11_stress_ex123.pdf
+% into the paper's fig/ directory, and add fig/ to \graphicspath in main.tex.
+
+\rnew{
+\subsection{Scalability}\label{subsec:scalability}
+}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\columnwidth]{11_stress_ex123.pdf}
+  \caption{\rnew{Stress-test timing for three TREs ($K=20$ samples per
+      data point, mean sampling time in seconds).
+      Bars decompose into one-time volume-computation cost and per-sample cost.
+      \emph{Top:} $\eex{1}=(\trest{a}{\leq 1})^*$.
+      \emph{Middle:} $\eex{2}=a^*\concat\trest{a^*}{[1,2]}$ ($T=2.0$).
+      \emph{Bottom:} $\eex{3}=(\trest{aa}{\leq 1}\concat a)
+        \cap(a\concat\trest{aa}{\leq 1})$ ($n=3$).}}
+  \label{fig:stress}
+\end{figure}
+
+\rnew{%
+Fig.~\ref{fig:stress} characterises scaling across three TREs, each
+stressing a different aspect of the algorithms ($K=20$ samples per data point).
+Timing decomposes into a \emph{one-time volume computation}
+(Thm.~\ref{thm:polynomials}), paid once per specification regardless
+of how many words are subsequently drawn, and a \emph{per-sample} cost.
+In typical use, the former is amortised across all samples.
+
+For the unambiguous expression $\eex{1}$, Alg.~\ref{alg:slicesampling}
+proceeds without rejection and scales to $n=22$ with cost dominated
+by volume computation.
+For the ambiguous $\eex{2}$, volume computation remains inexpensive, while
+per-sample cost grows with~$n$, consistent with Alg.~\ref{alg:smartsampling}
+incurring an increasing density correction cost as the average multiplicity of
+generated words grows with~$n$ (Thm.~\ref{thm:slicesampling}).
+For the intersection expression $\eex{3}$, Alg.~\ref{alg:gensmartsampling}
+draws candidates from the first subexpression and accepts those also belonging
+to the second. As $T$ approaches the feasibility boundary at $T=2$ from
+below, the ratio of the intersection volume to the enclosing language volume
+vanishes, so the expected cost per accepted sample grows accordingly.
+This is the expected behaviour of rejection sampling as the
+acceptance probability decreases.
+
+The density correction cost in Alg.~\ref{alg:smartsampling} can be significant for
+highly ambiguous expressions. The expected number of trials is characterised
+by the multiplicity structure of the expression (Thm.~\ref{thm:slicesampling}).
+The rejection-based handling of intersection in Alg.~\ref{alg:gensmartsampling}
+is a known limitation of the approach: one can construct TREs with arbitrarily
+thin intersections, and the cost scales with the inverse of the acceptance
+probability.
+}

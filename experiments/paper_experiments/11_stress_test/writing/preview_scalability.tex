@@ -1,0 +1,33 @@
+\documentclass[lettersize,journal]{IEEEtran}
+\usepackage{mathtools}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{microtype}
+
+% ── macros from defs.tex ─────────────────────────────────────────────────────
+\newcommand{\eex}[1]{e_{ex#1}}
+\newcommand{\trest}[2]{\langle #1 \rangle_{#2}}
+\DeclareMathOperator{\concat}{\cdot}
+\newcommand{\vslice}[3]{V_{#1}^{#2}\!\left(#3\right)}
+\newcommand{\vslicem}[3]{V_{#1}^{\mathcal{M}(#2)}\!\left(#3\right)}
+
+\newtheorem{theorem}{Theorem}
+
+% ── revision markup ───────────────────────────────────────────────────────────
+\long\def\rnew#1{{\color{blue}#1}}
+
+% Cross-references will show ?? — expected in this standalone preview.
+
+\graphicspath{{../results/}{../../Unif_Sampling_for_Tre_EMSOFT/fig/}}
+
+\begin{document}
+
+\section{Applications and Experiments}
+
+\input{scalability}
+
+\end{document}
