@@ -1,0 +1,21 @@
+\revised{
+\begin{example}
+Consider the timed language $\{t_1at_2a\mid t_1+t_2\leq 1\}$ recognised by the TRE $\trest{aa}{\leq 1}$. We choose a 2D examples to visualise empirically the timed words $t_1at_2a$ %(stricly speaking the delay vector ($t_1,t_2$))
+as a cloud of 2D points $(t_1,t_2)$ in the triangle of equations $t_1\geq 0\wedge t_2\geq 0, t_1+t_2\leq  1$ (see Figure~\ref{fig:maxent-triangle}). We depict several distributions of maximal entropy with fixed mean $\mu=\frac{2}{3}$ and varying prescribed variance $\nu\in\{\frac{1}{72},\frac{1}{18},\frac{1}{9}\}$. The formulae are taken from \cite{BarbotB23}, where no sampling was provided.
+$V_n(T)=\Vol{\{t_1 \mid  0\leq t_1\leq 1-T \}}=1-T$
+$P_{\lambda_1,\lambda_2}(T)=\frac{1}{N_{\lambda_1,\lambda_2}}(1-T)e^{\lambda_1 T+\lambda_2 T^2}$
+where $N_{\lambda_1,\lambda_2}$ is a normalizing constant so that $\int P_{\lambda_1,\lambda_2}(T)dT=1$, that is, $N_{\lambda_1,\lambda_2}=\int_0^1(1-T)e^{\lambda_1 T+\lambda_2 T^2}dT$.
+\begin{eqnarray}
+%\int_0^1 (1-T)e^{\lambda_0+\lambda_1 T+\lambda_2 T^2} dT&=&1\\
+\frac{1}{N_{\lambda_1,\lambda_2}}\int_0^1 T(1-T)e^{\lambda_1 T+\lambda_2 T^2} dT&=&\mu\\
+\frac{1}{N_{\lambda_1,\lambda_2}}\int_0^1 T^2 (1-T) e^{\lambda_1 T+\lambda_2 T^2} dT -\mu^2&=&\nu
+\end{eqnarray}
+\end{example}
+}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig/exp15_maxent_triangle}
+  \caption{Max-entropy samples from $\trest{aa}{\leq 1}$ ($n=2$, $5{,}000$ samples per panel) with fixed mean $E(T)=\frac{2}{3}$ and prescribed variances $V(T)\in\{\frac{1}{72},\,\frac{1}{18},\,\frac{1}{9}\}$. Each point $(t_1,t_2)$ is one timed word; the support is the triangle $t_1+t_2\leq 1$.}
+  \label{fig:maxent-triangle}
+\end{figure}
