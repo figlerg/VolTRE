@@ -1,0 +1,39 @@
+\documentclass[lettersize,journal]{IEEEtran}
+
+\usepackage{mathtools}
+\usepackage[utf8]{inputenc}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,positioning,arrows,automata,shadows,decorations.text,fit,quotes}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{enumerate}
+\usepackage{amsmath,amssymb}
+\usepackage{amsthm}
+\usepackage[mathcal]{eucal}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage[OT2,T1]{fontenc}
+\DeclareSymbolFont{cyrletters}{OT2}{wncyr}{m}{n}
+\DeclareMathSymbol{\Sha}{\mathalpha}{cyrletters}{"58}
+\usepackage{microtype}
+\usepackage[]{todonotes}
+\usepackage[clean]{revdiff}   % clean mode: no colour markup
+
+\renewcommand{\subsubsection}[1]{\medskip\noindent\textbf{#1}}
+
+\input{../Unif_Sampling_for_Tre_EMSOFT/defs}
+
+% suppress undefined-ref / citation warnings for preview
+\renewcommand{\cite}[1]{[{\scriptsize\tt #1}]}
+
+\pagestyle{plain}
+
+\begin{document}
+
+\section*{Preview: Experiment 16 --- TA vs.\ TRE scalability}
+
+\input{exp16_scaling}
+
+\end{document}

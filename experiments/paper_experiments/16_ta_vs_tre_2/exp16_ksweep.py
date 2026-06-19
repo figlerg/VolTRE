@@ -25,6 +25,7 @@ Plot modes (PLOT_MODE):
   5 — [current]  two panels (VolTRE | TA), stacked bars, log y, T.O. bars + hatch
   6 — [current]  single panel, paired total-time bars (VolTRE | TA per k), log y,
                  T.O. hatched TA bars; best for showing catastrophic TA scaling
+  7 — [current]  same as mode 6 but bars stacked: init (darker) / sample (lighter)
 """
 import os, sys, re, csv, time, warnings
 from misc.exceptions import EmptyLanguageError
@@ -58,7 +59,7 @@ N            = 10
 N_SAMPLES    = 10
 
 # ── plot configuration ────────────────────────────────────────────────────────
-PLOT_MODE   = 6     # see mode descriptions in docstring above
+PLOT_MODE   = 7     # see mode descriptions in docstring above
 
 # K values for VolTRE panel:
 #   6 → same x-range as TA — most direct comparison
@@ -337,6 +338,62 @@ def plot_m6(tre_rows, ta_rows, k_tre_show, ta_timeout_k, timeout_s, out_path):
     print(f'  saved {out_path}')
 
 
+# ── Mode 7 [current]: same as mode 6, stacked init (darker) / sample (lighter) ─
+def plot_m7(tre_rows, ta_rows, k_tre_show, ta_timeout_k, timeout_s, out_path):
+    C_TRE_INIT   = '#2166ac'   # dark blue  — VolTRE init
+    C_TRE_SAMPLE = '#92c5de'   # light blue — VolTRE sample
+    C_TA_INIT    = '#d6604d'   # dark red   — TA init
+    C_TA_SAMPLE  = '#f4a582'   # light salmon — TA sample
+
+    tre_map = {r['k']: r for r in tre_rows}
+    ta_map  = {r['k']: r for r in ta_rows if r['status'] == 'ok'}
+
+    all_k = list(range(1, k_tre_show + 1))
+    xpos  = np.arange(len(all_k))
+    w     = 0.38
+
+    tre_inits   = [max(tre_map[k]['t_vol'],    LOG_EPS) if k in tre_map else np.nan for k in all_k]
+    tre_samples = [max(tre_map[k]['t_sample'], LOG_EPS) if k in tre_map else np.nan for k in all_k]
+    ta_inits    = [max(ta_map[k]['t_split'],   LOG_EPS) if k in ta_map and k < ta_timeout_k else 0.0 for k in all_k]
+    ta_samples  = [max(ta_map[k]['t_sample'],  LOG_EPS) if k in ta_map and k < ta_timeout_k else 0.0 for k in all_k]
+
+    fig, ax = plt.subplots(1, 1, figsize=(fig_width_in * 0.75, PANEL_H * 1.3))
+
+    ax.bar(xpos - w/2, tre_inits,   w, color=C_TRE_INIT,   alpha=0.9, label='VolTRE — init')
+    ax.bar(xpos - w/2, tre_samples, w, color=C_TRE_SAMPLE, alpha=0.9, label='VolTRE — sample',
+           bottom=tre_inits)
+    ax.bar(xpos + w/2, ta_inits,    w, color=C_TA_INIT,    alpha=0.9, label='Wordgen — init')
+    ax.bar(xpos + w/2, ta_samples,  w, color=C_TA_SAMPLE,  alpha=0.9, label='Wordgen — sample',
+           bottom=ta_inits)
+
+    # T.O. bars — TA init colour + hatch
+    to_ks = [k for k in all_k if k >= ta_timeout_k]
+    for k in to_ks:
+        xi = xpos[all_k.index(k)]
+        ax.bar(xi + w/2, timeout_s, w, color=C_TA_INIT, alpha=0.85,
+               hatch='//', edgecolor='#a03020')
+    if to_ks:
+        ax.text((xpos[0] + xpos[-1]) / 2, timeout_s * 2, 'T.O. (>1 h)',
+                ha='center', va='center', fontsize=5.5, color='#d62728')
+
+    ax.axhline(timeout_s, color='#d62728', linewidth=0.8, linestyle='--', alpha=0.7, zorder=5)
+
+    ax.set_yscale('log')
+    ax.set_ylim(bottom=LOG_EPS * 0.5, top=timeout_s * 4)
+    ax.set_xticks(xpos)
+    ax.set_xticklabels([str(k) for k in all_k], fontsize=6)
+    ax.set_xlabel('$k$', fontsize=7, labelpad=2)
+    ax.set_ylabel('total time (s)', fontsize=7)
+    ax.set_title(EXPR_TITLE, fontsize=6.8)
+    ax.tick_params(labelsize=6)
+    ax.grid(axis='y', linestyle='--', alpha=0.3)
+    ax.legend(loc='upper left', fontsize=5.5, frameon=True,
+              handlelength=0.8, borderpad=0.3, labelspacing=0.2)
+    fig.tight_layout()
+    fig.savefig(out_path, bbox_inches='tight')
+    print(f'  saved {out_path}')
+
+
 # ── Mode 5 [current]: stress-test style stacked bars, log y, T.O. bars ───────
 #
 # Two panels side by side (VolTRE | wordgen), log y per panel.
@@ -435,5 +492,7 @@ if __name__ == '__main__':
             plot_m5(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, TIMEOUT_S, path)
         elif PLOT_MODE == 6:
             plot_m6(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, TIMEOUT_S, path)
+        elif PLOT_MODE == 7:
+            plot_m7(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, TIMEOUT_S, path)
 
     print('\nDone.')
