@@ -41,12 +41,12 @@ A selection of experiments can be found in [this folder](./experiments/paper_exp
 
 ### Installation
 Follow these steps to create a virtual environment and install the tool:
-- Install Python 3
+- Install Python, **version 3.10 to 3.12** (3.10+ is needed for the syntax we use, and 3.13+ is not supported by the pinned dependency versions in requirements.txt: pip would try to build numpy/matplotlib from source)
 - Install Git
 - Install pip
 - Clone this repository: ````git clone https://github.com/figlerg/VolTRE````
 - cd into the top level folder: ````cd VolTRE````
-- Create a new venv: ````python3 -m venv .venv````
+- Create a new venv with a supported Python version: ````python3 -m venv .venv```` (if your default Python is newer than 3.12, use e.g. ````python3.12 -m venv .venv```` on Linux/macOS or ````py -3.12 -m venv .venv```` on Windows)
 - Activate the venv (choose one): 
   - For Windows Powershell: ````.venv\Scripts\activate.ps1````
   - For Windows cmd: ````.venv\Scripts\activate.bat````
@@ -56,11 +56,11 @@ Follow these steps to create a virtual environment and install the tool:
 
 
 Assuming that your platform is Windows Powershell and the prerequisites are installed, you can run this bash script to install 
-(note that depending on your installation you may need to substitute "py" with "python", "python3", or the full path of your python executable):
+(note that depending on your installation you may need to substitute "py -3.12" with "python", "python3.12", or the full path of your python executable):
 ````bash
 git clone https://github.com/figlerg/VolTRE
 cd VolTRE
-py -m venv .venv
+py -3.12 -m venv .venv
 .venv\Scripts\activate.ps1
 pip install -r requirements.txt
 python -m pip install -e .
