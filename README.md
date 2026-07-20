@@ -20,9 +20,9 @@ This repository accompanies the Diplomarbeit (Master's thesis) *"Uniform Samplin
 
 
 
-## Paper: _Slice Sampling for Timed Regular Languages_
+## Paper: _Uniform Sampling for Timed Regular Expressions_
 
-This repository is associated with the upcoming paper **"Slice Sampling for Timed Regular Languages"**. 
+This repository is associated with the paper **"Uniform Sampling for Timed Regular Expressions"** (accepted at EMSOFT 2026). 
 
 
 
@@ -46,11 +46,11 @@ Follow these steps to create a virtual environment and install the tool:
 - Install pip
 - Clone this repository: ````git clone https://github.com/figlerg/VolTRE````
 - cd into the top level folder: ````cd VolTRE````
-- Create a new venv: ````python3 -m venv venv````
+- Create a new venv: ````python3 -m venv .venv````
 - Activate the venv (choose one): 
-  - For Windows Powershell: ````venv\Scripts\activate.ps1````
-  - For Windows cmd: ````venv\Scripts\activate.bat````
-  - For macOS/Linux: ````source venv/bin/activate````
+  - For Windows Powershell: ````.venv\Scripts\activate.ps1````
+  - For Windows cmd: ````.venv\Scripts\activate.bat````
+  - For macOS/Linux: ````source .venv/bin/activate````
 - Install the required modules: ````pip install -r requirements.txt````
 - Install the module using setup.py ````pip install -e .````
 
@@ -60,8 +60,8 @@ Assuming that your platform is Windows Powershell and the prerequisites are inst
 ````bash
 git clone https://github.com/figlerg/VolTRE
 cd VolTRE
-py -m venv venv
-venv\Scripts\activate.ps1
+py -m venv .venv
+.venv\Scripts\activate.ps1
 pip install -r requirements.txt
 python -m pip install -e .
 
