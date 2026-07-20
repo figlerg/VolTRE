@@ -37,6 +37,8 @@ The paper is accepted at EMSOFT. We need to provide an artifact to get our reusa
 - Never push, force-push, hard-reset or rewrite history. Propose the exact command and let me run it. Also enforced via permission deny rules in .claude/settings.json.
 - Update .claude/PLAN.md at the end of every work block: progress on artifact tasks, decisions, open questions.
 - If .claude/repository.md or .claude/method.md are missing, populate them from the repo and paper_source, then have me review and correct them before relying on their content. Do not treat unreviewed generated notes as ground truth.
+- Don't sign off with these things like "Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>". 
+- In prose, don't use em dashes and semicolons. 
 
 ## Verification
 
