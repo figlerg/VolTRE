@@ -1,9 +1,9 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='VolTRE',
-    version='v0.0.0',
-    packages=['misc', 'match'],
+    version='0.1.0',
+    packages=find_packages(include=['parse', 'sample', 'volume', 'match', 'misc', 'probabilistic']),
     url='https://github.com/figlerg/VolTRE',
     license='BSD 3-Clause License',
     author='Felix Gigler, Benoît Barbot, Ezio Bartocci, Nicolas Basset, Thao Dang, Dejan Nickovic',

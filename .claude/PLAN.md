@@ -12,8 +12,8 @@ Last updated: 2026-07-20 (initial version, derived from .claude/artifact_guideli
 ## Artifact TODO list
 
 ### A. Packaging & install (blockers found 2026-07-20)
-- [x] Fix `requirements.txt` encoding: converted UTF-16→UTF-8/LF (2026-07-20, pip dry-run OK). Still: [ ] verify pins install in a *fresh* Linux/py3.12 env.
-- [ ] Fix `setup.py`: `packages=['misc','match']` is missing `parse`, `sample`, `volume`, `probabilistic` (works only as editable install from repo root). Use find_packages or list all.
+- [x] Fix `requirements.txt` encoding: converted UTF-16→UTF-8/LF (2026-07-20, pip dry-run OK). Pins verified in a fresh py3.12 venv 2026-07-20 (full install + run). Docker build will be the final cross-machine check.
+- [x] Fix `setup.py` (2026-07-20): root cause was missing `__init__.py` in `parse`, `sample`, `volume`, `probabilistic` (only `match`/`misc` had one, so only those were listed). Added 4 empty `__init__.py`, switched to `find_packages(include=[...])`, version `v0.0.0`→`0.1.0`. Verified: non-editable install in fresh venv, import + slice_volume + sample from outside repo root OK.
 - [x] README updated (2026-07-20): venv name → `.venv`, paper title corrected to "Uniform Sampling for Timed Regular Expressions" (EMSOFT 2026).
 - [ ] Verify README install steps literally in a fresh venv (README install script is Windows-flavored; add/verify Linux path).
 - [ ] Verify README CLI examples literally (`python main.py -p experiments/spec_00.tre ...`), `minimal_example.py`, and `tutorial.ipynb` in fresh env.
@@ -74,12 +74,12 @@ Pure Python on CPU, no GPU or special hardware. Dev reference machine: Dell Lati
 ## Progress log
 - 2026-07-20: Initial repo/method/plan notes created (read-only pass). Found packaging blockers (UTF-16 requirements.txt, incomplete setup.py packages). Figure inventory extracted from final main.tex.
 - 2026-07-20 (later): Felix reviewed repository.md/method.md (fine, with corrections). Deadline 24 July confirmed. Decisions: wordgen-in-Docker is the target; canonical paper PDF = paper_source/Unif_Sampling_for_Tre_EMSOFT(61).pdf (old copies deleted); camera-ready cleanup deferred. Done: requirements.txt → UTF-8; README venv → .venv + title fixed.
+- 2026-07-20 (commit c3bd3ff): committed artifact-prep changes (README, requirements.txt, CLAUDE.md, .claude notes/settings, .gitignore). The previously-unclear .gitignore modification turned out to be Felix's own `paper_source` ignore line — resolved, included. Not pushed (per workflow rules).
 
 ## Open questions (for Felix)
 1. fig:cube pngs provenance — regenerate or ship as-is with generating scripts marked approximate?
 2. fig:sharkfin — exact generation settings to be recovered, deferred until we build that part of the eval loop. Git is a dead end (checked 2026-07-20: theorem4.py has a single commit with NR_SAMPLES=200; the whole `paper_source/` dir is gitignored, so sharkfin.pdf has no history). Felix may check emails; otherwise regenerate with theorem4.py and document the (small) parameter difference.
 3. Anonymous repo link in the paper (anonymous.4open.science) vs. the artifact's public GitHub/Zenodo — final camera-ready footnote should point where? (deferred with camera-ready)
-4. Intent of the uncommitted `.gitignore` modification (pre-existing, not mine) — include in a commit or still in flux?
 
 ## Pending small cleanup
 - [ ] Delete `experiments/paper_experiments/Unif_Sampling_for_Tre_EMSOFT/` — approved by Felix (verified: only unique content is an Overleaf zip from 2026-06-18, all superseded by paper_source/). Blocked: root-owned files; Felix must run `rm -rf` himself (command provided in chat).
