@@ -1,7 +1,7 @@
 import os
 import pytest
-from antlr4.error.Errors import ParseCancellationException
 
+from parse.SyntaxError import TREParseError
 from parse.quickparse import quickparse
 from tests.file_helper import all_tre_files
 
@@ -19,7 +19,7 @@ def test_quickparse(file_path, expected_to_fail):
     """
     if expected_to_fail:
         # bad test cases that should fail
-        with pytest.raises(ParseCancellationException):
+        with pytest.raises(TREParseError):
             print(file_path)
             print(quickparse(file_path).getText())
 

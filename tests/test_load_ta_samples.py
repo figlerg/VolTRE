@@ -5,7 +5,7 @@ from match.match import match
 from sample.TimedWord import TimedWord
 
 SAMPLE_FILE = os.path.join(
-    os.path.dirname(__file__), '..', 'experiments', 'paper_experiments', '09_ta_case_study', 'ta_sample_1.txt'
+    os.path.dirname(__file__), '..', 'experiments', 'paper_experiments', '09_ta_case_study', 'ta_sample_old.txt'
 )
 
 PHI1_FILE = os.path.join(
@@ -32,7 +32,7 @@ def test_symbols_and_delays_match_length():
 
 
 def test_known_first_word():
-    """First line of ta_sample_1.txt has 10 tokens starting with 0.763440[g]."""
+    """First line of ta_sample_old.txt has 10 tokens starting with 0.763440[g]."""
     words = TimedWord.from_wordgen_file(SAMPLE_FILE)
     w = words[0]
     assert len(w.symbols) == 10
