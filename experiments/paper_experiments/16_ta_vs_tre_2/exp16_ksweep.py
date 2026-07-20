@@ -26,6 +26,8 @@ Plot modes (PLOT_MODE):
   6 — [current]  single panel, paired total-time bars (VolTRE | TA per k), log y,
                  T.O. hatched TA bars; best for showing catastrophic TA scaling
   7 — [current]  same as mode 6 but bars stacked: init (darker) / sample (lighter)
+  8 — [local-TA]  run wordgen locally via subprocess; real 1-h timeout + 8 GB memory
+                  cap per k; saves exp16_local_ta_timing.csv; generates mode-7-style plot
 """
 import os, sys, re, csv, time, warnings
 from misc.exceptions import EmptyLanguageError
@@ -51,7 +53,7 @@ from experiments.paper_experiments.expressions_12_requests import (
 
 # ── experiment parameters ─────────────────────────────────────────────────────
 LOAD_TRE  = True    # set False to rerun VolTRE timing
-LOAD_TA   = True    # set False to reparse outfelix
+LOAD_TA   = True    # set False to reparse outfelix / rerun local wordgen
 
 K_TRE_MAX    = 9    # k=10 is empty for n=10 (min cycle needs k+1=11 symbols)
 K_TA_TIMEOUT = 6    # first k where TA failed (shown as T.O.)
@@ -59,7 +61,7 @@ N            = 10
 N_SAMPLES    = 10
 
 # ── plot configuration ────────────────────────────────────────────────────────
-PLOT_MODE   = 7     # see mode descriptions in docstring above
+PLOT_MODE   = 8     # see mode descriptions in docstring above
 
 # K values for VolTRE panel:
 #   6 → same x-range as TA — most direct comparison
@@ -75,8 +77,16 @@ OUTFELIX = os.path.join(os.path.dirname(__file__),
 RESULTS  = os.path.join(os.path.dirname(__file__), 'results')
 os.makedirs(RESULTS, exist_ok=True)
 
-CSV_TRE  = os.path.join(RESULTS, 'exp16_voltre_timing.csv')
-CSV_TA   = os.path.join(RESULTS, 'exp16_ta_timing.csv')
+CSV_TRE      = os.path.join(RESULTS, 'exp16_voltre_timing.csv')
+CSV_TA       = os.path.join(RESULTS, 'exp16_ta_timing.csv')
+CSV_TA_LOCAL = os.path.join(RESULTS, 'exp16_local_ta_timing.csv')
+
+# wordgen binary built from /workspace/wordgen into /tmp/wordgen_build
+WORDGEN_BIN  = '/tmp/wordgen_build/_build/default/src/wordgen.exe'
+# memory cap per wordgen subprocess (bytes) — protects container from OOM
+WORDGEN_MEM_LIMIT = 8 * 1024 ** 3   # 8 GB virtual address space
+# k values to attempt for the local TA run (beyond k=5 is expected to OOM/timeout)
+K_LOCAL_MAX  = 9
 
 DEADLINES = [(f'r{i}', i) for i in range(1, K_TRE_MAX + 1)]
 
@@ -468,31 +478,247 @@ def plot_m5(tre_rows, ta_rows, k_tre_show, ta_timeout_k, timeout_s, out_path):
     print(f'  saved {out_path}')
 
 
+# ── Mode 8: run wordgen locally, real timeout + memory cap ────────────────────
+#
+# Builds the same e_k regexp family, runs wordgen as a subprocess for each k.
+# Per-process memory capped at WORDGEN_MEM_LIMIT (virtual address space).
+# Timeout = TIMEOUT_S (3600 s). Results saved to CSV_TA_LOCAL; never overwrites
+# existing CSVs from Benoit's run or VolTRE data.
+
+import subprocess, signal, resource as _resource
+
+_RE_SPLIT_L = re.compile(r'Splitting reachability graph.*?\[(\d+(?:\.\d+)?)s\]')
+_RE_DIST_L  = re.compile(r'Computing Distribution\[.*?\]\s*\[(\d+(?:\.\d+)?)s\]')
+
+
+def _wordgen_regexp(k):
+    """Single-char wordgen regexp for e_k (dprime5 family).
+    r_i → chr(ord('r') + i - 1):  r1='r', r2='s', r3='t', ...
+    Innermost: a*g  (a = wildcard before grant g).
+    """
+    inner = 'a*g'
+    for i in range(k):          # i=0 → r1, deadline 1
+        c = chr(ord('r') + i)
+        inner = f'{c}<{inner}>_[0,{i + 1}]'
+    return f'(<{inner}>_[0,{k + 1}])*'
+
+
+def _run_wordgen(regexp, n, n_traj, timeout_s, mem_limit):
+    """Run wordgen subprocess. Returns (t_split, t_dist_total, status, log).
+    t_dist_total is the total distribution time for all n_traj samples.
+    status: 'ok' | 'timeout' | 'oom' | 'error:<code>'
+    """
+    if not os.path.isfile(WORDGEN_BIN):
+        return None, None, 'no_binary', 'wordgen binary not found'
+
+    def _set_limits():
+        _resource.setrlimit(_resource.RLIMIT_AS, (mem_limit, mem_limit))
+
+    cmd = [WORDGEN_BIN, '--regexp', regexp, '--poly', str(n), '--traj', str(n_traj)]
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            preexec_fn=_set_limits, text=True,
+        )
+        try:
+            stdout, _ = proc.communicate(timeout=timeout_s)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                pass
+            return None, None, 'timeout', '(killed after timeout)'
+
+        if proc.returncode not in (0, None):
+            # SIGKILL (−9 or 137) typically means OOM from setrlimit or kernel OOM
+            code = proc.returncode
+            if code in (-9, 137, -signal.SIGKILL):
+                return None, None, 'oom', stdout[:500]
+            return None, None, f'error:{code}', stdout[:500]
+
+        m_split = _RE_SPLIT_L.search(stdout)
+        m_dist  = _RE_DIST_L.search(stdout)
+        t_split = float(m_split.group(1)) if m_split else None
+        t_dist  = float(m_dist.group(1))  if m_dist  else None
+        return t_split, t_dist, 'ok', stdout
+    except Exception as e:
+        return None, None, f'exception:{type(e).__name__}', str(e)
+
+
+def run_local_ta(k_max, n, n_traj, timeout_s, mem_limit):
+    """Run wordgen for k=1..k_max. Returns list of row dicts."""
+    rows = []
+    fieldnames = ['k', 't_split', 't_sample', 't_dist_total', 'status', 'regexp', 'n', 'n_traj']
+    with open(CSV_TA_LOCAL, 'w', newline='') as f:
+        w = csv.DictWriter(f, fieldnames=fieldnames)
+        w.writeheader()
+        for k in range(1, k_max + 1):
+            regexp = _wordgen_regexp(k)
+            print(f'  k={k}  regexp={regexp}')
+            t0_wall = time.perf_counter()
+            t_split, t_dist_total, status, log = _run_wordgen(
+                regexp, n, n_traj, timeout_s, mem_limit)
+            elapsed = time.perf_counter() - t0_wall
+            t_sample = (t_dist_total / n_traj) if (t_dist_total is not None) else None
+            print(f'    status={status}  t_split={t_split}  '
+                  f't_dist_total={t_dist_total}  wall={elapsed:.1f}s')
+            if status != 'ok':
+                print(f'    log: {log[:200]}')
+            row = {
+                'k':            k,
+                't_split':      t_split,
+                't_sample':     t_sample,
+                't_dist_total': t_dist_total,
+                'status':       status,
+                'regexp':       regexp,
+                'n':            n,
+                'n_traj':       n_traj,
+            }
+            rows.append(row)
+            csv_row = {
+                'k':            k,
+                't_split':      f'{t_split:.6f}'      if t_split      is not None else '',
+                't_sample':     f'{t_sample:.6f}'     if t_sample     is not None else '',
+                't_dist_total': f'{t_dist_total:.6f}' if t_dist_total is not None else '',
+                'status':       status,
+                'regexp':       regexp,
+                'n':            n,
+                'n_traj':       n_traj,
+            }
+            w.writerow(csv_row)
+            f.flush()
+            # stop early if two consecutive non-ok (timeout or oom cascade)
+            if len(rows) >= 2 and all(r['status'] not in ('ok',) for r in rows[-2:]):
+                print(f'  Two consecutive failures — stopping at k={k}.')
+                break
+    print(f'  saved {CSV_TA_LOCAL}')
+    return rows
+
+
+def load_local_ta():
+    with open(CSV_TA_LOCAL, newline='') as f:
+        out = []
+        for r in csv.DictReader(f):
+            out.append({
+                'k':            int(r['k']),
+                't_split':      float(r['t_split'])      if r['t_split']      else None,
+                't_sample':     float(r['t_sample'])     if r['t_sample']     else None,
+                't_dist_total': float(r['t_dist_total']) if r['t_dist_total'] else None,
+                'status':       r['status'],
+            })
+        return out
+
+
+def plot_m8(tre_rows, local_ta_rows, k_tre_show, timeout_s, out_path):
+    """Mode-7-style stacked bars using locally-measured TA data."""
+    C_TRE_INIT   = '#2166ac'
+    C_TRE_SAMPLE = '#92c5de'
+    C_TA_INIT    = '#d6604d'
+    C_TA_SAMPLE  = '#f4a582'
+
+    tre_map    = {r['k']: r for r in tre_rows}
+    ta_map     = {r['k']: r for r in local_ta_rows if r['status'] == 'ok'}
+    ta_fail    = {r['k']: r['status'] for r in local_ta_rows if r['status'] != 'ok'}
+
+    k_ta_max   = max((r['k'] for r in local_ta_rows), default=0)
+    all_k      = list(range(1, max(k_tre_show, k_ta_max) + 1))
+    xpos       = np.arange(len(all_k), dtype=float)
+    w          = 0.38
+
+    # Use LOG_EPS as floor everywhere — set_yscale('log') must come BEFORE bar()
+    # calls; setting it after corrupts bar transforms when any bottom=0 exists.
+    tre_inits   = np.array([max(tre_map[k]['t_vol'],    LOG_EPS) if k in tre_map else np.nan for k in all_k])
+    tre_samples = np.array([max(tre_map[k]['t_sample'], LOG_EPS) if k in tre_map else np.nan for k in all_k])
+    ta_inits    = np.array([max(ta_map[k]['t_split'],   LOG_EPS) if k in ta_map else LOG_EPS for k in all_k])
+    ta_samples  = np.array([max(ta_map[k]['t_sample'],  LOG_EPS) if k in ta_map else LOG_EPS for k in all_k])
+
+    fig, ax = plt.subplots(1, 1, figsize=(fig_width_in * 0.75, PANEL_H * 1.3))
+
+    # Set log scale BEFORE drawing bars so all bar artists are created in log space
+    ax.set_yscale('log')
+    ax.set_ylim(bottom=LOG_EPS * 0.5, top=timeout_s * 4)
+
+    ax.bar(xpos - w/2, tre_inits,   w, color=C_TRE_INIT,   alpha=0.9, label='VolTRE — init')
+    ax.bar(xpos - w/2, tre_samples, w, color=C_TRE_SAMPLE, alpha=0.9, label='VolTRE — sample',
+           bottom=tre_inits)
+    ax.bar(xpos + w/2, ta_inits,    w, color=C_TA_INIT,    alpha=0.9, label='Wordgen — init')
+    ax.bar(xpos + w/2, ta_samples,  w, color=C_TA_SAMPLE,  alpha=0.9, label='Wordgen — sample',
+           bottom=ta_inits)
+
+    # T.O. / OOM bars for failed TA ks
+    to_ks = [k for k in all_k if k in ta_fail]
+    for k in to_ks:
+        xi = xpos[all_k.index(k)]
+        hatch = '//' if 'timeout' in ta_fail[k] else 'xx'
+        ax.bar(xi + w/2, timeout_s, w, color=C_TA_INIT, alpha=0.85,
+               hatch=hatch, edgecolor='#a03020')
+        short = 'T.O.' if 'timeout' in ta_fail[k] else 'OOM'
+        ax.text(xi + w/2, timeout_s * 1.15, short,
+                ha='center', va='bottom', fontsize=5, color='#d62728')
+
+    ax.axhline(timeout_s, color='#d62728', linewidth=0.8, linestyle='--', alpha=0.7, zorder=5)
+    ax.set_xticks(xpos)
+    ax.set_xticklabels([str(k) for k in all_k], fontsize=6)
+    ax.set_xlabel('$k$', fontsize=7, labelpad=2)
+    ax.set_ylabel('total time (s)', fontsize=7)
+    ax.set_title(EXPR_TITLE, fontsize=6.5)
+    ax.tick_params(labelsize=6)
+    ax.grid(axis='y', linestyle='--', alpha=0.3)
+    ax.legend(loc='upper left', fontsize=5.5, frameon=True,
+              handlelength=0.8, borderpad=0.3, labelspacing=0.2)
+    fig.tight_layout()
+    fig.savefig(out_path, bbox_inches='tight')
+    print(f'  saved {out_path}')
+
+
 # ── main ──────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     print(f'=== Exp 16: VolTRE vs wordgen  '
           f'[mode={PLOT_MODE}  K_TRE_SHOW={K_TRE_SHOW}  n={N}  samples={N_SAMPLES}] ===')
 
-    print('\n--- VolTRE ---')
-    tre_rows = load_voltre_timing() if (LOAD_TRE and os.path.exists(CSV_TRE)) \
-               else run_voltre_timing()
+    if PLOT_MODE == 8:
+        # ── Mode 8: run wordgen locally and plot ─────────────────────────────
+        print('\n--- VolTRE (from csv) ---')
+        tre_rows = load_voltre_timing() if (LOAD_TRE and os.path.exists(CSV_TRE)) \
+                   else run_voltre_timing()
 
-    print('\n--- wordgen (TA, from outfelix) ---')
-    ta_rows  = load_ta_timing()    if (LOAD_TA  and os.path.exists(CSV_TA))  \
-               else parse_outfelix()
+        print(f'\n--- wordgen LOCAL run (k=1..{K_LOCAL_MAX}, timeout={TIMEOUT_S}s, '
+              f'mem_limit={WORDGEN_MEM_LIMIT // 1024**3}GB) ---')
+        if LOAD_TA and os.path.exists(CSV_TA_LOCAL):
+            print('  loading existing local TA csv ...')
+            local_ta_rows = load_local_ta()
+        else:
+            local_ta_rows = run_local_ta(K_LOCAL_MAX, N, N_SAMPLES, TIMEOUT_S, WORDGEN_MEM_LIMIT)
 
-    for k_show in [6, 7, 9]:
-        path = os.path.join(RESULTS, f'exp16_ksweep_v{PLOT_MODE}_k{k_show}.pdf')
-        print(f'\n  mode={PLOT_MODE}  K_TRE_SHOW={k_show} ...')
-        if PLOT_MODE == 3:
-            plot_m3(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, path)
-        elif PLOT_MODE == 4:
-            plot_m4(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, path)
-        elif PLOT_MODE == 5:
-            plot_m5(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, TIMEOUT_S, path)
-        elif PLOT_MODE == 6:
-            plot_m6(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, TIMEOUT_S, path)
-        elif PLOT_MODE == 7:
-            plot_m7(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, TIMEOUT_S, path)
+        k_ta_max = max((r['k'] for r in local_ta_rows), default=K_TRE_SHOW)
+        k_show   = max(K_TRE_SHOW, k_ta_max)
+        path     = os.path.join(RESULTS, f'exp16_ksweep_v8_k{k_show}.pdf')
+        print(f'\n  mode=8  k_show={k_show} ...')
+        plot_m8(tre_rows, local_ta_rows, k_show, TIMEOUT_S, path)
+
+    else:
+        print('\n--- VolTRE ---')
+        tre_rows = load_voltre_timing() if (LOAD_TRE and os.path.exists(CSV_TRE)) \
+                   else run_voltre_timing()
+
+        print('\n--- wordgen (TA, from outfelix) ---')
+        ta_rows  = load_ta_timing()    if (LOAD_TA  and os.path.exists(CSV_TA))  \
+                   else parse_outfelix()
+
+        for k_show in [6, 7, 9]:
+            path = os.path.join(RESULTS, f'exp16_ksweep_v{PLOT_MODE}_k{k_show}.pdf')
+            print(f'\n  mode={PLOT_MODE}  K_TRE_SHOW={k_show} ...')
+            if PLOT_MODE == 3:
+                plot_m3(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, path)
+            elif PLOT_MODE == 4:
+                plot_m4(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, path)
+            elif PLOT_MODE == 5:
+                plot_m5(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, TIMEOUT_S, path)
+            elif PLOT_MODE == 6:
+                plot_m6(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, TIMEOUT_S, path)
+            elif PLOT_MODE == 7:
+                plot_m7(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, TIMEOUT_S, path)
 
     print('\nDone.')

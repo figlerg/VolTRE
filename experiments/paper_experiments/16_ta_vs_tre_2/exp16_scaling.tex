@@ -2,7 +2,7 @@
 % Place as a \subsubsection inside \section{Applications and experiments},
 % or as part of a "Scalability" subsection --- Felix to decide cross-references.
 %
-% Figure: copy results/exp16_ksweep_v6_k7.pdf → paper/fig/exp16_ksweep_v6_k7.pdf
+% Figure: copy results/exp16_ksweep_v8_k8.pdf → paper/fig/exp16_ksweep_v8_k8.pdf
 % ───────────────────────────────────────────────────────────────────────────────
 
 \subsubsection{Scalability on nested request-grant protocols.}
@@ -36,21 +36,24 @@ algebraically through the slice-volume recursion, with only a
 polynomial overhead per level.
 
 \paragraph{Setup.}
-We fix word length $n=10$ and vary $k=1,\ldots,7$.
+We fix word length $n=10$ and vary $k=1,\ldots,8$.
 For each $k$ we measure (i) the one-time preprocessing time
-($t_\mathrm{vol}$ for VolTRE, $t_\mathrm{split}$ for \wordgen)
-and (ii) total time including 10 samples.
+and (ii) the average per-sample time (cache warm).
 \wordgen\ was given a budget of $3600$~s.
 VolTRE scales to larger $n$ than shown here; we cut off where \wordgen\ fails.
 
 \paragraph{Results.}
-Figure~\ref{fig:exp16} shows total time on a logarithmic scale.
-VolTRE processes all values of $k$ in well under $15$~s, with per-sample
-cost growing gradually from $\approx 0.2$~s at $k{=}1$ to $\approx 5.6$~s
-at $k{=}7$.
-\wordgen\ is faster for small $k$ (total $\approx 1.8$~s at $k{=}5$),
-but fails to terminate within the $1$~h budget at $k{=}6$ due to
-memory exhaustion, and by extension for all $k\geq 6$.
+Figure~\ref{fig:exp16} shows preprocessing $+$ per-sample time on a
+logarithmic scale; bars are stacked, with the darker shade showing
+preprocessing and the lighter shade the per-sample cost
+(\emph{not} the total over many samples).
+VolTRE's per-sample cost grows from $\approx 0.2$~s at $k{=}1$ to
+$\approx 5.6$~s at $k{=}8$, with preprocessing always under $3$~s.
+\wordgen\ is faster for small $k$ ($\approx 0.1$~s per sample at $k{=}4$
+vs.\ $\approx 0.3$~s for VolTRE), but at $k{=}6$ its preprocessing alone
+($\approx 23$~s of splitting) already exceeds VolTRE's combined bar
+($\approx 4$~s), and its per-sample cost rises to $\approx 13$~s.
+\wordgen\ runs out of memory at $k{=}7$.
 This illustrates a structural advantage of the TRE representation:
 the exponential blowup in the number of clocks is avoided by VolTRE's
 compositional volume computation, at the cost of rejection sampling
@@ -58,11 +61,10 @@ for intersections that TA-based methods handle natively.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{fig/exp16_ksweep_v7_k7}
-  \caption{Total time (preprocessing $+$ 10 samples, log scale, $n=10$)
-    for the expression family $e_k$ as $k$ varies.
-    Blue: VolTRE (TRE-based).
-    Red: \wordgen\ (TA-based).
-    Hatched bars indicate time-out ($>\!1$~h); the dashed line marks the cutoff.}
+  \includegraphics[width=\linewidth]{fig/exp16_ksweep_v8_k8}
+  \caption{VolTRE vs.\ \wordgen\ on $e_k$: preprocessing $+$ per-sample time
+    (log scale, $n=10$) as $k$ varies. Bars show one sample's cost, not a total.
+    Hatched bars indicate out-of-memory,
+    dashed line marks the $3600$~s budget.}
   \label{fig:exp16}
 \end{figure}
