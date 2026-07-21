@@ -3,11 +3,9 @@
 Last updated: 2026-07-21 (Docker image verified end to end in fast mode on Felix's machine).
 
 ## ▶ NEXT SESSION — start here
-1. **Felix: overnight full-mode run in the container** (2026-07-21 night, worst case ~6 h):
-   `docker run --rm -v ${PWD}/artifact/output:/voltre/artifact/output voltre-artifact ./artifact/reproduce.sh --full 2>&1 | tee artifact/output/full_run.log`
-   Next session: inspect full_run.log + PDFs in artifact/output/. RAM: leave Docker/WSL defaults, the 8 GB wordgen cap is enforced in-artifact via setrlimit (exp16_ksweep.py:520).
-2. Artifact doc files (README/REQUIREMENTS/STATUS/INSTALL), section C below.
-3. Still open: tutorial.ipynb unverified; multi-arch buildx; Felix to run `rm -rf "/workspace/experiments/paper_experiments/Unif_Sampling_for_Tre_EMSOFT"` (root-owned); commit of the two container fixes (Dockerfile yojson, common.py PYTHONPATH) pending Felix's confirmation.
+1. Archival (section E): cut emsoft26-artifact branch + tag, Zenodo DOI (then fill STATUS placeholder), paper PDF into archive, clean-machine vetting, HotCRP form. Watch the ΣΔ Simulink discussion (see camera-ready section) in case it changes STATUS wording.
+2. Optional cosmetic fix, ask Felix: exp16_ksweep.py:688 prints hardcoded "--- VolTRE (from csv) ---" even when full mode recomputes; make the label conditional on LOAD_TRE.
+3. Still open: multi-arch buildx; INSTALL only documents the bash `-v "$PWD/..."` mount form, consider adding the PowerShell `${PWD}` variant; Felix to run `rm -rf "/workspace/experiments/paper_experiments/Unif_Sampling_for_Tre_EMSOFT"` (root-owned); optional dev-venv repin (numpy drifted to 2.2.6).
 
 ## ⚠ Deadline
 **Artifact submission deadline 24 July (AoE)** — confirmed by Felix 2026-07-20 ("tight"). Decision notification 24 August.
@@ -24,7 +22,7 @@ Last updated: 2026-07-21 (Docker image verified end to end in fast mode on Felix
 - [x] README updated (2026-07-20): venv name → `.venv`, paper title corrected to "Uniform Sampling for Timed Regular Expressions" (EMSOFT 2026).
 - [x] Verify README install steps on Windows: done 2026-07-20 by Felix (fresh clone from GitHub, py -3.12 venv, requirements install, non-editable `pip install .`, CLI sampling example all OK). Caveat: plain `py` picked Python 3.14 and failed (see version-constraint item). Still: [ ] Linux path (covered by Docker build).
 - [~] Document Python version constraint **3.10–3.12** everywhere: >=3.10 for match/case, <=3.12 because pinned numpy 1.26.4/matplotlib 3.8.4 have no wheels for 3.13+ (found 2026-07-20: Felix's Windows py launcher used a newer Python → pip tried to build numpy from source). README done 2026-07-20. Still: REQUIREMENTS + INSTALL when created; Dockerfile must pin python:3.12.
-- [x] Verify README CLI examples + `minimal_example.py`: done on Windows fresh clone 2026-07-20 (sampling example + minimal_example OK, plot shown). Still: [ ] `tutorial.ipynb` unverified.
+- [x] Verify README CLI examples + `minimal_example.py`: done on Windows fresh clone 2026-07-20 (sampling example + minimal_example OK, plot shown). `tutorial.ipynb` verified 2026-07-21: runs end to end headlessly (nbconvert --execute) in a fresh pinned venv. NOTE: it fails under numpy 2.x (dev venv drifted to 2.2.6; sympy can't parse numpy-2 repr in VolumePoly.plot:362), irrelevant for the pinned artifact env. Optional dev follow-ups: repin .venv, one-line float() cast fix.
 - [x] Run pytest suite in fresh env (2026-07-20): after fixes, **162 passed, 0 failed, ~86 s** in a fresh non-editable py3.12 venv, run from repo root. Fixed pre-existing suite bugs: (1) cwd-dependent `../experiments` paths in test_sample_maxent/test_lambda_tuning → `__file__`-anchored; (2) test_parse expected old `ParseCancellationException`, now `TREParseError`; (3) test_load_ta_samples pointed at renamed `ta_sample_1.txt` → `ta_sample_old.txt`; (4) added `tests/__init__.py` (suite previously only collected under editable install). Expected-state note for INSTALL: 162 passed, warnings are harmless (TODO warnings + experimental intersection match).
 - [x] Build **Docker image**: built and verified on Felix's Windows machine 2026-07-21. Two fixes needed: (1) wordgen's src/dune requires yojson, undeclared in its dune-project → pinned yojson.3.0.0 in Dockerfile stage 1; (2) `experiments` package not importable under non-editable install → common.py exports REPO_ROOT on sys.path/PYTHONPATH. In-container: smoke_test.sh OK (wordgen found), full fast reproduce loop OK (all 8 PDFs, ~3.5 min).
 - [ ] Optional: PyPI publication (nice-to-have, not required).
@@ -32,16 +30,17 @@ Last updated: 2026-07-21 (Docker image verified end to end in fast mode on Felix
 ### B. Evaluation loop (definition of done)
 - [x] Per-figure runners built 2026-07-21 under `artifact/figures/` (common.py, volume_delta_sigma.py, maxent_triangle.py, sharkfin.py, stress.py, ksweep_ta_vs_tre.py). Entry point `artifact/reproduce.sh [figure ...] [--full]`. Fast mode (default): regenerate plots from committed CSVs, full loop 3m12s, all 5 figures verified visually against the paper (stress even byte-identical data; sharkfin CSVs turned out to BE the paper's data). Full mode (`--full`): recompute measurements with seed 42; CSVs/PDFs go to artifact/output/, repo stays clean. Env plumbing added to the 4 experiment scripts (VOLTRE_RESAMPLE, VOLTRE_OUT_DIR, VOLTRE_RESULTS_DIR, WORDGEN_BIN).
 - [x] Smoke test `artifact/smoke_test.sh` (~30 s: parse + volume + 3 samples + wordgen presence check).
-- [ ] Full-mode runs at real budgets never executed end to end (only tiny-budget smoke tests). stress full ~1 h (BUDGET_S=1200 × 3 examples), ksweep full up to several hours. Planned: Felix's overnight container run 2026-07-21 (see NEXT SESSION).
+- [x] Full-mode run at real budgets: Felix ran `reproduce.sh --full` in the container 2026-07-21, completed cleanly in ~85 min (deltasigma 35 s, maxent 159 s, sharkfin 2334 s, stress 644 s, ksweep 1716 s). Much faster than the ~6 h worst case because wordgen failed fast on memory (k=7 SIGABRT after 8 min, k=8 explicit OOM after 14 min, then two-consecutive-failures stop, k=9 never attempted) instead of burning 1 h timeouts, and the stress sweeps finished under budget. Qualitative results match the paper: VolTRE scales through k=9, wordgen dies at k>=7 locally (paper's committed data: k>=7 OOM too). ksweep + stress PDFs visually checked against the paper. Log oddities, all cosmetic: interleaved print ordering from block buffering, "(from csv)" header hardcoded in exp16_ksweep.py:688 despite fresh computation, mojibake em dash in PowerShell log encoding.
 - [x] Docker run of the loop: fast mode verified in-container 2026-07-21 (see section A).
 - Note: figure runners fall back to mathtext when LaTeX is absent (fonts differ, content identical); Docker image installs texlive for paper-identical fonts.
 
 ### C. Documentation files (required by guidelines)
-- [ ] README — what the artifact does, usage, how to reproduce each paper figure.
-- [ ] REQUIREMENTS — hardware/software env, Docker, requirements.txt with versions.
-- [ ] STATUS — badges applied for + justification.
+- [~] Drafted 2026-07-21, uncommitted, pending Felix's diff review:
+- [x] README — added "EMSOFT 2026 Artifact" section: reproduce.sh usage, per-figure table (fast/full runtimes), pointers to the other doc files.
+- [x] REQUIREMENTS.md — hardware (commodity CPU, RAM note for ksweep --full), Docker vs native, Python 3.10–3.12, optional LaTeX/wordgen/MATLAB notes.
+- [x] STATUS.md — all three badges with justifications; ΣΔ MATLAB figures declared data-only. TODO inside: insert Zenodo DOI before submission.
 - [x] LICENSE — BSD 3-Clause already at repo root (verify it's the intended license).
-- [ ] INSTALL — install steps + basic usage example + expected output check.
+- [x] INSTALL.md — Docker + native paths, smoke-test expected output, pytest expectation. All reviewer-typed commands tested literally 2026-07-21 in the sandbox (smoke test, CLI example, pytest: 162 passed in pinned venv, tutorial nbconvert). Docker commands match what Felix ran on Windows (bash `"$PWD"` form documented).
 - [ ] Accepted paper PDF included in artifact: canonical is `paper_source/Unif_Sampling_for_Tre_EMSOFT(61).pdf` (per Felix; the (31)/(37) copies were deleted 2026-07-20). PDF is gitignored — remember to add it explicitly to the artifact archive.
 
 ### D. wordgen (exp 16 comparison)
@@ -50,6 +49,10 @@ Last updated: 2026-07-21 (Docker image verified end to end in fast mode on Felix
 - [x] Clean build proven 2026-07-21 from pristine source: only deps dune + xml-light 2.5 + zarith 1.14 + ppx_deriving 6.1.1 (opam, OCaml 5.3), builds `src/wordgen.exe` in ~2 s, runtime dep only libgmp. Recipe encoded in Dockerfile stage 1.
 - [x] Docker build of stage 1 verified 2026-07-21 (after adding yojson.3.0.0, undeclared dep of wordgen's src/dune; local build had only passed because the sandbox opam switch already had yojson).
 - fig:exp16 fast mode does NOT need wordgen (committed CSVs); only `ksweep --full` does.
+
+### Camera-ready + open questions (NOT part of the artifact, deadline ~3 weeks, mid-August)
+- [ ] Paper plots have vastly different font sizes across figures; unify for the camera-ready. Noted 2026-07-21, explicitly deferred, do not touch now.
+- [ ] ΣΔ Simulink question (open, colleagues discussing as of 2026-07-21): apparently the Simulink software/models can't be shipped directly without asking MathWorks. Decide what the artifact/camera-ready ships for the ΣΔ case study. Current artifact stance (STATUS.md): data provided, not re-runnable. Revisit once the discussion concludes.
 
 ### E. Archival & submission
 - [ ] Cut artifact branch from `experimental` (frozen after submission). NOTE: do not push/cut without Felix's explicit go-ahead.
@@ -91,6 +94,10 @@ Pure Python on CPU, no GPU or special hardware. Dev reference machine: Dell Lati
 - 2026-07-20 (commit 9ff8864): README documents the 3.10–3.12 constraint, install script pinned to `py -3.12`. Session ended here. All of section A is done except tutorial.ipynb and the Docker-covered Linux README path. Next block is the eval loop (see NEXT SESSION above).
 - 2026-07-21: Eval-loop plan approved by Felix (wordgen-first order; sharkfin regenerated as-is with delta documented). Built: Dockerfile (multi-stage, ocaml/opam debian-12 → python:3.12-slim-bookworm + texlive, both bookworm so glibc matches), .dockerignore, artifact/ with reproduce.sh, smoke_test.sh, 5 figure runners, vendored wordgen source tarball. All 5 figures verified in fast mode (3m12s total). Discoveries: sharkfin committed CSVs are the paper's actual data and paper's sharkfin.pdf is just the bottom panel (added standalone-panel output to theorem4.py); paper's 11_stress_ex123_3.pdf byte-identical to committed results PDF; exp15 paper copy is cropped to drop panel titles. Sweep items resolved: CLAUDE.md edit was already committed (3edb2e5) and pushed. artifact/output/ gitignored.
 - 2026-07-21 (later): Docker image verified on Felix's Windows machine. Build failed once (yojson undeclared by wordgen upstream → pinned yojson.3.0.0 in stage 1), container reproduce failed once (`experiments` package unimportable under non-editable install → common.py now exports repo root on sys.path/PYTHONPATH, verified locally and in-container). Smoke test + full fast loop pass inside the container, all 8 PDFs written to the mounted artifact/output/. RAM decision: no .wslconfig/docker --memory tweaks, the artifact's own setrlimit 8 GB cap governs wordgen. Overnight full-mode container run planned for tonight.
+- 2026-07-21 (lunch block): committed Docker fixes (8dc766a). Drafted section C doc files (README artifact section, REQUIREMENTS.md, STATUS.md, INSTALL.md), uncommitted for Felix's review. Verified tutorial.ipynb headlessly in a fresh pinned venv (passes; fails only under numpy 2.x, dev venv has drifted to 2.2.6). Pinned-venv pytest: 162 passed, 54 s. Dev-venv pytest: 4 failures, all numpy-drift, not artifact-relevant.
+- 2026-07-21 (session end): Felix reviewed REQUIREMENTS/STATUS/INSTALL, made minor edits (RAM simplified to ~10 GB; runtime wording). One inconsistency fixed: his 6 h figure was attached to the default (fast) reproduce.sh call, moved to --full. All reviewer-typed doc commands verified run: smoke test, CLI example, native install path + pytest (162 passed) + tutorial nbconvert in fresh pinned venv, fast reproduce loop in sandbox and container. Docker doc commands match Felix's Windows runs modulo bash vs PowerShell $PWD quoting. Doc files remain uncommitted. Tonight: Felix's overnight full-mode container run (command in NEXT SESSION item 1; no rebuild needed, his image was built after both fixes and equals 8dc766a).
+- 2026-07-21 (afternoon): Felix ran the full-mode container run immediately instead of overnight. Completed cleanly in ~85 min, all figures qualitatively verified (details in section B). README table and STATUS updated with measured runtimes. Section B is now fully done; the eval loop is verified fast + full, native + container.
+- 2026-07-21 (end of day): Felix approved the README artifact section, all doc files committed. New notes from Felix: camera-ready font-size unification and the ΣΔ Simulink/MathWorks question (see camera-ready section above).
 
 ## Open questions (for Felix)
 1. fig:cube pngs provenance — regenerate or ship as-is with generating scripts marked approximate?
