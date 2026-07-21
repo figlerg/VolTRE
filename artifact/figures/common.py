@@ -20,6 +20,13 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 EXPERIMENTS_DIR = os.path.join(REPO_ROOT, "experiments", "paper_experiments")
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "output")
 
+# The experiment scripts import the repo-root package `experiments`, which is
+# not installed by pip (only an editable install puts the repo root on
+# sys.path). Export the repo root for this process and all subprocesses.
+sys.path.insert(0, REPO_ROOT)
+_pp = os.environ.get("PYTHONPATH")
+os.environ["PYTHONPATH"] = REPO_ROOT if not _pp else REPO_ROOT + os.pathsep + _pp
+
 # LaTeX textwidth of the paper, as in plot_config.py
 fig_width_pt = 418.25368
 inches_per_pt = 1.0 / 72.27

@@ -1,12 +1,13 @@
 # PLAN — EMSOFT 2026 artifact
 
-Last updated: 2026-07-21 (evaluation loop built and verified in fast mode).
+Last updated: 2026-07-21 (Docker image verified end to end in fast mode on Felix's machine).
 
 ## ▶ NEXT SESSION — start here
-1. **Felix: run `docker build -t voltre-artifact .`** (repo root, WSL). Dockerfile is written but unverified (no docker in sandbox). Then run inside the container: `./artifact/smoke_test.sh` and `./artifact/reproduce.sh`. Report errors back.
-2. **Full-mode verification**: `./reproduce.sh stress --full` (~1 h) and `./reproduce.sh ksweep --full` (hours) have only been smoke-tested with tiny budgets, never run at full budget. Run at least once, ideally in the container.
-3. Artifact doc files (README/REQUIREMENTS/STATUS/INSTALL), section C below.
-4. Still open: tutorial.ipynb unverified; Felix to run `rm -rf "/workspace/experiments/paper_experiments/Unif_Sampling_for_Tre_EMSOFT"` (root-owned); commit of 2026-07-21 work pending Felix's confirmation.
+1. **Felix: overnight full-mode run in the container** (2026-07-21 night, worst case ~6 h):
+   `docker run --rm -v ${PWD}/artifact/output:/voltre/artifact/output voltre-artifact ./artifact/reproduce.sh --full 2>&1 | tee artifact/output/full_run.log`
+   Next session: inspect full_run.log + PDFs in artifact/output/. RAM: leave Docker/WSL defaults, the 8 GB wordgen cap is enforced in-artifact via setrlimit (exp16_ksweep.py:520).
+2. Artifact doc files (README/REQUIREMENTS/STATUS/INSTALL), section C below.
+3. Still open: tutorial.ipynb unverified; multi-arch buildx; Felix to run `rm -rf "/workspace/experiments/paper_experiments/Unif_Sampling_for_Tre_EMSOFT"` (root-owned); commit of the two container fixes (Dockerfile yojson, common.py PYTHONPATH) pending Felix's confirmation.
 
 ## ⚠ Deadline
 **Artifact submission deadline 24 July (AoE)** — confirmed by Felix 2026-07-20 ("tight"). Decision notification 24 August.
@@ -25,14 +26,14 @@ Last updated: 2026-07-21 (evaluation loop built and verified in fast mode).
 - [~] Document Python version constraint **3.10–3.12** everywhere: >=3.10 for match/case, <=3.12 because pinned numpy 1.26.4/matplotlib 3.8.4 have no wheels for 3.13+ (found 2026-07-20: Felix's Windows py launcher used a newer Python → pip tried to build numpy from source). README done 2026-07-20. Still: REQUIREMENTS + INSTALL when created; Dockerfile must pin python:3.12.
 - [x] Verify README CLI examples + `minimal_example.py`: done on Windows fresh clone 2026-07-20 (sampling example + minimal_example OK, plot shown). Still: [ ] `tutorial.ipynb` unverified.
 - [x] Run pytest suite in fresh env (2026-07-20): after fixes, **162 passed, 0 failed, ~86 s** in a fresh non-editable py3.12 venv, run from repo root. Fixed pre-existing suite bugs: (1) cwd-dependent `../experiments` paths in test_sample_maxent/test_lambda_tuning → `__file__`-anchored; (2) test_parse expected old `ParseCancellationException`, now `TREParseError`; (3) test_load_ta_samples pointed at renamed `ta_sample_1.txt` → `ta_sample_old.txt`; (4) added `tests/__init__.py` (suite previously only collected under editable install). Expected-state note for INSTALL: 162 passed, warnings are harmless (TODO warnings + experimental intersection match).
-- [ ] Build **Docker image** (required by guidelines for non-trivial tools) containing artifact + all deps; artifact must run end-to-end inside it.
+- [x] Build **Docker image**: built and verified on Felix's Windows machine 2026-07-21. Two fixes needed: (1) wordgen's src/dune requires yojson, undeclared in its dune-project → pinned yojson.3.0.0 in Dockerfile stage 1; (2) `experiments` package not importable under non-editable install → common.py exports REPO_ROOT on sys.path/PYTHONPATH. In-container: smoke_test.sh OK (wordgen found), full fast reproduce loop OK (all 8 PDFs, ~3.5 min).
 - [ ] Optional: PyPI publication (nice-to-have, not required).
 
 ### B. Evaluation loop (definition of done)
 - [x] Per-figure runners built 2026-07-21 under `artifact/figures/` (common.py, volume_delta_sigma.py, maxent_triangle.py, sharkfin.py, stress.py, ksweep_ta_vs_tre.py). Entry point `artifact/reproduce.sh [figure ...] [--full]`. Fast mode (default): regenerate plots from committed CSVs, full loop 3m12s, all 5 figures verified visually against the paper (stress even byte-identical data; sharkfin CSVs turned out to BE the paper's data). Full mode (`--full`): recompute measurements with seed 42; CSVs/PDFs go to artifact/output/, repo stays clean. Env plumbing added to the 4 experiment scripts (VOLTRE_RESAMPLE, VOLTRE_OUT_DIR, VOLTRE_RESULTS_DIR, WORDGEN_BIN).
 - [x] Smoke test `artifact/smoke_test.sh` (~30 s: parse + volume + 3 samples + wordgen presence check).
-- [ ] Full-mode runs at real budgets never executed end to end (only tiny-budget smoke tests). stress full ~1 h, ksweep full up to several hours.
-- [ ] Docker run of the loop (blocked on Felix building the image).
+- [ ] Full-mode runs at real budgets never executed end to end (only tiny-budget smoke tests). stress full ~1 h (BUDGET_S=1200 × 3 examples), ksweep full up to several hours. Planned: Felix's overnight container run 2026-07-21 (see NEXT SESSION).
+- [x] Docker run of the loop: fast mode verified in-container 2026-07-21 (see section A).
 - Note: figure runners fall back to mathtext when LaTeX is absent (fonts differ, content identical); Docker image installs texlive for paper-identical fonts.
 
 ### C. Documentation files (required by guidelines)
@@ -47,7 +48,7 @@ Last updated: 2026-07-21 (evaluation loop built and verified in fast mode).
 - [x] License checked 2026-07-21: GPLv3 — redistribution of source + binary in our image is fine (we ship the full source tarball, satisfying GPL source provision).
 - [x] Local wordgen matches upstream commit 5502f65b (git.lacl.fr/barbot/wordgen.git, 2026-03-26) exactly (only CRLF noise). Source tarball vendored at `artifact/wordgen-src-5502f65.tar.gz` (4.4 MB, via git archive).
 - [x] Clean build proven 2026-07-21 from pristine source: only deps dune + xml-light 2.5 + zarith 1.14 + ppx_deriving 6.1.1 (opam, OCaml 5.3), builds `src/wordgen.exe` in ~2 s, runtime dep only libgmp. Recipe encoded in Dockerfile stage 1.
-- [ ] Docker build of stage 1 unverified (no docker in sandbox).
+- [x] Docker build of stage 1 verified 2026-07-21 (after adding yojson.3.0.0, undeclared dep of wordgen's src/dune; local build had only passed because the sandbox opam switch already had yojson).
 - fig:exp16 fast mode does NOT need wordgen (committed CSVs); only `ksweep --full` does.
 
 ### E. Archival & submission
@@ -89,6 +90,7 @@ Pure Python on CPU, no GPU or special hardware. Dev reference machine: Dell Lati
 - 2026-07-20 (commits 4f01c38, a200734): setup.py/packaging fixed and test suite fixed, both verified end-to-end on Linux (fresh venv) AND on Felix's Windows machine (fresh GitHub clone, py3.12, non-editable install, CLI + minimal_example + pytest 162/162). Key discovery: Python must be 3.10–3.12 (3.14 tries to build numpy from source).
 - 2026-07-20 (commit 9ff8864): README documents the 3.10–3.12 constraint, install script pinned to `py -3.12`. Session ended here. All of section A is done except tutorial.ipynb and the Docker-covered Linux README path. Next block is the eval loop (see NEXT SESSION above).
 - 2026-07-21: Eval-loop plan approved by Felix (wordgen-first order; sharkfin regenerated as-is with delta documented). Built: Dockerfile (multi-stage, ocaml/opam debian-12 → python:3.12-slim-bookworm + texlive, both bookworm so glibc matches), .dockerignore, artifact/ with reproduce.sh, smoke_test.sh, 5 figure runners, vendored wordgen source tarball. All 5 figures verified in fast mode (3m12s total). Discoveries: sharkfin committed CSVs are the paper's actual data and paper's sharkfin.pdf is just the bottom panel (added standalone-panel output to theorem4.py); paper's 11_stress_ex123_3.pdf byte-identical to committed results PDF; exp15 paper copy is cropped to drop panel titles. Sweep items resolved: CLAUDE.md edit was already committed (3edb2e5) and pushed. artifact/output/ gitignored.
+- 2026-07-21 (later): Docker image verified on Felix's Windows machine. Build failed once (yojson undeclared by wordgen upstream → pinned yojson.3.0.0 in stage 1), container reproduce failed once (`experiments` package unimportable under non-editable install → common.py now exports repo root on sys.path/PYTHONPATH, verified locally and in-container). Smoke test + full fast loop pass inside the container, all 8 PDFs written to the mounted artifact/output/. RAM decision: no .wslconfig/docker --memory tweaks, the artifact's own setrlimit 8 GB cap governs wordgen. Overnight full-mode container run planned for tonight.
 
 ## Open questions (for Felix)
 1. fig:cube pngs provenance — regenerate or ship as-is with generating scripts marked approximate?

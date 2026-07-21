@@ -13,7 +13,8 @@ FROM ocaml/opam:debian-12-ocaml-5.3 AS wordgen-build
 RUN sudo apt-get update \
  && sudo apt-get install -y --no-install-recommends libgmp-dev pkg-config \
  && sudo apt-get clean
-RUN opam install -y dune.3.23.1 xml-light.2.5 zarith.1.14 ppx_deriving.6.1.1
+# yojson is required by wordgen's src/dune but missing from its dune-project depends.
+RUN opam install -y dune.3.23.1 xml-light.2.5 zarith.1.14 ppx_deriving.6.1.1 yojson.3.0.0
 COPY --chown=opam:opam artifact/wordgen-src-5502f65.tar.gz /home/opam/
 RUN mkdir wordgen \
  && tar -xzf wordgen-src-5502f65.tar.gz -C wordgen \
