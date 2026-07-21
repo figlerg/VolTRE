@@ -14,7 +14,9 @@ import matplotlib.pyplot as plt
 from experiments.paper_experiments.plot_config import fig_width_in
 plt.rcParams.update({"text.usetex": False, "font.family": "sans-serif", "font.serif": []})
 
-RESULTS = os.path.join(os.path.dirname(__file__), 'results')
+# VOLTRE_RESULTS_DIR: read CSVs from there, VOLTRE_OUT_DIR: write the pdf there
+RESULTS = os.environ.get('VOLTRE_RESULTS_DIR', os.path.join(os.path.dirname(__file__), 'results'))
+OUT_DIR = os.environ.get('VOLTRE_OUT_DIR', RESULTS)
 K = 20
 
 COLORS = {
@@ -131,6 +133,6 @@ stress_bar_plot(ax3, T_VALUES_EX3, results_ex3, r'$T$  ($n=3$)',
                 r'$e_{\mathrm{ex3}}=(\langle aa\rangle_{\leq 1}\!\cdot\! a)'
                 r'\cap(a\!\cdot\!\langle aa\rangle_{\leq 1})$')
 
-out = os.path.join(RESULTS, '11_stress_ex123.pdf')
+out = os.path.join(OUT_DIR, '11_stress_ex123.pdf')
 fig.savefig(out, bbox_inches='tight')
 print(f'Saved {out}  (figure size: {COL_W:.2f} x {PANEL_H*3:.2f} in)')

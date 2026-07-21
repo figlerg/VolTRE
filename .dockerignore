@@ -1,0 +1,15 @@
+.git
+.venv
+.claude
+.vscode
+wordgen
+paper_source
+notes
+build
+dist
+*.egg-info
+__pycache__
+**/__pycache__
+**/.ipynb_checkpoints
+**/*.prof
+.pytest_cache

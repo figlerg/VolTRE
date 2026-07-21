@@ -52,8 +52,9 @@ from experiments.paper_experiments.expressions_12_requests import (
 )
 
 # ── experiment parameters ─────────────────────────────────────────────────────
-LOAD_TRE  = True    # set False to rerun VolTRE timing
-LOAD_TA   = True    # set False to reparse outfelix / rerun local wordgen
+# set VOLTRE_RESAMPLE=1 to rerun VolTRE timing and the local wordgen run
+LOAD_TRE  = os.environ.get('VOLTRE_RESAMPLE', '') != '1'
+LOAD_TA   = os.environ.get('VOLTRE_RESAMPLE', '') != '1'
 
 K_TRE_MAX    = 9    # k=10 is empty for n=10 (min cycle needs k+1=11 symbols)
 K_TA_TIMEOUT = 6    # first k where TA failed (shown as T.O.)
@@ -74,15 +75,19 @@ TIMEOUT_S   = 3600  # T.O. bar height in mode 5 (seconds, 1h)
 # ── paths ─────────────────────────────────────────────────────────────────────
 OUTFELIX = os.path.join(os.path.dirname(__file__),
                          '20260616_benoit_results', 'outfelix')
-RESULTS  = os.path.join(os.path.dirname(__file__), 'results')
+# VOLTRE_RESULTS_DIR: read/write the timing CSVs there, VOLTRE_OUT_DIR: pdf output
+RESULTS  = os.environ.get('VOLTRE_RESULTS_DIR',
+                          os.path.join(os.path.dirname(__file__), 'results'))
+OUT_DIR  = os.environ.get('VOLTRE_OUT_DIR', RESULTS)
 os.makedirs(RESULTS, exist_ok=True)
 
 CSV_TRE      = os.path.join(RESULTS, 'exp16_voltre_timing.csv')
 CSV_TA       = os.path.join(RESULTS, 'exp16_ta_timing.csv')
 CSV_TA_LOCAL = os.path.join(RESULTS, 'exp16_local_ta_timing.csv')
 
-# wordgen binary built from /workspace/wordgen into /tmp/wordgen_build
-WORDGEN_BIN  = '/tmp/wordgen_build/_build/default/src/wordgen.exe'
+# wordgen binary; default is a local build in /tmp, the Docker image sets WORDGEN_BIN
+WORDGEN_BIN  = os.environ.get('WORDGEN_BIN',
+                              '/tmp/wordgen_build/_build/default/src/wordgen.exe')
 # memory cap per wordgen subprocess (bytes) — protects container from OOM
 WORDGEN_MEM_LIMIT = 8 * 1024 ** 3   # 8 GB virtual address space
 # k values to attempt for the local TA run (beyond k=5 is expected to OOM/timeout)
@@ -694,7 +699,7 @@ if __name__ == '__main__':
 
         k_ta_max = max((r['k'] for r in local_ta_rows), default=K_TRE_SHOW)
         k_show   = max(K_TRE_SHOW, k_ta_max)
-        path     = os.path.join(RESULTS, f'exp16_ksweep_v8_k{k_show}.pdf')
+        path     = os.path.join(OUT_DIR, f'exp16_ksweep_v8_k{k_show}.pdf')
         print(f'\n  mode=8  k_show={k_show} ...')
         plot_m8(tre_rows, local_ta_rows, k_show, TIMEOUT_S, path)
 
@@ -708,7 +713,7 @@ if __name__ == '__main__':
                    else parse_outfelix()
 
         for k_show in [6, 7, 9]:
-            path = os.path.join(RESULTS, f'exp16_ksweep_v{PLOT_MODE}_k{k_show}.pdf')
+            path = os.path.join(OUT_DIR, f'exp16_ksweep_v{PLOT_MODE}_k{k_show}.pdf')
             print(f'\n  mode={PLOT_MODE}  K_TRE_SHOW={k_show} ...')
             if PLOT_MODE == 3:
                 plot_m3(tre_rows, ta_rows, k_show, K_TA_TIMEOUT, path)

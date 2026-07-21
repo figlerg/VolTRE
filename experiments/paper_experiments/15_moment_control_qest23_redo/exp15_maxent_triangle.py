@@ -27,7 +27,9 @@ from volume.tuning import parameterize_mean_variance
 RESULTS    = os.path.dirname(__file__)
 NR_SAMPLES = 5000
 N          = 2
-LOAD       = True    # set False to resample
+# set VOLTRE_RESAMPLE=1 to resample instead of loading the CSVs
+LOAD       = os.environ.get('VOLTRE_RESAMPLE', '') != '1'
+OUT_DIR    = os.environ.get('VOLTRE_OUT_DIR', RESULTS)
 np.random.seed(42)
 
 phi = quickparse('<a.a>_[0,1]', string=True)
@@ -56,7 +58,8 @@ configs = [
 fig, axes = plt.subplots(1, 3, figsize=(fig_width_in, fig_width_in / 2.8))
 
 for ax, (mean, var, label) in zip(axes, configs):
-    csv_path = os.path.join(RESULTS, f'exp15_samples_mean{mean:.3f}_var{var:.4f}.csv')
+    csv_dir = RESULTS if LOAD else OUT_DIR
+    csv_path = os.path.join(csv_dir, f'exp15_samples_mean{mean:.3f}_var{var:.4f}.csv')
 
     if LOAD and os.path.exists(csv_path):
         with open(csv_path, newline='') as f:
@@ -89,6 +92,6 @@ for ax, (mean, var, label) in zip(axes, configs):
     ax.tick_params(labelsize=7)
 
 fig.tight_layout()
-out = os.path.join(RESULTS, 'exp15_maxent_triangle.pdf')
+out = os.path.join(OUT_DIR, 'exp15_maxent_triangle.pdf')
 fig.savefig(out, bbox_inches='tight', dpi=300)
 print(f'\nSaved {out}')

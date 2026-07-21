@@ -1,6 +1,12 @@
 # PLAN — EMSOFT 2026 artifact
 
-Last updated: 2026-07-20 (initial version, derived from .claude/artifact_guidelines_emsoft.md + paper_source).
+Last updated: 2026-07-21 (evaluation loop built and verified in fast mode).
+
+## ▶ NEXT SESSION — start here
+1. **Felix: run `docker build -t voltre-artifact .`** (repo root, WSL). Dockerfile is written but unverified (no docker in sandbox). Then run inside the container: `./artifact/smoke_test.sh` and `./artifact/reproduce.sh`. Report errors back.
+2. **Full-mode verification**: `./reproduce.sh stress --full` (~1 h) and `./reproduce.sh ksweep --full` (hours) have only been smoke-tested with tiny budgets, never run at full budget. Run at least once, ideally in the container.
+3. Artifact doc files (README/REQUIREMENTS/STATUS/INSTALL), section C below.
+4. Still open: tutorial.ipynb unverified; Felix to run `rm -rf "/workspace/experiments/paper_experiments/Unif_Sampling_for_Tre_EMSOFT"` (root-owned); commit of 2026-07-21 work pending Felix's confirmation.
 
 ## ⚠ Deadline
 **Artifact submission deadline 24 July (AoE)** — confirmed by Felix 2026-07-20 ("tight"). Decision notification 24 August.
@@ -23,9 +29,11 @@ Last updated: 2026-07-20 (initial version, derived from .claude/artifact_guideli
 - [ ] Optional: PyPI publication (nice-to-have, not required).
 
 ### B. Evaluation loop (definition of done)
-- [ ] One documented command (or small set) that reproduces every replicable figure below in a fresh Docker container, no undocumented manual steps.
-- [ ] Per-figure runner scripts with seeds; decide fast mode vs full mode (some experiments are hours-long — provide precomputed results + "reproduce from scratch" switch; wordgen budget alone is 3600 s).
-- [ ] Smoke test target (< a few minutes) for reviewers to confirm installation works (INSTALL file requirement).
+- [x] Per-figure runners built 2026-07-21 under `artifact/figures/` (common.py, volume_delta_sigma.py, maxent_triangle.py, sharkfin.py, stress.py, ksweep_ta_vs_tre.py). Entry point `artifact/reproduce.sh [figure ...] [--full]`. Fast mode (default): regenerate plots from committed CSVs, full loop 3m12s, all 5 figures verified visually against the paper (stress even byte-identical data; sharkfin CSVs turned out to BE the paper's data). Full mode (`--full`): recompute measurements with seed 42; CSVs/PDFs go to artifact/output/, repo stays clean. Env plumbing added to the 4 experiment scripts (VOLTRE_RESAMPLE, VOLTRE_OUT_DIR, VOLTRE_RESULTS_DIR, WORDGEN_BIN).
+- [x] Smoke test `artifact/smoke_test.sh` (~30 s: parse + volume + 3 samples + wordgen presence check).
+- [ ] Full-mode runs at real budgets never executed end to end (only tiny-budget smoke tests). stress full ~1 h, ksweep full up to several hours.
+- [ ] Docker run of the loop (blocked on Felix building the image).
+- Note: figure runners fall back to mathtext when LaTeX is absent (fonts differ, content identical); Docker image installs texlive for paper-identical fonts.
 
 ### C. Documentation files (required by guidelines)
 - [ ] README — what the artifact does, usage, how to reproduce each paper figure.
@@ -36,9 +44,11 @@ Last updated: 2026-07-20 (initial version, derived from .claude/artifact_guideli
 - [ ] Accepted paper PDF included in artifact: canonical is `paper_source/Unif_Sampling_for_Tre_EMSOFT(61).pdf` (per Felix; the (31)/(37) copies were deleted 2026-07-20). PDF is gitignored — remember to add it explicitly to the artifact archive.
 
 ### D. wordgen (exp 16 comparison)
-- [ ] wordgen is gitignored, not shipped. Document as optional prerequisite with pointer to its installation instructions.
-- DECIDED (Felix 2026-07-20): shipping wordgen inside the Docker image is the optimal outcome — attempt it. Fallback if it doesn't build in time: fig:exp16 partially reproducible (VolTRE bars) + cached wordgen results (`16_ta_vs_tre_2/results/`, `20260616_benoit_results/`).
-- [ ] Check wordgen's license permits redistribution inside our image; otherwise install-from-source in Dockerfile.
+- [x] License checked 2026-07-21: GPLv3 — redistribution of source + binary in our image is fine (we ship the full source tarball, satisfying GPL source provision).
+- [x] Local wordgen matches upstream commit 5502f65b (git.lacl.fr/barbot/wordgen.git, 2026-03-26) exactly (only CRLF noise). Source tarball vendored at `artifact/wordgen-src-5502f65.tar.gz` (4.4 MB, via git archive).
+- [x] Clean build proven 2026-07-21 from pristine source: only deps dune + xml-light 2.5 + zarith 1.14 + ppx_deriving 6.1.1 (opam, OCaml 5.3), builds `src/wordgen.exe` in ~2 s, runtime dep only libgmp. Recipe encoded in Dockerfile stage 1.
+- [ ] Docker build of stage 1 unverified (no docker in sandbox).
+- fig:exp16 fast mode does NOT need wordgen (committed CSVs); only `ksweep --full` does.
 
 ### E. Archival & submission
 - [ ] Cut artifact branch from `experimental` (frozen after submission). NOTE: do not push/cut without Felix's explicit go-ahead.
@@ -77,10 +87,12 @@ Pure Python on CPU, no GPU or special hardware. Dev reference machine: Dell Lati
 - 2026-07-20 (later): Felix reviewed repository.md/method.md (fine, with corrections). Deadline 24 July confirmed. Decisions: wordgen-in-Docker is the target; canonical paper PDF = paper_source/Unif_Sampling_for_Tre_EMSOFT(61).pdf (old copies deleted); camera-ready cleanup deferred. Done: requirements.txt → UTF-8; README venv → .venv + title fixed.
 - 2026-07-20 (commit c3bd3ff, amended to 437eb89): committed artifact-prep changes (README, requirements.txt, CLAUDE.md, .claude notes/settings, .gitignore). The previously-unclear .gitignore modification turned out to be Felix's own `paper_source` ignore line — resolved, included. Decision: old Co-Authored-By trailers on already-pushed commits stay (no force-push of experimental); no such trailers going forward.
 - 2026-07-20 (commits 4f01c38, a200734): setup.py/packaging fixed and test suite fixed, both verified end-to-end on Linux (fresh venv) AND on Felix's Windows machine (fresh GitHub clone, py3.12, non-editable install, CLI + minimal_example + pytest 162/162). Key discovery: Python must be 3.10–3.12 (3.14 tries to build numpy from source).
+- 2026-07-20 (commit 9ff8864): README documents the 3.10–3.12 constraint, install script pinned to `py -3.12`. Session ended here. All of section A is done except tutorial.ipynb and the Docker-covered Linux README path. Next block is the eval loop (see NEXT SESSION above).
+- 2026-07-21: Eval-loop plan approved by Felix (wordgen-first order; sharkfin regenerated as-is with delta documented). Built: Dockerfile (multi-stage, ocaml/opam debian-12 → python:3.12-slim-bookworm + texlive, both bookworm so glibc matches), .dockerignore, artifact/ with reproduce.sh, smoke_test.sh, 5 figure runners, vendored wordgen source tarball. All 5 figures verified in fast mode (3m12s total). Discoveries: sharkfin committed CSVs are the paper's actual data and paper's sharkfin.pdf is just the bottom panel (added standalone-panel output to theorem4.py); paper's 11_stress_ex123_3.pdf byte-identical to committed results PDF; exp15 paper copy is cropped to drop panel titles. Sweep items resolved: CLAUDE.md edit was already committed (3edb2e5) and pushed. artifact/output/ gitignored.
 
 ## Open questions (for Felix)
 1. fig:cube pngs provenance — regenerate or ship as-is with generating scripts marked approximate?
-2. fig:sharkfin — exact generation settings to be recovered, deferred until we build that part of the eval loop. Git is a dead end (checked 2026-07-20: theorem4.py has a single commit with NR_SAMPLES=200; the whole `paper_source/` dir is gitignored, so sharkfin.pdf has no history). Felix may check emails; otherwise regenerate with theorem4.py and document the (small) parameter difference.
+2. fig:sharkfin — RESOLVED 2026-07-21 (Felix: regenerate as-is, document delta). Better still: the committed empirical CSVs reproduce the paper curve exactly (wiggle-for-wiggle), so the caption's "50 samples/T" is likely just inaccurate; artifact regenerates a near-identical figure. Delta documented in the runner docstring, to be repeated in artifact README.
 3. Anonymous repo link in the paper (anonymous.4open.science) vs. the artifact's public GitHub/Zenodo — final camera-ready footnote should point where? (deferred with camera-ready)
 
 ## Pending small cleanup

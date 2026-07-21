@@ -16,11 +16,16 @@ from volume.slice_volume import slice_volume
 from sample.sample import sample
 
 RESULTS      = os.path.join(os.path.dirname(__file__), 'results')
+OUT_DIR      = os.environ.get('VOLTRE_OUT_DIR', RESULTS)
 SAVE_MEAN    = os.path.join(RESULTS, 'theorem4_empirical.csv')
 SAVE_SAMPLES = os.path.join(RESULTS, 'theorem4_samples.csv')
 os.makedirs(RESULTS, exist_ok=True)
 
-LOAD = True   # set True to skip sampling and load saved CSVs
+# set VOLTRE_RESAMPLE=1 to resample instead of loading the saved CSVs
+LOAD = os.environ.get('VOLTRE_RESAMPLE', '') != '1'
+if not LOAD:
+    SAVE_MEAN    = os.path.join(OUT_DIR, 'theorem4_empirical.csv')
+    SAVE_SAMPLES = os.path.join(OUT_DIR, 'theorem4_samples.csv')
 
 # ── expressions (Example 9) ──────────────────────────────────────────────────
 eex2       = quickparse('a*.<a*>_[1,2]', string=True)
@@ -102,8 +107,25 @@ ax3.grid(axis='y', linestyle='--', alpha=0.3)
 ax3.tick_params(labelsize=6)
 if ZOOM: ax3.set_xlim(X_LIM_a, X_LIM_b)
 
-save_path = os.path.join(RESULTS, 'theorem4_ambiguity.pdf')
+save_path = os.path.join(OUT_DIR, 'theorem4_ambiguity.pdf')
 
 fig.savefig(save_path, bbox_inches='tight')
 
 print(f"Saved plot under: {save_path}")
+
+# standalone version of the trials panel, as used in the paper (fig:sharkfin)
+fig2, ax = plt.subplots(figsize=(COL_W, COL_W * 0.6))
+ax.plot(T_dense, ratio, color=C3, lw=1.8,
+        label=r"$V_n(e_{ex2})\,/\,V_n(e'_{ex2})$")
+ax.plot(T_sparse, empirical, color=C3, lw=1.5, linestyle='--',
+        label='empirical #trials')
+ax.set_xlabel('$T$', fontsize=9)
+ax.set_ylabel('trials', fontsize=9)
+ax.legend(loc='upper right', fontsize=7.5, frameon=True,
+          handlelength=1.2, borderpad=0.3, labelspacing=0.2)
+ax.grid(axis='y', linestyle='--', alpha=0.3)
+ax.tick_params(labelsize=8)
+if ZOOM: ax.set_xlim(X_LIM_a, X_LIM_b)
+sharkfin_path = os.path.join(OUT_DIR, 'sharkfin.pdf')
+fig2.savefig(sharkfin_path, bbox_inches='tight')
+print(f"Saved plot under: {sharkfin_path}")
