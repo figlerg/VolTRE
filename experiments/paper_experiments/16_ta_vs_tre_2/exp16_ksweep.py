@@ -29,7 +29,7 @@ Plot modes (PLOT_MODE):
   8 — [local-TA]  run wordgen locally via subprocess; real 1-h timeout + 8 GB memory
                   cap per k; saves exp16_local_ta_timing.csv; generates mode-7-style plot
 """
-import os, sys, re, csv, time, warnings
+import argparse, os, sys, re, csv, time, warnings
 from misc.exceptions import EmptyLanguageError
 warnings.filterwarnings('ignore')
 
@@ -51,10 +51,22 @@ from experiments.paper_experiments.expressions_12_requests import (
     build_e_dprime5, time_one,
 )
 
+# ── CLI ───────────────────────────────────────────────────────────────────────
+_ap = argparse.ArgumentParser(
+    description="fig:exp16 (Fig. 6): VolTRE vs. wordgen (TA) scalability k-sweep.")
+_ap.add_argument('--results', default=None,
+                 help="directory to read/write the timing CSVs (default: this script's results/)")
+_ap.add_argument('--out', default=None,
+                 help="output directory for the plots (default: same as --results)")
+_ap.add_argument('--resample', action='store_true',
+                 help="rerun VolTRE timing and the local wordgen run instead of loading CSVs")
+_ap.add_argument('--wordgen', default=None,
+                 help="path to the wordgen binary (default: $WORDGEN_BIN or a local /tmp build)")
+_args = _ap.parse_args()
+
 # ── experiment parameters ─────────────────────────────────────────────────────
-# set VOLTRE_RESAMPLE=1 to rerun VolTRE timing and the local wordgen run
-LOAD_TRE  = os.environ.get('VOLTRE_RESAMPLE', '') != '1'
-LOAD_TA   = os.environ.get('VOLTRE_RESAMPLE', '') != '1'
+LOAD_TRE  = not _args.resample
+LOAD_TA   = not _args.resample
 
 K_TRE_MAX    = 9    # k=10 is empty for n=10 (min cycle needs k+1=11 symbols)
 K_TA_TIMEOUT = 6    # first k where TA failed (shown as T.O.)
@@ -75,19 +87,19 @@ TIMEOUT_S   = 3600  # T.O. bar height in mode 5 (seconds, 1h)
 # ── paths ─────────────────────────────────────────────────────────────────────
 OUTFELIX = os.path.join(os.path.dirname(__file__),
                          '20260616_benoit_results', 'outfelix')
-# VOLTRE_RESULTS_DIR: read/write the timing CSVs there, VOLTRE_OUT_DIR: pdf output
-RESULTS  = os.environ.get('VOLTRE_RESULTS_DIR',
-                          os.path.join(os.path.dirname(__file__), 'results'))
-OUT_DIR  = os.environ.get('VOLTRE_OUT_DIR', RESULTS)
+RESULTS  = _args.results if _args.results \
+           else os.path.join(os.path.dirname(__file__), 'results')
+OUT_DIR  = _args.out if _args.out else RESULTS
 os.makedirs(RESULTS, exist_ok=True)
+os.makedirs(OUT_DIR, exist_ok=True)
 
 CSV_TRE      = os.path.join(RESULTS, 'exp16_voltre_timing.csv')
 CSV_TA       = os.path.join(RESULTS, 'exp16_ta_timing.csv')
 CSV_TA_LOCAL = os.path.join(RESULTS, 'exp16_local_ta_timing.csv')
 
-# wordgen binary; default is a local build in /tmp, the Docker image sets WORDGEN_BIN
-WORDGEN_BIN  = os.environ.get('WORDGEN_BIN',
-                              '/tmp/wordgen_build/_build/default/src/wordgen.exe')
+# wordgen binary; --wordgen wins, else $WORDGEN_BIN (Docker sets it), else local /tmp build
+WORDGEN_BIN  = _args.wordgen or os.environ.get(
+    'WORDGEN_BIN', '/tmp/wordgen_build/_build/default/src/wordgen.exe')
 # memory cap per wordgen subprocess (bytes) — protects container from OOM
 WORDGEN_MEM_LIMIT = 8 * 1024 ** 3   # 8 GB virtual address space
 # k values to attempt for the local TA run (beyond k=5 is expected to OOM/timeout)

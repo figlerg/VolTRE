@@ -1,5 +1,5 @@
 """Standalone script: load CSVs and regenerate 11_stress_ex123.pdf (no sampling)."""
-import os, sys, csv
+import argparse, os, sys, csv
 import numpy as np
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
@@ -14,9 +14,17 @@ import matplotlib.pyplot as plt
 from experiments.paper_experiments.plot_config import fig_width_in
 plt.rcParams.update({"text.usetex": False, "font.family": "sans-serif", "font.serif": []})
 
-# VOLTRE_RESULTS_DIR: read CSVs from there, VOLTRE_OUT_DIR: write the pdf there
-RESULTS = os.environ.get('VOLTRE_RESULTS_DIR', os.path.join(os.path.dirname(__file__), 'results'))
-OUT_DIR = os.environ.get('VOLTRE_OUT_DIR', RESULTS)
+_ap = argparse.ArgumentParser(
+    description="fig:stress (Fig. 3): scaling of VolTRE across three TREs.")
+_ap.add_argument('--results', default=None,
+                 help="directory to read the timing CSVs from (default: this script's results/)")
+_ap.add_argument('--out', default=None,
+                 help="output directory for the figure (default: same as --results)")
+_args = _ap.parse_args()
+
+RESULTS = _args.results if _args.results else os.path.join(os.path.dirname(__file__), 'results')
+OUT_DIR = _args.out if _args.out else RESULTS
+os.makedirs(OUT_DIR, exist_ok=True)
 K = 20
 
 COLORS = {

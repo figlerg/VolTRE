@@ -25,11 +25,13 @@ FROM python:3.12-slim-bookworm
 # libgmp10: wordgen runtime dependency.
 # texlive + lmodern: the paper figures use matplotlib with text.usetex and
 # Latin Modern fonts; without LaTeX the runners fall back to mathtext.
+# gnuplot: the cube figure (Fig. 2) draws its 3D and projection panels with it.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       libgmp10 \
       texlive-latex-base texlive-latex-extra texlive-fonts-recommended \
       lmodern cm-super dvipng ghostscript \
+      gnuplot-nox \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /voltre
 COPY requirements.txt ./

@@ -5,7 +5,7 @@ Reproduces the QEST23 cloud-of-points figure using VolTRE machinery.
 Three panels with different (mean, variance) targets for the total duration T.
 Uniform baseline: E(T) = 2/3, Var(T) = 1/18.
 """
-import os, sys, csv, warnings
+import argparse, os, sys, csv, warnings
 warnings.filterwarnings('ignore')
 
 import numpy as np
@@ -27,9 +27,16 @@ from volume.tuning import parameterize_mean_variance
 RESULTS    = os.path.dirname(__file__)
 NR_SAMPLES = 5000
 N          = 2
-# set VOLTRE_RESAMPLE=1 to resample instead of loading the CSVs
-LOAD       = os.environ.get('VOLTRE_RESAMPLE', '') != '1'
-OUT_DIR    = os.environ.get('VOLTRE_OUT_DIR', RESULTS)
+_ap = argparse.ArgumentParser(
+    description="fig:maxent-triangle (Fig. 7): max-entropy sampling from <a.a>_[0,1].")
+_ap.add_argument('--out', default=None,
+                 help="output directory for the figure and resampled CSVs (default: this script's dir)")
+_ap.add_argument('--resample', action='store_true',
+                 help="resample instead of loading the committed CSVs")
+_args = _ap.parse_args()
+LOAD    = not _args.resample
+OUT_DIR = _args.out if _args.out else RESULTS
+os.makedirs(OUT_DIR, exist_ok=True)
 np.random.seed(42)
 
 phi = quickparse('<a.a>_[0,1]', string=True)

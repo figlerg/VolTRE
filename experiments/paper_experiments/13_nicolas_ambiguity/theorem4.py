@@ -1,3 +1,4 @@
+import argparse
 import os
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,15 +16,25 @@ from parse.quickparse import quickparse
 from volume.slice_volume import slice_volume
 from sample.sample import sample
 
-RESULTS      = os.path.join(os.path.dirname(__file__), 'results')
-OUT_DIR      = os.environ.get('VOLTRE_OUT_DIR', RESULTS)
-SAVE_MEAN    = os.path.join(RESULTS, 'theorem4_empirical.csv')
-SAVE_SAMPLES = os.path.join(RESULTS, 'theorem4_samples.csv')
-os.makedirs(RESULTS, exist_ok=True)
+_ap = argparse.ArgumentParser(
+    description="fig:sharkfin (Fig. 4): number of trials to sample from an ambiguous TRE.")
+_ap.add_argument('--out', default=None,
+                 help="output directory for the figures (default: this script's results/)")
+_ap.add_argument('--resample', action='store_true',
+                 help="resample the empirical trial counts instead of loading the committed CSVs")
+_args = _ap.parse_args()
 
-# set VOLTRE_RESAMPLE=1 to resample instead of loading the saved CSVs
-LOAD = os.environ.get('VOLTRE_RESAMPLE', '') != '1'
-if not LOAD:
+RESULTS = os.path.join(os.path.dirname(__file__), 'results')
+OUT_DIR = _args.out if _args.out else RESULTS
+os.makedirs(RESULTS, exist_ok=True)
+os.makedirs(OUT_DIR, exist_ok=True)
+
+# committed CSVs live in results/; --resample recomputes them into OUT_DIR
+LOAD = not _args.resample
+if LOAD:
+    SAVE_MEAN    = os.path.join(RESULTS, 'theorem4_empirical.csv')
+    SAVE_SAMPLES = os.path.join(RESULTS, 'theorem4_samples.csv')
+else:
     SAVE_MEAN    = os.path.join(OUT_DIR, 'theorem4_empirical.csv')
     SAVE_SAMPLES = os.path.join(OUT_DIR, 'theorem4_samples.csv')
 
