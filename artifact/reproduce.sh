@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Reproduce the replicable figures of the paper by running the real experiment
-# scripts under experiments/paper_experiments/ directly (no wrappers). Each run
-# writes the script's own output file(s) into artifact/output/, then copies them
-# to figN_* names matching the figure numbers in the paper.
+# scripts under experiments/paper_experiments/ directly (no wrappers). Every
+# script writes into a scratch directory; only the final deliverables are copied
+# into artifact/output/ under figN_* names matching the figure numbers in the
+# paper, so the output directory contains just those figures and nothing else.
 #
 # Usage:
 #   ./reproduce.sh [figure ...] [--full]
@@ -19,7 +20,7 @@
 # (minutes in total). With --full, all measurements are recomputed from scratch
 # (hours; cube and ksweep additionally need a wordgen binary, see README).
 #
-# Output: artifact/output/  (both the paper-named files and the figN_* copies)
+# Output: artifact/output/  (only the figN_* deliverables)
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -27,6 +28,11 @@ REPO="$(cd "$HERE/.." && pwd)"
 EXP="$REPO/experiments/paper_experiments"
 OUT="$HERE/output"
 mkdir -p "$OUT"
+
+# Intermediates (paper-named PDFs, CSVs, .dat) go here and are discarded on exit;
+# only figN_* files are copied into $OUT.
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
 
 # The experiment scripts import the repo-root package `experiments`; export the
 # repo root so a non-editable install still finds it. Force a headless backend.
@@ -50,60 +56,60 @@ for fig in "${FIGS[@]}"; do
 
     cube)  # Fig 2
       if [ "$FULL" = 1 ]; then
-        python3 "$EXP/fig2_cube/make_cube_fig.py" --out "$OUT" --resample
+        python3 "$EXP/fig2_cube/make_cube_fig.py" --out "$WORK" --resample
       else
-        python3 "$EXP/fig2_cube/make_cube_fig.py" --out "$OUT"
+        python3 "$EXP/fig2_cube/make_cube_fig.py" --out "$WORK"
       fi
-      cp "$OUT/cube_3d.png"         "$OUT/fig2a_cube_3d.png"
-      cp "$OUT/cube_projection.png" "$OUT/fig2b_cube_projection.png"
-      cp "$OUT/cube_volume.pdf"     "$OUT/fig2c_cube_volume.pdf"
+      cp "$WORK/cube_3d.png"         "$OUT/fig2a_cube_3d.png"
+      cp "$WORK/cube_projection.png" "$OUT/fig2b_cube_projection.png"
+      cp "$WORK/cube_volume.pdf"     "$OUT/fig2c_cube_volume.pdf"
       ;;
 
     stress)  # Fig 3
       if [ "$FULL" = 1 ]; then
-        python3 "$EXP/11_stress_test/stress_compute.py" --out "$OUT"
-        python3 "$EXP/11_stress_test/make_combined_plot.py" --results "$OUT" --out "$OUT"
+        python3 "$EXP/11_stress_test/stress_compute.py" --out "$WORK"
+        python3 "$EXP/11_stress_test/make_combined_plot.py" --results "$WORK" --out "$WORK"
       else
-        python3 "$EXP/11_stress_test/make_combined_plot.py" --out "$OUT"
+        python3 "$EXP/11_stress_test/make_combined_plot.py" --out "$WORK"
       fi
-      cp "$OUT/11_stress_ex123.pdf" "$OUT/fig3_stress.pdf"
+      cp "$WORK/11_stress_ex123.pdf" "$OUT/fig3_stress.pdf"
       ;;
 
     sharkfin)  # Fig 4
       if [ "$FULL" = 1 ]; then
-        python3 "$EXP/13_nicolas_ambiguity/theorem4.py" --out "$OUT" --resample
+        python3 "$EXP/13_nicolas_ambiguity/theorem4.py" --out "$WORK" --resample
       else
-        python3 "$EXP/13_nicolas_ambiguity/theorem4.py" --out "$OUT"
+        python3 "$EXP/13_nicolas_ambiguity/theorem4.py" --out "$WORK"
       fi
-      cp "$OUT/sharkfin.pdf" "$OUT/fig4_sharkfin.pdf"
+      cp "$WORK/sharkfin.pdf" "$OUT/fig4_sharkfin.pdf"
       ;;
 
     ksweep)  # Fig 6
       if [ "$FULL" = 1 ]; then
-        python3 "$EXP/16_ta_vs_tre_2/exp16_ksweep.py" --results "$OUT" --out "$OUT" --resample
+        python3 "$EXP/16_ta_vs_tre_2/exp16_ksweep.py" --results "$WORK" --out "$WORK" --resample
       else
-        python3 "$EXP/16_ta_vs_tre_2/exp16_ksweep.py" --out "$OUT"
+        python3 "$EXP/16_ta_vs_tre_2/exp16_ksweep.py" --out "$WORK"
       fi
-      cp "$OUT/exp16_ksweep_v8_k8.pdf" "$OUT/fig6_ksweep.pdf"
+      cp "$WORK/exp16_ksweep_v8_k8.pdf" "$OUT/fig6_ksweep.pdf"
       ;;
 
     maxent)  # Fig 7
       if [ "$FULL" = 1 ]; then
-        python3 "$EXP/15_moment_control_qest23_redo/exp15_maxent_triangle.py" --out "$OUT" --resample
+        python3 "$EXP/15_moment_control_qest23_redo/exp15_maxent_triangle.py" --out "$WORK" --resample
       else
-        python3 "$EXP/15_moment_control_qest23_redo/exp15_maxent_triangle.py" --out "$OUT"
+        python3 "$EXP/15_moment_control_qest23_redo/exp15_maxent_triangle.py" --out "$WORK"
       fi
-      cp "$OUT/exp15_maxent_triangle.pdf" "$OUT/fig7_maxent.pdf"
+      cp "$WORK/exp15_maxent_triangle.pdf" "$OUT/fig7_maxent.pdf"
       ;;
 
     deltasigma)  # Fig 9 (exact volume, no fast/full distinction)
-      python3 "$EXP/make_delta_sigma_fig.py" --out "$OUT"
-      cp "$OUT/08_delta_sigma_nicolas_n_10.pdf"           "$OUT/fig9a_deltasigma.pdf"
-      cp "$OUT/08b_delta_sigma_nicolas_fat_thin_n_10.pdf" "$OUT/fig9b_deltasigma.pdf"
-      cp "$OUT/08c_delta_sigma_thao_n_10.pdf"             "$OUT/fig9c_deltasigma.pdf"
+      python3 "$EXP/make_delta_sigma_fig.py" --out "$WORK"
+      cp "$WORK/08_delta_sigma_nicolas_n_10.pdf"           "$OUT/fig9a_deltasigma.pdf"
+      cp "$WORK/08b_delta_sigma_nicolas_fat_thin_n_10.pdf" "$OUT/fig9b_deltasigma.pdf"
+      cp "$WORK/08c_delta_sigma_thao_n_10.pdf"             "$OUT/fig9c_deltasigma.pdf"
       ;;
   esac
 done
 
 echo
-echo "Requested figures written to $OUT (paper names + figN_* copies)."
+echo "Figures written to $OUT (figN_* files only)."
