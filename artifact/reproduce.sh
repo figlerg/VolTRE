@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Reproduce the replicable figures of the paper by running the real experiment
 # scripts under experiments/paper_experiments/ directly (no wrappers). Every
-# script writes into a scratch directory; only the final deliverables are copied
-# into artifact/output/ under figN_* names matching the figure numbers in the
-# paper, so the output directory contains just those figures and nothing else.
+# script writes its raw output into artifact/output/intermediates/. Only the
+# final deliverables are copied up into artifact/output/ under figN_* names
+# matching the figure numbers in the paper, so `ls artifact/output/` shows just
+# those figures plus the intermediates/ folder.
 #
 # Usage:
 #   ./reproduce.sh [figure ...] [--full]
@@ -20,7 +21,7 @@
 # (minutes in total). With --full, all measurements are recomputed from scratch
 # (hours; cube and ksweep additionally need a wordgen binary, see README).
 #
-# Output: artifact/output/  (only the figN_* deliverables)
+# Output: artifact/output/  (figN_* deliverables + an intermediates/ subfolder)
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -29,10 +30,14 @@ EXP="$REPO/experiments/paper_experiments"
 OUT="$HERE/output"
 mkdir -p "$OUT"
 
-# Intermediates (paper-named PDFs, CSVs, .dat) go here and are discarded on exit;
-# only figN_* files are copied into $OUT.
-WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+# Each script writes its own paper-named PDFs/CSVs/.dat into $WORK, a persistent
+# subfolder of $OUT that a curious reviewer can inspect (the fresh measurement
+# CSVs from --full live here). Only the figN_* deliverables are copied up into
+# $OUT itself, so `ls $OUT` shows just the ten figures plus this one folder.
+# $WORK is wiped at the start of every run so it always reflects the latest run.
+WORK="$OUT/intermediates"
+rm -rf "$WORK"
+mkdir -p "$WORK"
 
 # The experiment scripts import the repo-root package `experiments`; export the
 # repo root so a non-editable install still finds it. Force a headless backend.
@@ -112,4 +117,4 @@ for fig in "${FIGS[@]}"; do
 done
 
 echo
-echo "Figures written to $OUT (figN_* files only)."
+echo "Figures written to $OUT (figN_* deliverables; raw output in $WORK)."
