@@ -1,0 +1,22 @@
+VolTRE
+Copyright (c) 2024 Felix Gigler, Benoit Barbot, Ezio Bartocci, Nicolas Basset,
+Thao Dang, Dejan Nickovic.
+
+VolTRE itself is distributed under the BSD 3-Clause License (see LICENSE).
+
+Third-party component
+---------------------
+This artifact bundles the source of wordgen, an independent tool used only as a
+comparison baseline for one figure (the k-sweep, Fig. 6). It is not part of
+VolTRE.
+
+  wordgen
+  Authors:  Benoit Barbot and contributors
+  Upstream: https://git.lacl.fr/barbot/wordgen.git  (commit 5502f65b)
+  License:  GNU General Public License v3.0 (GPLv3)
+  Bundled:  artifact/wordgen-src-5502f65.tar.gz
+
+The full GPLv3 text and upstream copyright notices are inside that source
+tarball (COPYING). The Docker image compiles the wordgen binary from exactly
+this vendored source, so the corresponding source required by GPLv3 ships with
+the artifact.

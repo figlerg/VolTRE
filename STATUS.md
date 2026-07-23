@@ -6,9 +6,9 @@ Expressions". We apply for all three badges.
 ## Available
 
 The artifact is archived on Zenodo with a version-pinned DOI
-(**TODO: insert DOI before submission**) under the BSD 3-Clause license
-(see LICENSE). Development continues at https://github.com/figlerg/VolTRE,
-which does not replace the archived copy.
+([10.5281/zenodo.21512672](https://doi.org/10.5281/zenodo.21512672)) under the
+BSD 3-Clause license (see LICENSE). Development continues at
+https://github.com/figlerg/VolTRE, which does not replace the archived copy.
 
 ## Reviewed
 

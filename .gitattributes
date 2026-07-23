@@ -1,1 +1,12 @@
 * text=auto eol=lf
+
+# Keep internal/dev-only paths out of `git archive` (the release zip).
+# See release/ARCHIVING.md.
+.claude export-ignore
+.claude-sandbox export-ignore
+.idea export-ignore
+.obsidian export-ignore
+CLAUDE.md export-ignore
+notes export-ignore
+vis_experiments export-ignore
+release export-ignore
