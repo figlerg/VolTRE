@@ -35,6 +35,8 @@ The figures produced by `reproduce.sh`, the scripts behind them, and their fast 
 
 Full-mode times measured in the Docker container on the reference machine (see REQUIREMENTS.md), ~1.5 h in total. `cube --full` and `ksweep --full` need a wordgen binary (the Docker image ships one). `ksweep --full` can take up to several hours on machines where wordgen runs into the 1 h timeout instead of failing fast on memory.
 
+Note on `ksweep --full`: at the larger nesting depths wordgen prints errors and eventually crashes (`error:-6`, `Fatal error: exception Out of memory`), and the run reports "Two consecutive failures — stopping at k=8." This is the expected result, not an artifact bug. The whole point of Fig. 6 is that wordgen blows up in states and memory as the nesting depth grows while VolTRE stays fast, so the script deliberately catches these failures and records them as the baseline giving up.
+
 `--full` recomputes all measurements from scratch (fixed seed 42), so it exercises the sampling and volume methods end to end. The sampling-based figures come out identical to the paper, while for the two timing figures (`stress`, `ksweep`) the absolute numbers depend on your hardware and only the qualitative result is reproduced. Fast mode (the default when you omit `--full`) instead rebuilds the plots from the committed measurement data, reproducing the paper figures exactly but without re-running the methods. Without a LaTeX installation the figures fall back to matplotlib's mathtext (content identical, fonts differ). The Docker image ships LaTeX, gnuplot (used for the `cube` 3D/projection panels), and the wordgen baseline needed for `cube --full` and `ksweep --full`.
 
 ---
