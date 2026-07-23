@@ -20,13 +20,10 @@ wordgen binary found (full mode of the ksweep figure available)
 Smoke test passed.
 ```
 
-To reproduce the paper figures (written to `artifact/output/` on the host):
-
-```bash
-docker run --rm -v "$PWD/artifact/output:/voltre/artifact/output" voltre-artifact ./artifact/reproduce.sh
-```
-
-See README.md for the figure list, runtimes, and the `--full` mode.
+Once the smoke test passes, the image is ready. Reproducing the paper figures is
+driven from the walkthrough in README.md (step 3), which also lists the figures,
+their runtimes, and the `--full` mode. This file covers only getting VolTRE
+installed and verifying the install.
 
 On Apple Silicon Macs the image builds and runs natively as arm64 (both base
 images are multi-arch and the wordgen baseline is compiled from source during
