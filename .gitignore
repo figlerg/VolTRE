@@ -174,3 +174,7 @@ experiments/paper_experiments/Unif_Sampling_for_Tre_EMSOFT(37).pdf
 
 paper_source
 artifact/output/
+
+# Stray dev scratch (regenerated on demand, keep out of the tree)
+/main.prof
+/structure.txt
