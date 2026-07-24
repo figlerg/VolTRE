@@ -35,11 +35,19 @@ used here are whitespace and comments).
 
 ## Running the study
 
-1. Open MATLAB with this folder as the working directory.
-2. Run the main script `testUniform` (it initializes Breach itself via
-   `InitBreach`). To plot the falsifiers, set the variable
-   `display_option` in `testUniform.m` to a value greater than 0 (it
-   ships set to 1).
+Reproducing the case study means running both scripts, from this folder
+as the MATLAB working directory:
+
+1. `testUniform` reruns the full falsification campaign (100 signals per
+   class, each simulated at three input scalings) and reproduces the
+   falsifier counts that back the case study's claim. To plot the falsifiers, set the
+   variable `display_option` in `testUniform.m` to a value greater than
+   0 (it ships set to 1).
+2. `make_fig8_panels` recreates the three panels of Fig. 8 themselves
+   (see the panel section below).
+
+Both scripts initialize Breach themselves via `InitBreach` and can be
+run independently in any order.
 
 No compilation step is needed on Windows, Linux, or macOS. Breach 1.8.0
 ships precompiled MEX binaries for all three platforms.
@@ -69,7 +77,9 @@ means the quantizer output left the [-2, 2] band for that input.
 The check is the console output: the `Number of Falsifiers` printed after
 each class should be largest for exA, smaller for exB, and zero for exC.
 As a reference, a run with MATLAB R2026a and Breach 1.8.0 gave 33
-falsifiers for exA and 17 for exB.
+falsifiers for exA and 17 for exB. The model contains noise and sampling
+jitter blocks, so robustness values and exact counts can vary slightly
+between runs while the qualitative ordering stays stable.
 
 With `display_option > 0` the script also plots each falsifier: the peak
 input signal together with the quantizer output escaping the saturation
