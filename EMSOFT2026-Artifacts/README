@@ -1,0 +1,34 @@
+** Goal: The code and data in this project is used to produce the reported results of testing a Delta-Sigma circuit model. 
+
+** Software Requirements: 
+- MATLAB/Simulink R2022a or more recent versions
+- A supported C/C++ compiler to compile the MEX files that the tool BREACH needs. To check this, type 'mex -setup' 
+and 'mex -setup C++' 
+
+
+** Contents:
+- "breach-dev": this directory contains the BREACH tool for falsification purposes.
+- the directories "ExampleBand-Pass" and "Functions" contains the Simulink models and matlab code used to encode 
+and simulate the Delta-Sigma model.
+- three directories SigExpA, SigExpB, SigExpC contain the timed words generated from the expressions 
+exA, exB, exC in the EMSOFT2026 paper. The timed words are stored in files with names having the prefix "s_". 
+The files with names having with the prefix "f1cos_clean_s" are continuous-time signals 
+(having peaks of varying width) generated from timed words. 
+- matlab files: 
+    - "testUniform.m" (the main file to produce the results), 
+    - "data_cleaning.m" and "continuous_signal_generation.m" (to transform timed words to continuous-time signals with peaks of varying width), 
+    - "piecewise_cos.m" (auxiliary function used by "continuous_signal_generation.m"
+
+
+
+** To produce the results report in the paper, 
+1. Open MATLAB
+2. Install BREACH: go to the directory "breach-dev" and type "InstallBreach"
+2. From the main directory execute the script 'testUniform.m'. To plot the falsifiers, 
+set the variable 'display_option' in this script to a value > 0.
+
+The execution will report: no falsifiers for signals from exC, and more falsifiers from exA  
+than from exB. 
+
+
+
