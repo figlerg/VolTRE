@@ -28,7 +28,7 @@ Add ORCIDs where available.
 ## Keywords
 
 timed regular expressions, uniform sampling, volumetry, timed automata,
-falsification, artifact evaluation, EMSOFT 2026
+falsification, artifact evaluation, EMSOFT
 
 ## Related identifiers
 
@@ -38,18 +38,18 @@ falsification, artifact evaluation, EMSOFT 2026
 
 ## Description / abstract
 
-VolTRE is a tool for volumetry and uniform sampling of timed regular expressions
-(TRE). Given a TRE together with a target word length and total duration, it
-computes the exact volume of the corresponding slice of timed words and draws
-samples that are uniformly distributed over that slice, with exact rather than
-only expected duration control. This archive is the artifact accompanying the
-EMSOFT 2026 paper "Uniform Sampling for Timed Regular Expressions". It contains
-the VolTRE implementation, the experiment scripts behind every reproducible
-figure of the paper, a Docker environment that pins all dependencies, and a
-one-command reproduction script (artifact/reproduce.sh). Fast mode rebuilds the
-paper figures from committed measurement data in minutes, while --full recomputes
-every measurement from scratch with a fixed seed. The bundled wordgen tool
-(GPLv3, see NOTICE) is included only as a comparison baseline for one figure. The
-delta-sigma modulator case study (Fig. 8) additionally used a licensed
-MATLAB/Simulink toolchain and is provided as data rather than as a re-runnable
-step, as documented in STATUS.md.
+This is the artifact accompanying the paper "Uniform Sampling for Timed Regular
+Expressions", submitted for artifact evaluation at EMSOFT 2026.
+
+The paper introduces the first method to uniformly sample timed words directly
+from timed regular expressions (TREs). Given a desired length and duration as
+input, the method guarantees that all words of that length and duration in the
+language have the same chance of being drawn. It also introduces the first
+technique for treating the full class of timed regular languages recognized by
+non-deterministic timed automata (excluding those that require silent
+transitions), whereas previous work handled only deterministic timed automata.
+The approach is implemented in VolTRE, an open-source prototype tool.
+
+This archive packages VolTRE together with the experiment scripts, data, and a
+Docker environment needed to reproduce the paper's figures. The bundled wordgen
+tool (GPLv3, see NOTICE) is included only as a comparison baseline.
