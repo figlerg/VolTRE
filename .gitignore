@@ -178,3 +178,12 @@ artifact/output/
 # Stray dev scratch (regenerated on demand, keep out of the tree)
 /main.prof
 /structure.txt
+
+# Delta-Sigma Simulink case study: cloned Breach and MATLAB run artifacts
+experiments/paper_experiments/08_delta_sigma_simulink/breach-dev/
+experiments/paper_experiments/08_delta_sigma_simulink/SigExp*/clean_s_*
+experiments/paper_experiments/08_delta_sigma_simulink/SigExp*/f1cos_*
+experiments/paper_experiments/08_delta_sigma_simulink/slprj/
+experiments/paper_experiments/08_delta_sigma_simulink/**/*.slxc
+experiments/paper_experiments/08_delta_sigma_simulink/**/*.asv
+experiments/paper_experiments/08_delta_sigma_simulink/fig8_panel*.png

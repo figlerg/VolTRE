@@ -25,9 +25,9 @@ including the wordgen comparison baseline built from vendored source.
 ## Reproducible
 
 Every figure of the paper that rests on VolTRE's own computation is regenerated
-by `./artifact/reproduce.sh`. That covers figures 2, 3, 4, 6, 7, and 9. The
-remaining figures are hand-drawn diagrams (1, 5, 10) or the licensed Simulink
-case study (8), which are not computed by VolTRE.
+by `./artifact/reproduce.sh`. That covers figures 2, 3, 4, 6, 7, and 9. Figure
+8 is also reproducible, but through MATLAB rather than the Docker loop (see
+below). The remaining figures (1, 5, 10) are hand-drawn diagrams.
 
 The code behind each reproducible figure is the real experiment code under
 `experiments/paper_experiments/`. `reproduce.sh` runs these scripts directly and
@@ -39,9 +39,12 @@ copies each result to a `figN_*` file in `artifact/output/`:
 - Figure 4 (ambiguity trials): `13_nicolas_ambiguity/theorem4.py`
 - Figure 6 (VolTRE vs. wordgen k-sweep): `16_ta_vs_tre_2/exp16_ksweep.py`
 - Figure 7 (max-entropy triangle): `15_moment_control_qest23_redo/exp15_maxent_triangle.py`
+- Figure 8 (ΣΔ falsification panels): `08_delta_sigma_simulink/make_fig8_panels.m`
+  and `08_delta_sigma_simulink/testUniform.m` (MATLAB, see below)
 - Figure 9 (ΣΔ volume functions): `make_delta_sigma_fig.py`
 
-`./artifact/reproduce.sh` regenerates all of them in two modes:
+`./artifact/reproduce.sh` regenerates all of them except Figure 8 in two
+modes:
 
 - `--full`: every measurement is recomputed from scratch with a fixed seed
   (42), so VolTRE's sampling and volume computation run end to end (about
@@ -55,6 +58,13 @@ copies each result to a `figN_*` file in `artifact/output/`:
   exactly but does not re-run the methods, so it is a quick look rather than
   a full reproduction.
 
-Exception, stated for transparency: the ΣΔ modulator case-study figures were
-produced with a licensed MATLAB/Simulink toolchain. For these we provide the
-data, but they are not re-runnable within this artifact.
+Figure 8 (the ΣΔ falsification case study) is the one reproducible figure
+outside the Docker loop, because it needs a licensed MATLAB/Simulink
+installation. The artifact ships everything else required: the Simulink
+models, the driver scripts, and the VolTRE-sampled input words, with full
+instructions in
+`experiments/paper_experiments/08_delta_sigma_simulink/README.md`.
+`testUniform.m` reproduces the falsifier counts behind the figure's claim
+(more falsifiers for e_A than e_B, none for e_C) and `make_fig8_panels.m`
+recreates the three panels themselves. The run was verified with MATLAB
+R2026a and Breach 1.8.0 (cloned per the instructions, not bundled).
